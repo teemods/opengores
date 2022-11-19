@@ -694,6 +694,9 @@ void IGameController::Snap(int SnappingClient)
 			pSwitchState->m_aEndTicks[i] = vEndTicks[i].first;
 		}
 	}
+
+	// OpenGores
+	SnapFlags(SnappingClient);
 }
 
 int IGameController::GetAutoTeam(int NotThisID)
