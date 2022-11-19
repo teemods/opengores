@@ -2257,7 +2257,6 @@ if(CLIENT)
     prediction/entities/pickup.h
     prediction/entities/projectile.cpp
     prediction/entities/projectile.h
-    
     prediction/entity.cpp
     prediction/entity.h
     prediction/gameworld.cpp
