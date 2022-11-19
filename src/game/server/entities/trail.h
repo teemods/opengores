@@ -1,0 +1,25 @@
+/* (c) Magnus Auvinen. See licence.txt in the root of the distribution for more information. */
+/* If you are missing that file, acquire a complete release at teeworlds.com.                */
+#ifndef GAME_SERVER_ENTITIES_TRAIL_H
+#define GAME_SERVER_ENTITIES_TRAIL_H
+
+#include <game/server/entity.h>
+
+class CTrail : public CEntity
+{
+public:
+	CTrail(CGameWorld *pGameWorld, int Owner);
+	~CTrail();
+
+	virtual void Snap(int SnappingClient) override;
+	virtual void Tick() override;
+	virtual void Reset() override;
+
+private: 
+	int m_IDs[1];
+
+public:
+	int m_Owner;
+};
+
+#endif

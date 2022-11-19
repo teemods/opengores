@@ -257,7 +257,7 @@ void CGameContext::CreateHammerHit(vec2 Pos, int64_t Mask)
 	}
 }
 
-void CGameContext::CreateExplosion(vec2 Pos, int Owner, int Weapon, bool NoDamage, int ActivatedTeam, int64_t Mask)
+void CGameContext::CreateExplosionEvent(vec2 Pos, int64_t Mask)
 {
 	// create the event
 	CNetEvent_Explosion *pEvent = (CNetEvent_Explosion *)m_Events.Create(NETEVENTTYPE_EXPLOSION, sizeof(CNetEvent_Explosion), Mask);
@@ -266,6 +266,12 @@ void CGameContext::CreateExplosion(vec2 Pos, int Owner, int Weapon, bool NoDamag
 		pEvent->m_X = (int)Pos.x;
 		pEvent->m_Y = (int)Pos.y;
 	}
+}
+
+void CGameContext::CreateExplosion(vec2 Pos, int Owner, int Weapon, bool NoDamage, int ActivatedTeam, int64_t Mask)
+{
+	// create the event
+	CreateExplosionEvent(Pos, Mask);
 
 	// deal damage
 	CEntity *apEnts[MAX_CLIENTS];
@@ -2344,7 +2350,34 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				// reload scores
 				Score()->PlayerData(ClientID)->Reset();
 				m_apPlayers[ClientID]->m_Score = -9999;
+
+				// powers
+				m_apPlayers[ClientID]->m_Powers.m_HasRainbow = false;
+				m_apPlayers[ClientID]->m_Powers.m_HasRainbowBlack = false;
+				m_apPlayers[ClientID]->m_Powers.m_HasSplash = false;
+				m_apPlayers[ClientID]->m_Powers.m_HasExplosion = false;
+				m_apPlayers[ClientID]->m_Powers.m_HasSplashPistol = false;
+				m_apPlayers[ClientID]->m_Powers.m_HasExplosionPistol = false;
+				m_apPlayers[ClientID]->m_Powers.m_HasStar = false;
+				m_apPlayers[ClientID]->m_Powers.m_HasAuraDot = false;
+				m_apPlayers[ClientID]->m_Powers.m_HasAuraGun = false;
+				m_apPlayers[ClientID]->m_Powers.m_HasAuraShotgun = false;
+				m_apPlayers[ClientID]->m_Powers.m_HasTrail = false;
+
+				m_apPlayers[ClientID]->m_PowersActivable.m_HasEmotion = false;
+				m_apPlayers[ClientID]->m_PowersActivable.m_HasSoundtrack = false;
+				m_apPlayers[ClientID]->m_PowersActivable.m_HasDropHeart = false;
+				m_apPlayers[ClientID]->m_PowersActivable.m_HasDropShield = false;
+				m_apPlayers[ClientID]->m_PowersActivable.m_HasDropNinjaSword = false;
+				m_apPlayers[ClientID]->m_PowersActivable.m_HasGuidedHeart = false;
+				m_apPlayers[ClientID]->m_PowersActivable.m_HasGuidedShield = false;
+				m_apPlayers[ClientID]->m_PowersActivable.m_HasGuidedNinjaSword = false;
+				m_apPlayers[ClientID]->m_PowersActivable.m_HasCarry = false;
+
 				Score()->LoadPlayerData(ClientID);
+
+				// flag system
+				m_pController->UpdateRecordFlag();
 
 				SixupNeedsUpdate = true;
 			}

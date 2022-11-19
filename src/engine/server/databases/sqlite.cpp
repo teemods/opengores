@@ -53,6 +53,8 @@ public:
 	int GetBlob(int Col, unsigned char *pBuffer, int BufferSize) override;
 
 	bool AddPoints(const char *pPlayer, int Points, char *pError, int ErrorSize) override;
+	bool AddSeasonPoints(const char *pPlayer, int Points, char *pError, int ErrorSize) override;
+	bool ChangePowerStatus(const char *pPlayer, const char * PowerName, int Status, char *pError, int ErrorSize) override;
 
 private:
 	// copy of config vars
@@ -139,7 +141,7 @@ bool CSqliteConnection::Connect(char *pError, int ErrorSize)
 
 	if(m_Setup)
 	{
-		char aBuf[1024];
+		char aBuf[2048];
 		FormatCreateRace(aBuf, sizeof(aBuf));
 		if(Execute(aBuf, pError, ErrorSize))
 			return true;
@@ -383,6 +385,49 @@ bool CSqliteConnection::AddPoints(const char *pPlayer, int Points, char *pError,
 	BindInt(3, Points);
 	bool End;
 	return Step(&End, pError, ErrorSize);
+}
+
+bool CSqliteConnection::AddSeasonPoints(const char *pPlayer, int Points, char *pError, int ErrorSize)
+{
+	char aBuf[512];
+	str_format(aBuf, sizeof(aBuf),
+		"INSERT INTO %s_points(Name, SeasonPoints) "
+		"VALUES (?, ?) "
+		"ON CONFLICT(Name) DO UPDATE SET SeasonPoints=SeasonPoints+?;",
+		GetPrefix());
+	if(PrepareStatement(aBuf, pError, ErrorSize))
+	{
+		return true;
+	}
+	BindString(1, pPlayer);
+	BindInt(2, Points);
+	BindInt(3, Points);
+	bool End;
+	if(Step(&End, pError, ErrorSize))
+	{
+		return true;
+	}
+	return false;
+}
+
+bool CSqliteConnection::ChangePowerStatus(const char *pPlayer, const char * PowerName, int Status, char *pError, int ErrorSize)
+{
+	char aBuf[512];
+	str_format(aBuf, sizeof(aBuf),
+		"UPDATE %s_points SET %sEnabled= ?  WHERE Name = ?;",
+		GetPrefix(), PowerName);
+	if(PrepareStatement(aBuf, pError, ErrorSize))
+	{
+		return true;
+	}
+	BindInt(1, Status);
+	BindString(2, pPlayer);
+	bool End;
+	if(Step(&End, pError, ErrorSize))
+	{
+		return true;
+	}
+	return false;
 }
 
 std::unique_ptr<IDbConnection> CreateSqliteConnection(const char *pFilename, bool Setup)

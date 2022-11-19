@@ -551,6 +551,12 @@ void CCharacter::FireWeapon()
 		else
 			Lifetime = (int)(Server()->TickSpeed() * GameServer()->TuningList()[m_TuneZone].m_GrenadeLifetime);
 
+		if(g_Config.m_SvGoresGrenadeTele || g_Config.m_SvKogGrenadeTele) {
+            if(GameWorld()->CheckForProjectileTeleport(m_pPlayer->GetCID(), WEAPON_GRENADE)) {
+			    break;
+		    }
+		}
+
 		new CProjectile(
 			GameWorld(),
 			WEAPON_GRENADE, //Type
@@ -2338,4 +2344,46 @@ int64_t CCharacter::TeamMask()
 void CCharacter::SwapClients(int Client1, int Client2)
 {
 	m_Core.SetHookedPlayer(m_Core.m_HookedPlayer == Client1 ? Client2 : m_Core.m_HookedPlayer == Client2 ? Client1 : m_Core.m_HookedPlayer);
+}
+
+// OpenGores
+vec2 CCharacter::GetLastSightInput()
+{
+    return normalize(vec2(m_LatestInput.m_TargetX, m_LatestInput.m_TargetY));
+}
+
+void CCharacter::SetCollideOthers(bool on)
+{
+	if (m_Core.m_CollisionDisabled == on) return;
+
+	m_Core.m_CollisionDisabled = on;
+	if (on)
+		m_NeededFaketuning &= ~FAKETUNE_NOCOLL;
+	else
+		m_NeededFaketuning |= FAKETUNE_NOCOLL;
+	GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
+}
+
+void CCharacter::SetHitOthers(bool on)
+{
+	if(on)
+	{
+		m_Core.m_HammerHitDisabled = false;
+		m_Core.m_ShotgunHitDisabled = false;
+		m_Core.m_GrenadeHitDisabled = false;
+		m_Core.m_LaserHitDisabled = false;
+	}
+	else
+	{
+		m_Core.m_HammerHitDisabled = true;
+		m_Core.m_ShotgunHitDisabled = true;
+		m_Core.m_GrenadeHitDisabled = true;
+		m_Core.m_LaserHitDisabled = true;
+	}
+
+	if (on)
+		m_NeededFaketuning &= ~FAKETUNE_NOHAMMER;
+	else
+		m_NeededFaketuning |= FAKETUNE_NOHAMMER;
+	GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
 }

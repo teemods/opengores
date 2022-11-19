@@ -31,6 +31,10 @@ public:
 	virtual void Snap(int SnappingClient) override;
 	virtual void SwapClients(int Client1, int Client2) override;
 
+	// OpenGores
+	bool TryToTeleportOwner(int Owner, int Type) override;
+	void TeleportOwnerToProjectile() override;
+
 private:
 	vec2 m_Direction;
 	int m_LifeSpan;

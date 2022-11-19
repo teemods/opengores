@@ -203,6 +203,7 @@ public:
 	// helper functions
 	void CreateDamageInd(vec2 Pos, float AngleMod, int Amount, int64_t Mask = -1);
 	void CreateExplosion(vec2 Pos, int Owner, int Weapon, bool NoDamage, int ActivatedTeam, int64_t Mask);
+	void CreateExplosionEvent(vec2 Pos, int64_t Mask = -1);
 	void CreateHammerHit(vec2 Pos, int64_t Mask = -1);
 	void CreatePlayerSpawn(vec2 Pos, int64_t Mask = -1);
 	void CreateDeath(vec2 Pos, int ClientID, int64_t Mask = -1);
@@ -369,6 +370,36 @@ private:
 	static void ConPoints(IConsole::IResult *pResult, void *pUserData);
 	static void ConTopPoints(IConsole::IResult *pResult, void *pUserData);
 	static void ConTimeCP(IConsole::IResult *pResult, void *pUserData);
+
+	// OpenGores
+	static void ConShowFlag(IConsole::IResult *pResult, void *pUserData);
+
+	static void ConPower(IConsole::IResult *pResult, void *pUserData);
+	static void ConPowerInfo(IConsole::IResult *pResult, void *pUserData);
+
+	static void ConHeart(IConsole::IResult *pResult, void *pUserData);
+	static void ConShield(IConsole::IResult *pResult, void *pUserData);
+	static void ConNinjaSword(IConsole::IResult *pResult, void *pUserData);
+
+	static void ConGuidedHeart(IConsole::IResult *pResult, void *pUserData);
+	static void ConGuidedShield(IConsole::IResult *pResult, void *pUserData);
+	static void ConGuidedNinjaSword(IConsole::IResult *pResult, void *pUserData);
+
+	static void ConCry(IConsole::IResult *pResult, void *pUserData);
+	static void ConAngry(IConsole::IResult *pResult, void *pUserData);
+	static void ConHappy(IConsole::IResult *pResult, void *pUserData);
+
+	static void ConSoundtrack(IConsole::IResult *pResult, void *pUserData);
+	static void ConCarry(IConsole::IResult *pResult, void *pUserData);
+	static void ConStopCarry(IConsole::IResult *pResult, void *pUserData);
+
+	static void ConSuperHeart(IConsole::IResult *pResult, void *pUserData);
+	static void ConGuidedSuperHeart(IConsole::IResult *pResult, void *pUserData);
+
+    static void ExecuteSuperHeart(IConsole::IResult *pResult, void *pUserData, bool Guided);
+    static void ExecuteDrop(IConsole::IResult *pResult, void *pUserData, int Emoticon, int Emote, int DropType, bool Guided);
+	static void ExecuteEmotion(IConsole::IResult *pResult, void *pUserData, int Emoticon, int Emote, int SoundID);
+	// Finish - OpenGores
 
 	static void ConUTF8(IConsole::IResult *pResult, void *pUserData);
 	static void ConDND(IConsole::IResult *pResult, void *pUserData);

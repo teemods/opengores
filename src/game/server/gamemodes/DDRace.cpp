@@ -170,6 +170,9 @@ void CGameControllerDDRace::Tick()
 		if(m_pInitResult->m_Success)
 		{
 			m_CurrentRecord = m_pInitResult->m_CurrentRecord;
+
+			// OpenGores
+			str_copy(m_CurrentRecordHolder, m_pInitResult->m_CurrentRecordHolder, sizeof(m_pInitResult->m_CurrentRecordHolder));
 		}
 		m_pInitResult = nullptr;
 	}

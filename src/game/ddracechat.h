@@ -65,4 +65,30 @@ CHAT_COMMAND("teleport", "?r[player name]", CFGFLAG_CHAT | CFGFLAG_SERVER, ConTe
 
 CHAT_COMMAND("kill", "", CFGFLAG_CHAT | CFGFLAG_SERVER, ConProtectedKill, this, "Kill yourself when kill-protected during a long game (use f1, kill for regular kill)")
 
+// OpenGores
+CHAT_COMMAND("showflag", "?i['0'|'1']", CFGFLAG_CHAT | CFGFLAG_SERVER, ConShowFlag, this, "Wether to show your own record flag or not (on by default)")
+
+CHAT_COMMAND("power", "?r[power name]", CFGFLAG_CHAT | CFGFLAG_SERVER, ConPower, this, "Enable or disable a power. If no power specified, show powers list.")
+CHAT_COMMAND("powerinfo", "", CFGFLAG_CHAT | CFGFLAG_SERVER, ConPowerInfo, this, "Show information about the power system.")
+
+CHAT_COMMAND("heart", "", CFGFLAG_CHAT | CFGFLAG_SERVER, ConHeart, this, "Use the drop heart power.")
+CHAT_COMMAND("shield", "", CFGFLAG_CHAT | CFGFLAG_SERVER, ConShield, this, "Use the drop shield power.")
+CHAT_COMMAND("ninjasword", "", CFGFLAG_CHAT | CFGFLAG_SERVER, ConNinjaSword, this, "Use the drop ninjasword power.")
+
+CHAT_COMMAND("guidedheart", "", CFGFLAG_CHAT | CFGFLAG_SERVER, ConGuidedHeart, this, "Use the guided heart power.")
+CHAT_COMMAND("guidedshield", "", CFGFLAG_CHAT | CFGFLAG_SERVER, ConGuidedShield, this, "Use the guided shield power.")
+CHAT_COMMAND("guidedninjasword", "", CFGFLAG_CHAT | CFGFLAG_SERVER, ConGuidedNinjaSword, this, "Use the guided ninjasword power.")
+
+CHAT_COMMAND("cry", "", CFGFLAG_CHAT | CFGFLAG_SERVER, ConCry, this, "Use the cry emotion power.")
+CHAT_COMMAND("angry", "", CFGFLAG_CHAT | CFGFLAG_SERVER, ConAngry, this, "Use the angry emotion power.")
+CHAT_COMMAND("happy", "", CFGFLAG_CHAT | CFGFLAG_SERVER, ConHappy, this, "Use the happy emotion power.")
+
+CHAT_COMMAND("soundtrack", "", CFGFLAG_CHAT | CFGFLAG_SERVER, ConSoundtrack, this, "Use the soundtrack legendary power.")
+
+CHAT_COMMAND("carry", "", CFGFLAG_CHAT | CFGFLAG_SERVER, ConCarry, this, "Use the carry legendary power.")
+CHAT_COMMAND("stopcarry", "", CFGFLAG_CHAT | CFGFLAG_SERVER, ConStopCarry, this, "Stop the carry legendary power before the times end.")
+
+CHAT_COMMAND("superheart", "?r[name]", CFGFLAG_CHAT | CFGFLAG_SERVER, ConSuperHeart, this, "Use the super heart power.")
+CHAT_COMMAND("guidedsuperheart", "?r[name]", CFGFLAG_CHAT | CFGFLAG_SERVER, ConGuidedSuperHeart, this, "Use the guided super heart power.")
+
 #undef CHAT_COMMAND

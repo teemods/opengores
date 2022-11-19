@@ -789,6 +789,10 @@ void CGameTeams::OnFinish(CPlayer *Player, float Time, const char *pTimestamp)
 		{
 			GameServer()->m_pController->m_CurrentRecord = Time;
 			NeedToSendNewServerRecord = true;
+
+			// flag system
+			str_copy(GameServer()->m_pController->m_CurrentRecordHolder, Server()->ClientName(Player->GetCID()), sizeof(IGameController::m_CurrentRecordHolder));
+			GameServer()->m_pController->UpdateRecordFlag();
 		}
 	}
 

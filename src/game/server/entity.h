@@ -155,6 +155,11 @@ public: // TODO: Maybe make protected
 
 	int m_Number;
 	int m_Layer;
+
+	// OpenGores
+	// Fixing static definition
+	virtual bool TryToTeleportOwner(int Owner, int Type) { return false; }
+	virtual void TeleportOwnerToProjectile() {} 
 };
 
 bool NetworkClipped(const CGameContext *pGameServer, int SnappingClient, vec2 CheckPos);

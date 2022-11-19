@@ -442,3 +442,23 @@ void CGameWorld::ReleaseHooked(int ClientID)
 		}
 	}
 }
+
+// OpenGores
+bool CGameWorld::CheckForProjectileTeleport(int Owner, int Type)
+{
+	for(auto *pEnt : m_apFirstEntityTypes)
+		for(; pEnt;)
+		{
+			m_pNextTraverseEntity = pEnt->m_pNextTypeEntity;
+
+			if(pEnt->m_ObjType == ENTTYPE_PROJECTILE) {
+				if(pEnt->TryToTeleportOwner(Owner, Type)) {
+					return true;
+				}
+			}
+
+		    pEnt = m_pNextTraverseEntity;
+		}
+
+	return false;
+}

@@ -147,6 +147,16 @@ public:
 	// DDRace
 
 	float m_CurrentRecord;
+
+	// OpenGores
+	int SnapRecordFlag(int SnappingClient);
+	int SnapFastcapFlag(int SnappingClient);
+	void SnapFlags(int SnappingClient);
+	
+	char m_CurrentRecordHolder[16];
+
+	CCharacter *m_pRecordFlagChar;
+	void UpdateRecordFlag();
 };
 
 #endif

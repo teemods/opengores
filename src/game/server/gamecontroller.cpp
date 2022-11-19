@@ -2,6 +2,7 @@
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
 #include <engine/shared/config.h>
 
+#include <game/server/teams.h>
 #include <game/generated/protocol.h>
 #include <game/mapitems.h>
 #include <game/teamscore.h>
@@ -31,7 +32,7 @@ IGameController::IGameController(class CGameContext *pGameServer)
 	m_SuddenDeath = 0;
 	m_RoundStartTick = Server()->Tick();
 	m_RoundCount = 0;
-	m_GameFlags = 0;
+	m_GameFlags = GAMEFLAG_FLAGS;
 	m_aMapWish[0] = 0;
 
 	m_UnbalancedTick = -1;
@@ -42,6 +43,8 @@ IGameController::IGameController(class CGameContext *pGameServer)
 	m_aNumSpawnPoints[2] = 0;
 
 	m_CurrentRecord = 0;
+	m_CurrentRecordHolder[0] = 0;
+	m_pRecordFlagChar = NULL;
 }
 
 IGameController::~IGameController() = default;
@@ -485,6 +488,11 @@ void IGameController::OnReset()
 
 int IGameController::OnCharacterDeath(class CCharacter *pVictim, class CPlayer *pKiller, int Weapon)
 {
+	if(m_pRecordFlagChar && m_pRecordFlagChar == pVictim)
+	{
+		m_pRecordFlagChar = NULL;
+	}
+
 	return 0;
 }
 
@@ -496,6 +504,9 @@ void IGameController::OnCharacterSpawn(class CCharacter *pChr)
 	// give default weapons
 	pChr->GiveWeapon(WEAPON_HAMMER);
 	pChr->GiveWeapon(WEAPON_GUN);
+
+	// flag system
+	UpdateRecordFlag();
 }
 
 void IGameController::HandleCharacterTiles(CCharacter *pChr, int MapIndex)
@@ -763,3 +774,89 @@ void IGameController::DoTeamChange(CPlayer *pPlayer, int Team, bool DoChatMsg)
 
 	// OnPlayerInfoChange(pPlayer);
 }
+
+// OpenGores
+void IGameController::UpdateRecordFlag()
+{
+	if(m_CurrentRecordHolder[0] == 0)
+		return;
+
+	CCharacter *RecordChar = NULL;
+	for(int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if(GameServer()->m_apPlayers[i] && GameServer()->m_apPlayers[i]->GetCharacter())
+		{
+			if(str_comp(Server()->ClientName(i), m_CurrentRecordHolder) == 0) {
+                RecordChar = GameServer()->m_apPlayers[i]->GetCharacter();
+			    break;
+			}
+		}
+	}
+
+	m_pRecordFlagChar = RecordChar;
+}
+
+int IGameController::SnapRecordFlag(int SnappingClient)
+{
+	// Verify if owner character exists (not spectator or not null/not in game)
+	if (! m_pRecordFlagChar)
+		return FLAG_MISSING;
+
+	CPlayer *pFlagOwner = m_pRecordFlagChar->GetPlayer();
+	CPlayer* pSnapPlayer = GameServer()->m_apPlayers[SnappingClient];
+
+	if (pSnapPlayer->GetCharacter() && pSnapPlayer->GetCharacter()->NetworkClipped(SnappingClient, m_pRecordFlagChar->m_Pos))
+		return pFlagOwner->GetCID();
+
+	// Verify if user want to show the flag
+	if(! pFlagOwner->m_ShowFlag)
+	   return pFlagOwner->GetCID();
+
+    // Verify if user is not paused (/spec)
+	if(
+		pFlagOwner->IsPaused() == -2 && 
+		pFlagOwner->GetCharacter()->IsGrounded() && 
+		pFlagOwner->GetCharacter()->m_Pos == pFlagOwner->GetCharacter()->m_PrevPos
+	)
+	   return pFlagOwner->GetCID();
+
+	// Verify flag owner team mask
+    int64_t TeamMask = -1LL;
+	TeamMask = m_pRecordFlagChar->Teams()->TeamMask(m_pRecordFlagChar->Team(), -1, pFlagOwner->GetCID());
+	if(!CmaskIsSet(TeamMask, SnappingClient))
+		return pFlagOwner->GetCID();
+
+	// insert flag
+	CNetObj_Flag *pFlag = (CNetObj_Flag *)Server()->SnapNewItem(NETOBJTYPE_FLAG, TEAM_BLUE, sizeof(CNetObj_Flag));
+	if(!pFlag)
+		return pFlagOwner->GetCID();
+
+	pFlag->m_X = (int)m_pRecordFlagChar->m_Pos.x;
+	pFlag->m_Y = (int)m_pRecordFlagChar->m_Pos.y;
+	pFlag->m_Team = TEAM_BLUE;
+
+	return pFlagOwner->GetCID();
+}
+
+void IGameController::SnapFlags(int SnappingClient)
+{
+	if(Server()->IsSixup(SnappingClient))
+	{
+		int *pGameDataFlag = (int*)Server()->SnapNewItem(8 + 26, 0, 4*4); // NETOBJTYPE_GAMEDATAFLAG
+		pGameDataFlag[0] = FLAG_MISSING;
+		pGameDataFlag[1] = SnapRecordFlag(SnappingClient);
+		pGameDataFlag[2] = 0; // m_FlagDropTickRed
+		pGameDataFlag[3] = 0; // m_FlagDropTickBlue
+	}
+	else
+	{
+		CNetObj_GameData *pGameDataObj = (CNetObj_GameData *)Server()->SnapNewItem(NETOBJTYPE_GAMEDATA, 0, sizeof(CNetObj_GameData));
+		if(!pGameDataObj)
+			return;
+		pGameDataObj->m_TeamscoreRed = 0;
+		pGameDataObj->m_TeamscoreBlue = 0;
+		pGameDataObj->m_FlagCarrierRed = FLAG_MISSING;
+		pGameDataObj->m_FlagCarrierBlue = SnapRecordFlag(SnappingClient);
+	}
+}
+

@@ -2257,6 +2257,7 @@ if(CLIENT)
     prediction/entities/pickup.h
     prediction/entities/projectile.cpp
     prediction/entities/projectile.h
+    
     prediction/entity.cpp
     prediction/entity.h
     prediction/gameworld.cpp
@@ -2472,6 +2473,8 @@ if(SERVER)
     alloc.h
     ddracechat.cpp
     ddracecommands.cpp
+    entities/aura.cpp
+    entities/aura.h
     entities/character.cpp
     entities/character.h
     entities/door.cpp
@@ -2486,12 +2489,20 @@ if(SERVER)
     entities/laser.h
     entities/light.cpp
     entities/light.h
+    entities/loot.cpp
+    entities/loot.h
     entities/pickup.cpp
     entities/pickup.h
     entities/plasma.cpp
     entities/plasma.h
     entities/projectile.cpp
     entities/projectile.h
+    entities/soundtrack.cpp
+    entities/soundtrack.h
+    entities/star.cpp
+    entities/star.h
+    entities/trail.cpp
+    entities/trail.h
     entity.cpp
     entity.h
     eventhandler.cpp

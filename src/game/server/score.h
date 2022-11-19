@@ -70,6 +70,10 @@ public:
 	void SaveTeam(int ClientID, const char *pCode, const char *pServer);
 	void LoadTeam(const char *pCode, int ClientID);
 	void GetSaves(int ClientID);
+
+	// OpenGores
+	void SendPowerInfoMessage(int ClientID);
+	void ChangePlayerPowerStatus(int ClientID, const char *powerName);
 };
 
 #endif // GAME_SERVER_SCORE_H

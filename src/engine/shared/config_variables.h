@@ -203,6 +203,30 @@ MACRO_CONFIG_STR(DbgStressServer, dbg_stress_server, 32, "localhost", CFGFLAG_CL
 
 MACRO_CONFIG_INT(HttpAllowInsecure, http_allow_insecure, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SERVER, "Allow insecure HTTP protocol in addition to the secure HTTPS one. Mostly useful for testing.")
 
+// OpenGores
+MACRO_CONFIG_INT(SvKogGrenadeTele, sv_kog_grenade_tele, 0, 0, 1, CFGFLAG_GAME | CFGFLAG_SERVER, "Activate gores grenade teleport (kog alias)")
+MACRO_CONFIG_INT(SvGoresGrenadeTele, sv_gores_grenade_tele, 0, 0, 1, CFGFLAG_GAME | CFGFLAG_SERVER, "Activate gores grenade teleport")
+
+MACRO_CONFIG_INT(SvEffectGunInterval, sv_effect_gun_interval, 2, 0, 999, CFGFLAG_GAME | CFGFLAG_SERVER, "Time interval between gun effect activation (splash & explosion)")
+MACRO_CONFIG_INT(SvEffectLootInterval, sv_effect_loot_interval, 15, 0, 999, CFGFLAG_GAME | CFGFLAG_SERVER, "Time interval between drop effect activation (all drop types)")
+MACRO_CONFIG_INT(SvEffectEmotionInterval, sv_effect_emotion_interval, 4, 0, 999, CFGFLAG_GAME | CFGFLAG_SERVER, "Time interval between emotion effect activation (all emotion types, and this interval only apply to sound)")
+MACRO_CONFIG_INT(SvEffectSoundtrackInterval, sv_effect_soundtrack_interval, 60, 0, 999, CFGFLAG_GAME | CFGFLAG_SERVER, "Time interval between soundtrack effect activation")
+MACRO_CONFIG_INT(SvEffectCarryInterval, sv_effect_carry_interval, 180, 0, 999, CFGFLAG_GAME | CFGFLAG_SERVER, "Time interval between carry effect activation")
+
+MACRO_CONFIG_INT(SvEffectLootDuration, sv_effect_loot_duration, 600, 0, 999, CFGFLAG_GAME | CFGFLAG_SERVER, "Duration/Lifetime for loot effect (seconds)")
+MACRO_CONFIG_INT(SvEffectCarryDuration, sv_effect_carry_duration, 15, 0, 999, CFGFLAG_GAME | CFGFLAG_SERVER, "Duration for carry effect (seconds)")
+
+MACRO_CONFIG_INT(SvEffectCarryWithRace, sv_effect_carry_with_race, 0, 0, 1, CFGFLAG_GAME | CFGFLAG_SERVER, "Enable carry power even with race started (considered cheat)")
+
+MACRO_CONFIG_INT(SvEffectGuidedLootSpeed, sv_effect_guided_loot_speed, 8, 1, 64, CFGFLAG_GAME | CFGFLAG_SERVER, "Guided loot traveling speed (8 = default)")
+MACRO_CONFIG_INT(SvEffectGuidedLootDetection, sv_effect_guided_loot_detection, 1200, 120, 12000, CFGFLAG_GAME | CFGFLAG_SERVER, "Guided loot detection area distance (1200 = default)")
+
+MACRO_CONFIG_INT(SvEffectAuraDotAmount, sv_effect_aura_dot_amount, 3, 1, 64, CFGFLAG_GAME | CFGFLAG_SERVER, "Amount of aura dots around the player (3 = default)")
+MACRO_CONFIG_INT(SvEffectAuraGunAmount, sv_effect_aura_gun_amount, 3, 1, 64, CFGFLAG_GAME | CFGFLAG_SERVER, "Amount of aura guns around the player (3 = default)")
+MACRO_CONFIG_INT(SvEffectAuraShotgunAmount, sv_effect_aura_shotgun_amount, 3, 1, 64, CFGFLAG_GAME | CFGFLAG_SERVER, "Amount of aura shotguns around the player (3 = default)")
+
+MACRO_CONFIG_STR(SvSuperHeartIpAddress, sv_super_heart_ip_address, 256, "127.0.0.1", CFGFLAG_GAME | CFGFLAG_SERVER, "The IP address that have the permission to use super heart effect")
+
 // DDRace
 MACRO_CONFIG_STR(SvWelcome, sv_welcome, 64, "", CFGFLAG_SERVER, "Message that will be displayed to players who join the server")
 MACRO_CONFIG_INT(SvReservedSlots, sv_reserved_slots, 0, 0, MAX_CLIENTS, CFGFLAG_SERVER, "The number of slots that are reserved for special players")

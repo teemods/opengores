@@ -87,6 +87,14 @@ public:
 	class CPlayer *GetPlayer() { return m_pPlayer; }
 	int64_t TeamMask();
 
+	// OpenGores
+	void SetCollideOthers(bool on);
+	void SetHitOthers(bool on);
+	vec2 GetLastSightInput();
+	
+	// carry effect
+	bool m_BeingCarried;
+
 private:
 	// player controlling this character
 	class CPlayer *m_pPlayer;

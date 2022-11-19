@@ -105,6 +105,8 @@ public:
 	int GetBlob(int Col, unsigned char *pBuffer, int BufferSize) override;
 
 	bool AddPoints(const char *pPlayer, int Points, char *pError, int ErrorSize) override;
+	bool AddSeasonPoints(const char *pPlayer, int Points, char *pError, int ErrorSize) override;
+	bool ChangePowerStatus(const char *pPlayer, const char * PowerName, int Status, char *pError, int ErrorSize) override;
 
 private:
 	class CStmtDeleter
@@ -321,7 +323,7 @@ bool CMysqlConnection::ConnectImpl()
 		char aCreateTeamrace[1024];
 		char aCreateMaps[1024];
 		char aCreateSaves[1024];
-		char aCreatePoints[1024];
+		char aCreatePoints[2048];
 		FormatCreateRace(aCreateRace, sizeof(aCreateRace));
 		FormatCreateTeamrace(aCreateTeamrace, sizeof(aCreateTeamrace), "VARBINARY(16)");
 		FormatCreateMaps(aCreateMaps, sizeof(aCreateMaps));
@@ -711,6 +713,49 @@ bool CMysqlConnection::AddPoints(const char *pPlayer, int Points, char *pError, 
 	BindInt(3, Points);
 	int NumUpdated;
 	return ExecuteUpdate(&NumUpdated, pError, ErrorSize);
+}
+
+bool CMysqlConnection::AddSeasonPoints(const char *pPlayer, int Points, char *pError, int ErrorSize)
+{
+	char aBuf[512];
+	str_format(aBuf, sizeof(aBuf),
+		"INSERT INTO %s_points(Name, SeasonPoints) "
+		"VALUES (?, ?) "
+		"ON DUPLICATE KEY UPDATE SeasonPoints=SeasonPoints+?",
+		GetPrefix());
+	if(PrepareStatement(aBuf, pError, ErrorSize))
+	{
+		return true;
+	}
+	BindString(1, pPlayer);
+	BindInt(2, Points);
+	BindInt(3, Points);
+	int NumUpdated;
+	if(ExecuteUpdate(&NumUpdated, pError, ErrorSize))
+	{
+		return true;
+	}
+	return false;
+}
+
+bool CMysqlConnection::ChangePowerStatus(const char *pPlayer, const char * PowerName, int Status, char *pError, int ErrorSize)
+{
+	char aBuf[512];
+	str_format(aBuf, sizeof(aBuf),
+		"UPDATE %s_points SET %sEnabled= ?  WHERE Name = ?",
+		GetPrefix(), PowerName);
+	if(PrepareStatement(aBuf, pError, ErrorSize))
+	{
+		return true;
+	}
+	BindInt(1, Status);
+	BindString(2, pPlayer);
+	int NumUpdated;
+	if(ExecuteUpdate(&NumUpdated, pError, ErrorSize))
+	{
+		return true;
+	}
+	return false;
 }
 
 std::unique_ptr<IDbConnection> CreateMysqlConnection(

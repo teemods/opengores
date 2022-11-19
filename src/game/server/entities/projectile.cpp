@@ -49,6 +49,49 @@ CProjectile::CProjectile(
 	GameWorld()->InsertEntity(this);
 }
 
+// OpenGores
+bool CProjectile::TryToTeleportOwner(int Owner, int Type)
+{
+    if(m_Type == Type) {
+        if(m_Owner == Owner) { 
+            TeleportOwnerToProjectile();
+
+			return true;
+		}
+	}
+
+	return false;
+}
+
+void CProjectile::TeleportOwnerToProjectile()
+{
+	CCharacter *pOwnerChar = 0;
+	pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
+
+	float Pt = (Server()->Tick() - m_StartTick - 1) / (float)Server()->TickSpeed();
+	float Ct = (Server()->Tick() - m_StartTick) / (float)Server()->TickSpeed();
+	vec2 PrevPos = GetPos(Pt);
+	vec2 CurPos = GetPos(Ct);
+
+	bool Found;
+	vec2 PossiblePos;
+
+	Found = GetNearestAirPos(CurPos, PrevPos, &PossiblePos);
+
+    m_MarkedForDestroy = true;
+
+    if(Found) {
+        pOwnerChar->m_TeleGunPos = PossiblePos;
+		pOwnerChar->m_TeleGunTeleport = true;
+		pOwnerChar->m_IsBlueTeleGunTeleport = false;
+
+        pOwnerChar->Core()->m_HookedPlayer = -1;
+		pOwnerChar->Core()->m_HookState = HOOK_RETRACTED;
+	    pOwnerChar->Core()->m_HookPos = PossiblePos;
+	}
+}
+// Finish - OpenGores
+
 void CProjectile::Reset()
 {
 	if(m_LifeSpan > -2)

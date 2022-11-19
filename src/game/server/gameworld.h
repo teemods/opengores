@@ -164,6 +164,9 @@ public:
 			Returns list with all Characters on line.
 	*/
 	std::list<CCharacter *> IntersectedCharacters(vec2 Pos0, vec2 Pos1, float Radius, class CEntity *pNotThis = 0);
+
+	// OpenGores
+	bool CheckForProjectileTeleport(int Owner, int Type);
 };
 
 #endif
