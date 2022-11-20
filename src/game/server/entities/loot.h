@@ -29,7 +29,6 @@ private:
 	int m_Owner;
 	char m_OwnerName[16];
 
-	int64_t m_TeamMask;
 	int m_ResponsibleTeam;
 	int m_LootType;
 	int m_DotsEffect;
