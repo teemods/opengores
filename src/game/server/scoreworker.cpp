@@ -143,7 +143,7 @@ bool CScoreWorker::Init(IDbConnection *pSqlServer, const ISqlData *pGameData, ch
 		pResult->m_CurrentRecord = pSqlServer->GetFloat(1);
 
 		// flag system
-        char aBuf2[16];
+		char aBuf2[16];
 		pSqlServer->GetString(2, aBuf2, sizeof(aBuf2));
 
 		str_copy(pResult->m_CurrentRecordHolder, aBuf2, sizeof(aBuf2));
@@ -211,7 +211,7 @@ bool CScoreWorker::LoadPlayerData(IDbConnection *pSqlServer, const ISqlData *pGa
 		"SELECT "
 		"Rainbow, RainbowEnabled, RainbowBlack, RainbowBlackEnabled,"
 		"Splash, SplashEnabled, Explosion, ExplosionEnabled,"
-		"SplashPistol, SplashPistolEnabled, ExplosionPistol, ExplosionPistolEnabled," 
+		"SplashPistol, SplashPistolEnabled, ExplosionPistol, ExplosionPistolEnabled,"
 		"Star, StarEnabled, AuraDot, AuraDotEnabled, AuraGun, AuraGunEnabled,"
 		"AuraShotgun, AuraShotgunEnabled, Trail, TrailEnabled"
 		" FROM %s_points WHERE Name = ?",
@@ -226,7 +226,8 @@ bool CScoreWorker::LoadPlayerData(IDbConnection *pSqlServer, const ISqlData *pGa
 	{
 		return true;
 	}
-	if(! End) {
+	if(!End)
+	{
 		pResult->m_Data.m_Info.m_Powers.m_HasRainbow = pSqlServer->GetInt(1);
 		pResult->m_Data.m_Info.m_Powers.m_HasRainbowEnabled = pSqlServer->GetInt(2);
 
@@ -261,7 +262,7 @@ bool CScoreWorker::LoadPlayerData(IDbConnection *pSqlServer, const ISqlData *pGa
 		pResult->m_Data.m_Info.m_Powers.m_HasTrailEnabled = pSqlServer->GetInt(22);
 	}
 
-    // powers activable
+	// powers activable
 	str_format(aBuf, sizeof(aBuf),
 		"SELECT "
 		"Emotion, Soundtrack, DropHeart, DropShield, DropNinjaSword, GuidedHeart, GuidedShield, GuidedNinjaSword, Carry"
@@ -277,7 +278,8 @@ bool CScoreWorker::LoadPlayerData(IDbConnection *pSqlServer, const ISqlData *pGa
 	{
 		return true;
 	}
-	if(! End) {
+	if(!End)
+	{
 		pResult->m_Data.m_Info.m_PowersActivable.m_HasEmotion = pSqlServer->GetInt(1);
 		pResult->m_Data.m_Info.m_PowersActivable.m_HasSoundtrack = pSqlServer->GetInt(2);
 		pResult->m_Data.m_Info.m_PowersActivable.m_HasDropHeart = pSqlServer->GetInt(3);
@@ -555,7 +557,9 @@ bool CScoreWorker::SaveScore(IDbConnection *pSqlServer, const ISqlData *pGameDat
 				"You earned %d point%s for finishing this map!",
 				Points, Points == 1 ? "" : "s");
 		}
-	} else {
+	}
+	else
+	{
 		str_format(aBuf, sizeof(aBuf), "SELECT Points FROM %s_maps WHERE Map=?", pSqlServer->GetPrefix());
 		if(pSqlServer->PrepareStatement(aBuf, pError, ErrorSize))
 		{
@@ -1796,7 +1800,7 @@ bool CScoreWorker::SendPowerInfoMessage(IDbConnection *pSqlServer, const ISqlDat
 	CScorePlayerResult *pResult = dynamic_cast<CScorePlayerResult *>(pGameData->m_pResult.get());
 	auto *paMessages = pResult->m_Data.m_aaMessages;
 
-    // powers
+	// powers
 	char aBuf[512];
 	str_format(aBuf, sizeof(aBuf),
 		"SELECT "
@@ -1817,17 +1821,17 @@ bool CScoreWorker::SendPowerInfoMessage(IDbConnection *pSqlServer, const ISqlDat
 	}
 
 	str_format(paMessages[0], sizeof(paMessages[0]),
-            "Powers are visual effects given to players who have participated in and won events or who belong to staff.");
+		"Powers are visual effects given to players who have participated in and won events or who belong to staff.");
 
 	if(!End)
 	{
 		// powers
-		// calculate owned, if empty, show none 
+		// calculate owned, if empty, show none
 		char ownedPowers[512];
 
 		str_format(ownedPowers, sizeof(ownedPowers),
-            "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
-            pSqlServer->GetInt(1) == 1 ? "rainbow, " : "",
+			"%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
+			pSqlServer->GetInt(1) == 1 ? "rainbow, " : "",
 			pSqlServer->GetInt(2) == 1 ? "rainbow-black, " : "",
 			pSqlServer->GetInt(3) == 1 ? "splash, " : "",
 			pSqlServer->GetInt(4) == 1 ? "explosion, " : "",
@@ -1846,18 +1850,15 @@ bool CScoreWorker::SendPowerInfoMessage(IDbConnection *pSqlServer, const ISqlDat
 			pSqlServer->GetInt(17) == 1 ? "guided-heart, " : "",
 			pSqlServer->GetInt(18) == 1 ? "guided-shield, " : "",
 			pSqlServer->GetInt(19) == 1 ? "guided-ninjasword, " : "",
-			pSqlServer->GetInt(20) == 1 ? "carry, " : ""
-		);
-
+			pSqlServer->GetInt(20) == 1 ? "carry, " : "");
 
 		str_format(paMessages[1], sizeof(paMessages[1]),
-            "Powers you own: %s.", ownedPowers
-		);
+			"Powers you own: %s.", ownedPowers);
 	}
 	else
 	{
 		str_format(paMessages[1], sizeof(paMessages[1]),
-            "Powers you own: none.");
+			"Powers you own: none.");
 	}
 
 	return false;
@@ -1888,36 +1889,40 @@ bool CScoreWorker::ChangePlayerPowerStatus(IDbConnection *pSqlServer, const ISql
 	{
 		int hasPowerEnabled = pSqlServer->GetInt(2);
 
-        // check if user have power
-		if(pSqlServer->GetInt(1) != 1) {
-            str_format(paMessages[0], sizeof(paMessages[0]),
-            	"You do not have permission to use this power!");
+		// check if user have power
+		if(pSqlServer->GetInt(1) != 1)
+		{
+			str_format(paMessages[0], sizeof(paMessages[0]),
+				"You do not have permission to use this power!");
 
 			return false;
 		}
 
-        // update on database
+		// update on database
 		if(pSqlServer->ChangePowerStatus(pData->m_aRequestingPlayer, pData->m_aName, !hasPowerEnabled, pError, ErrorSize))
 		{
 			return true;
 		}
 
-        // reload player data
+		// reload player data
 		LoadPlayerData(pSqlServer, pGameData, pError, ErrorSize);
 
 		// check if user want to enable or disable this power to send the correct message
-		if(hasPowerEnabled != 1) {
-            str_format(pResult->m_Data.m_Info.m_PowerStatusMessage, sizeof(pResult->m_Data.m_Info.m_PowerStatusMessage),
-            	"You have successfully enabled this power!");
-		}  else {
-            str_format(pResult->m_Data.m_Info.m_PowerStatusMessage, sizeof(pResult->m_Data.m_Info.m_PowerStatusMessage),
-            	"You have successfully disabled this power!");
+		if(hasPowerEnabled != 1)
+		{
+			str_format(pResult->m_Data.m_Info.m_PowerStatusMessage, sizeof(pResult->m_Data.m_Info.m_PowerStatusMessage),
+				"You have successfully enabled this power!");
+		}
+		else
+		{
+			str_format(pResult->m_Data.m_Info.m_PowerStatusMessage, sizeof(pResult->m_Data.m_Info.m_PowerStatusMessage),
+				"You have successfully disabled this power!");
 		}
 	}
 	else
 	{
 		str_format(paMessages[0], sizeof(paMessages[0]),
-            "You do not have permission to any power!");
+			"You do not have permission to any power!");
 	}
 
 	return false;

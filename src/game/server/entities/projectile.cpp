@@ -32,7 +32,7 @@ CProjectile::CProjectile(
 	m_LifeSpan = Span;
 	m_Owner = Owner;
 	m_Force = Force;
-	//m_Damage = Damage;
+	// m_Damage = Damage;
 	m_SoundImpact = SoundImpact;
 	m_StartTick = Server()->Tick();
 	m_Explosive = Explosive;
@@ -52,9 +52,11 @@ CProjectile::CProjectile(
 // OpenGores
 bool CProjectile::TryToTeleportOwner(int Owner, int Type)
 {
-    if(m_Type == Type) {
-        if(m_Owner == Owner) { 
-            TeleportOwnerToProjectile();
+	if(m_Type == Type)
+	{
+		if(m_Owner == Owner)
+		{
+			TeleportOwnerToProjectile();
 
 			return true;
 		}
@@ -78,16 +80,17 @@ void CProjectile::TeleportOwnerToProjectile()
 
 	Found = GetNearestAirPos(CurPos, PrevPos, &PossiblePos);
 
-    m_MarkedForDestroy = true;
+	m_MarkedForDestroy = true;
 
-    if(Found) {
-        pOwnerChar->m_TeleGunPos = PossiblePos;
+	if(Found)
+	{
+		pOwnerChar->m_TeleGunPos = PossiblePos;
 		pOwnerChar->m_TeleGunTeleport = true;
 		pOwnerChar->m_IsBlueTeleGunTeleport = false;
 
-        pOwnerChar->Core()->m_HookedPlayer = -1;
+		pOwnerChar->Core()->m_HookedPlayer = -1;
 		pOwnerChar->Core()->m_HookState = HOOK_RETRACTED;
-	    pOwnerChar->Core()->m_HookPos = PossiblePos;
+		pOwnerChar->Core()->m_HookPos = PossiblePos;
 	}
 }
 // Finish - OpenGores
@@ -407,7 +410,8 @@ void CProjectile::Snap(int SnappingClient)
 
 void CProjectile::SwapClients(int Client1, int Client2)
 {
-	m_Owner = m_Owner == Client1 ? Client2 : m_Owner == Client2 ? Client1 : m_Owner;
+	m_Owner = m_Owner == Client1 ? Client2 : m_Owner == Client2 ? Client1 :
+								      m_Owner;
 }
 
 // DDRace
@@ -422,17 +426,17 @@ bool CProjectile::FillExtraInfo(CNetObj_DDNetProjectile *pProj)
 	const int MaxPos = 0x7fffffff / 100;
 	if(abs((int)m_Pos.y) + 1 >= MaxPos || abs((int)m_Pos.x) + 1 >= MaxPos)
 	{
-		//If the modified data would be too large to fit in an integer, send normal data instead
+		// If the modified data would be too large to fit in an integer, send normal data instead
 		return false;
 	}
-	//Send additional/modified info, by modifying the fields of the netobj
+	// Send additional/modified info, by modifying the fields of the netobj
 	float Angle = -atan2f(m_Direction.x, m_Direction.y);
 
 	int Data = 0;
 	Data |= (abs(m_Owner) & 255) << 0;
 	if(m_Owner < 0)
 		Data |= PROJECTILEFLAG_NO_OWNER;
-	//This bit tells the client to use the extra info
+	// This bit tells the client to use the extra info
 	Data |= PROJECTILEFLAG_IS_DDNET;
 	// PROJECTILEFLAG_BOUNCE_HORIZONTAL, PROJECTILEFLAG_BOUNCE_VERTICAL
 	Data |= (m_Bouncing & 3) << 10;

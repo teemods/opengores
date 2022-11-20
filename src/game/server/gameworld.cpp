@@ -339,7 +339,7 @@ void CGameWorld::SwapClients(int Client1, int Client2)
 }
 
 // TODO: should be more general
-//CCharacter *CGameWorld::IntersectCharacter(vec2 Pos0, vec2 Pos1, float Radius, vec2& NewPos, CEntity *pNotThis)
+// CCharacter *CGameWorld::IntersectCharacter(vec2 Pos0, vec2 Pos1, float Radius, vec2& NewPos, CEntity *pNotThis)
 CCharacter *CGameWorld::IntersectCharacter(vec2 Pos0, vec2 Pos1, float Radius, vec2 &NewPos, CCharacter *pNotThis, int CollideWith, class CCharacter *pThisOnly)
 {
 	// Find other players
@@ -451,13 +451,15 @@ bool CGameWorld::CheckForProjectileTeleport(int Owner, int Type)
 		{
 			m_pNextTraverseEntity = pEnt->m_pNextTypeEntity;
 
-			if(pEnt->m_ObjType == ENTTYPE_PROJECTILE) {
-				if(pEnt->TryToTeleportOwner(Owner, Type)) {
+			if(pEnt->m_ObjType == ENTTYPE_PROJECTILE)
+			{
+				if(pEnt->TryToTeleportOwner(Owner, Type))
+				{
 					return true;
 				}
 			}
 
-		    pEnt = m_pNextTraverseEntity;
+			pEnt = m_pNextTraverseEntity;
 		}
 
 	return false;

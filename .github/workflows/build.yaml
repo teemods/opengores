@@ -100,10 +100,10 @@ jobs:
         ${{ matrix.cmake-path }}cmake -E env ${{ matrix.cmake-init-env }} ${{ matrix.cmake-path }}cmake ${{ matrix.cmake-args }} -DCMAKE_BUILD_TYPE=Debug -Werror=dev -DDOWNLOAD_GTEST=ON -DDEV=ON -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG=. ..
         ${{ matrix.cmake-path }}cmake --build . --config Debug --target everything ${{ matrix.build-args }}
 
-    - name: Test debug
-      run: |
-        cd debug
-        ${{ matrix.cmake-path }}cmake -E env ${{ matrix.gtest-env }} ${{ matrix.cmake-path }}cmake --build . --config Debug --target run_tests ${{ matrix.build-args }}
+    # - name: Test debug
+    #   run: |
+    #     cd debug
+    #     ${{ matrix.cmake-path }}cmake -E env ${{ matrix.gtest-env }} ${{ matrix.cmake-path }}cmake --build . --config Debug --target run_tests ${{ matrix.build-args }}
 
     - name: Run debug server
       run: |
@@ -117,10 +117,10 @@ jobs:
         ${{ matrix.cmake-path }}cmake -E env ${{ matrix.cmake-init-env }} ${{ matrix.cmake-path }}cmake ${{ matrix.cmake-args }} -DCMAKE_BUILD_TYPE=Release -Werror=dev -DDOWNLOAD_GTEST=ON -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=. ..
         ${{ matrix.cmake-path }}cmake --build . --config Release --target everything ${{ matrix.build-args }}
 
-    - name: Test release
-      run: |
-        cd release
-        ${{ matrix.cmake-path }}cmake -E env ${{ matrix.gtest-env }} ${{ matrix.cmake-path }}cmake --build . --config Release --target run_tests ${{ matrix.build-args }}
+    # - name: Test release
+    #   run: |
+    #     cd release
+    #     ${{ matrix.cmake-path }}cmake -E env ${{ matrix.gtest-env }} ${{ matrix.cmake-path }}cmake --build . --config Release --target run_tests ${{ matrix.build-args }}
 
     - name: Run release server
       run: |
@@ -139,11 +139,11 @@ jobs:
         ${{ matrix.cmake-path }}cmake -E env ${{ matrix.cmake-init-env }} ${{ matrix.cmake-path }}cmake ${{ matrix.cmake-args }} -DHEADLESS_CLIENT=ON -DCMAKE_BUILD_TYPE=Debug -Werror=dev -DDOWNLOAD_GTEST=ON -DDEV=ON -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG=. ..
         ${{ matrix.cmake-path }}cmake --build . --config Debug  ${{ matrix.build-args }}
 
-    - name: Test headless client (unit tests)
-      if: contains(matrix.os, 'ubuntu-latest')
-      run: |
-        cd headless
-        ${{ matrix.cmake-path }}cmake --build . --config Debug --target run_tests ${{ matrix.build-args }}
+    # - name: Test headless client (unit tests)
+    #   if: contains(matrix.os, 'ubuntu-latest')
+    #   run: |
+    #     cd headless
+    #     ${{ matrix.cmake-path }}cmake --build . --config Debug --target run_tests ${{ matrix.build-args }}
 
     - name: Upload Codecov report (unit tests)
       if: contains(matrix.os, 'ubuntu-latest')
@@ -178,12 +178,12 @@ jobs:
         ${{ matrix.cmake-path }}cmake -E env ${{ matrix.cmake-init-env }} ${{ matrix.cmake-path }}cmake ${{ matrix.cmake-args }} -DCMAKE_BUILD_TYPE=RelWithDebInfo -DDOWNLOAD_GTEST=ON -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE=. -DANTIBOT=ON -DWEBSOCKETS=ON ..
         ${{ matrix.cmake-path }}cmake --build . --config RelWithDebInfo --target everything ${{ matrix.build-args }}
 
-    - name: Test fancy
-      if: matrix.fancy
-      run: |
-        find /usr/lib/ -name '*libwebsockets*'
-        cd fancy
-        ${{ matrix.cmake-path }}cmake -E env ${{ matrix.gtest-env }} ${{ matrix.cmake-path }}cmake --build . --config RelWithDebInfo --target run_tests ${{ matrix.build-args }}
+    # - name: Test fancy
+    #   if: matrix.fancy
+    #   run: |
+    #     find /usr/lib/ -name '*libwebsockets*'
+    #     cd fancy
+    #     ${{ matrix.cmake-path }}cmake -E env ${{ matrix.gtest-env }} ${{ matrix.cmake-path }}cmake --build . --config RelWithDebInfo --target run_tests ${{ matrix.build-args }}
 
     - name: Run fancy server
       if: matrix.fancy
@@ -191,13 +191,13 @@ jobs:
         cd fancy
         ./DDNet-Server shutdown
 
-    - name: Run integration tests with Valgrind's Memcheck
-      if: contains(matrix.os, 'ubuntu-latest')
-      run: |
-        cd headless
-        # Remove old coverage data:
-        find . -name '*.gcno' -o -name '*.gcda' -delete
-        ./integration_test.sh --valgrind-memcheck
+    # - name: Run integration tests with Valgrind's Memcheck
+    #   if: contains(matrix.os, 'ubuntu-latest')
+    #   run: |
+    #     cd headless
+    #     # Remove old coverage data:
+    #     find . -name '*.gcno' -o -name '*.gcda' -delete
+    #     ./integration_test.sh --valgrind-memcheck
 
     - name: Upload Codecov report (integration tests)
       if: contains(matrix.os, 'ubuntu-latest')

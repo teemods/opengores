@@ -353,39 +353,62 @@ void CScore::SendPowerInfoMessage(int ClientID)
 
 void CScore::ChangePlayerPowerStatus(int ClientID, const char *powerName)
 {
-		if(RateLimitPlayer(ClientID))
+	if(RateLimitPlayer(ClientID))
 		return;
 
 	char realPowerName[64];
 
-    // powers (no activatable)
-	if(strcmp(powerName, "rainbow") == 0) {
-        str_format(realPowerName, sizeof(realPowerName), "Rainbow");
-	} else if(strcmp(powerName, "rainbow-black") == 0) {
-        str_format(realPowerName, sizeof(realPowerName), "RainbowBlack");
-	} else if(strcmp(powerName, "splash") == 0) {
-        str_format(realPowerName, sizeof(realPowerName), "Splash");
-	} else if(strcmp(powerName, "explosion") == 0) {
-        str_format(realPowerName, sizeof(realPowerName), "Explosion");
-	} else if(strcmp(powerName, "splash-pistol") == 0) {
-        str_format(realPowerName, sizeof(realPowerName), "SplashPistol");
-	} else if(strcmp(powerName, "explosion-pistol") == 0) {
-        str_format(realPowerName, sizeof(realPowerName), "ExplosionPistol");
-	} else if(strcmp(powerName, "star") == 0) {
-        str_format(realPowerName, sizeof(realPowerName), "Star");
-	} else if(strcmp(powerName, "aura-dot") == 0) {
-        str_format(realPowerName, sizeof(realPowerName), "AuraDot");
-	} else if(strcmp(powerName, "aura-gun") == 0) {
-        str_format(realPowerName, sizeof(realPowerName), "AuraGun");
-	} else if(strcmp(powerName, "aura-shotgun") == 0) {
-        str_format(realPowerName, sizeof(realPowerName), "AuraShotgun");
-	} else if(strcmp(powerName, "trail") == 0) {
-        str_format(realPowerName, sizeof(realPowerName), "Trail");
-	} else {
-        GameServer()->SendChatTarget(ClientID, "Invalid power name. For more information about powers type the command /powerinfo.");
+	// powers (no activatable)
+	if(strcmp(powerName, "rainbow") == 0)
+	{
+		str_format(realPowerName, sizeof(realPowerName), "Rainbow");
+	}
+	else if(strcmp(powerName, "rainbow-black") == 0)
+	{
+		str_format(realPowerName, sizeof(realPowerName), "RainbowBlack");
+	}
+	else if(strcmp(powerName, "splash") == 0)
+	{
+		str_format(realPowerName, sizeof(realPowerName), "Splash");
+	}
+	else if(strcmp(powerName, "explosion") == 0)
+	{
+		str_format(realPowerName, sizeof(realPowerName), "Explosion");
+	}
+	else if(strcmp(powerName, "splash-pistol") == 0)
+	{
+		str_format(realPowerName, sizeof(realPowerName), "SplashPistol");
+	}
+	else if(strcmp(powerName, "explosion-pistol") == 0)
+	{
+		str_format(realPowerName, sizeof(realPowerName), "ExplosionPistol");
+	}
+	else if(strcmp(powerName, "star") == 0)
+	{
+		str_format(realPowerName, sizeof(realPowerName), "Star");
+	}
+	else if(strcmp(powerName, "aura-dot") == 0)
+	{
+		str_format(realPowerName, sizeof(realPowerName), "AuraDot");
+	}
+	else if(strcmp(powerName, "aura-gun") == 0)
+	{
+		str_format(realPowerName, sizeof(realPowerName), "AuraGun");
+	}
+	else if(strcmp(powerName, "aura-shotgun") == 0)
+	{
+		str_format(realPowerName, sizeof(realPowerName), "AuraShotgun");
+	}
+	else if(strcmp(powerName, "trail") == 0)
+	{
+		str_format(realPowerName, sizeof(realPowerName), "Trail");
+	}
+	else
+	{
+		GameServer()->SendChatTarget(ClientID, "Invalid power name. For more information about powers type the command /powerinfo.");
 
 		return;
 	}
-	
+
 	ExecPlayerThread(CScoreWorker::ChangePlayerPowerStatus, "change power status", ClientID, realPowerName, 0);
 }

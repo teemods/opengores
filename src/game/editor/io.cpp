@@ -302,7 +302,7 @@ bool CEditorMap::Save(class IStorage *pStorage, const char *pFileName)
 					df.AddItem(MAPITEMTYPE_LAYER, LayerCount, sizeof(Item), &Item);
 
 					// clean up
-					//mem_free(quads);
+					// mem_free(quads);
 
 					GItem.m_NumLayers++;
 					LayerCount++;

@@ -524,7 +524,7 @@ void CGameConsole::OnReset()
 // only defined for 0<=t<=1
 static float ConsoleScaleFunc(float t)
 {
-	//return t;
+	// return t;
 	return sinf(acosf(1.0f - t));
 }
 
@@ -618,7 +618,7 @@ void CGameConsole::OnRender()
 		ConsoleHeightScale = ConsoleScaleFunc(Progress);
 	else if(m_ConsoleState == CONSOLE_CLOSING)
 		ConsoleHeightScale = ConsoleScaleFunc(1.0f - Progress);
-	else //if (console_state == CONSOLE_OPEN)
+	else // if (console_state == CONSOLE_OPEN)
 		ConsoleHeightScale = ConsoleScaleFunc(1.0f);
 
 	ConsoleHeight = ConsoleHeightScale * ConsoleMaxHeight;
@@ -713,7 +713,7 @@ void CGameConsole::OnRender()
 
 		x = Cursor.m_X;
 
-		//console text editing
+		// console text editing
 		bool Editing = false;
 		int EditingCursor = Input()->GetEditingCursor();
 		if(Input()->GetIMEState())
@@ -725,7 +725,7 @@ void CGameConsole::OnRender()
 			}
 		}
 
-		//hide rcon password
+		// hide rcon password
 		char aInputString[512];
 		str_copy(aInputString, pConsole->m_Input.GetString(Editing));
 		if(m_ConsoleType == CONSOLETYPE_REMOTE && Client()->State() == IClient::STATE_ONLINE && !Client()->RconAuthed() && (pConsole->m_UserGot || !pConsole->m_UsernameReq))

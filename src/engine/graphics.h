@@ -31,7 +31,7 @@ struct SBufferContainerInfo
 		bool m_Normalized;
 		void *m_pOffset;
 
-		//0: float, 1:integer
+		// 0: float, 1:integer
 		unsigned int m_FuncType;
 	};
 	std::vector<SAttribute> m_vAttributes;
@@ -127,7 +127,7 @@ struct GL_STexCoord3D
 };
 
 typedef ColorRGBA GL_SColorf;
-//use normalized color values
+// use normalized color values
 typedef vector4_base<unsigned char> GL_SColor;
 
 struct GL_SVertex

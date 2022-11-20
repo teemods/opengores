@@ -91,7 +91,7 @@ public:
 	void SetCollideOthers(bool on);
 	void SetHitOthers(bool on);
 	vec2 GetLastSightInput();
-	
+
 	// carry effect
 	bool m_BeingCarried;
 

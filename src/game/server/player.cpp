@@ -6,11 +6,11 @@
 #include "gamecontroller.h"
 #include "score.h"
 
-#include "entities/star.h"
 #include "entities/aura.h"
-#include "entities/trail.h"
 #include "entities/loot.h"
 #include "entities/soundtrack.h"
+#include "entities/star.h"
+#include "entities/trail.h"
 
 #include <game/server/teams.h>
 
@@ -114,7 +114,7 @@ void CPlayer::Reset()
 
 	m_PowersActivable.m_HasCarry = false;
 
-    // extra powers data
+	// extra powers data
 	m_PowersData.m_RainbowColor = 0;
 	m_PowersData.m_RainbowColorLight = 0;
 	m_PowersData.m_RainbowColorNumber = 0;
@@ -123,7 +123,7 @@ void CPlayer::Reset()
 	m_PowersData.m_CarryTimeRemaining = 0;
 	m_PowersData.m_CarryCharacter = NULL;
 
-    m_PowersData.m_HasStarSpawned = false;
+	m_PowersData.m_HasStarSpawned = false;
 	m_PowersData.m_HasAuraDotSpawned = false;
 	m_PowersData.m_HasAuraGunSpawned = false;
 	m_PowersData.m_HasAuraShotgunSpawned = false;
@@ -333,55 +333,61 @@ void CPlayer::Tick()
 	// handle rainbow color change
 	// if use custom color is enabled, probably user disabled using command, so disable again
 	if(m_Powers.m_HasRainbow && m_Powers.m_HasRainbowEnabled)
-    {
-        m_PowersData.m_RainbowColor = (m_PowersData.m_RainbowColor + 1) % 256;
-        m_PowersData.m_RainbowColorNumber = m_PowersData.m_RainbowColor * 0x010000 + 0xff00;
-    } else if(m_Powers.m_HasRainbowBlack && m_Powers.m_HasRainbowBlackEnabled)
-    {
-        m_PowersData.m_RainbowColorLight = (m_PowersData.m_RainbowColorLight + 5) % 511;
+	{
+		m_PowersData.m_RainbowColor = (m_PowersData.m_RainbowColor + 1) % 256;
+		m_PowersData.m_RainbowColorNumber = m_PowersData.m_RainbowColor * 0x010000 + 0xff00;
+	}
+	else if(m_Powers.m_HasRainbowBlack && m_Powers.m_HasRainbowBlackEnabled)
+	{
+		m_PowersData.m_RainbowColorLight = (m_PowersData.m_RainbowColorLight + 5) % 511;
 		m_PowersData.m_RainbowColorNumber = ((m_PowersData.m_RainbowColorLight > 255) ? 510 - m_PowersData.m_RainbowColorLight : m_PowersData.m_RainbowColorLight) * 1;
 	}
 
 	// handle star spawn
 	// only try to spawn star with valid character
 	// otherwise the game will try to spawn on a spectating user and will crash
-	if(GetCharacter()) {
-        if(m_Powers.m_HasStar && m_Powers.m_HasStarEnabled)
-        {
-	    	if(! m_PowersData.m_HasStarSpawned) {
-	    		new CStar(&GameServer()->m_World, m_ClientID);
-	    	}
-	    }
+	if(GetCharacter())
+	{
+		if(m_Powers.m_HasStar && m_Powers.m_HasStarEnabled)
+		{
+			if(!m_PowersData.m_HasStarSpawned)
+			{
+				new CStar(&GameServer()->m_World, m_ClientID);
+			}
+		}
 	}
 
 	// handle aura spawn
 	// only try to spawn aura with valid character
 	// otherwise the game will try to spawn on a spectating user and will crash
-	if(GetCharacter()) {
-        if(m_pCharacter->m_FreezeTime) {
-            if(m_Powers.m_HasAuraDot && m_Powers.m_HasAuraDotEnabled && ! m_PowersData.m_HasAuraDotSpawned)
-            {
-	    	    new CAura(&GameServer()->m_World, m_ClientID, g_Config.m_SvEffectAuraDotAmount, WEAPON_HAMMER, true);
-	        }
-			if(m_Powers.m_HasAuraGun && m_Powers.m_HasAuraGunEnabled && ! m_PowersData.m_HasAuraGunSpawned)
-            {
-	    	    new CAura(&GameServer()->m_World, m_ClientID, g_Config.m_SvEffectAuraGunAmount, WEAPON_GUN, true);
-	        }
-			if(m_Powers.m_HasAuraShotgun && m_Powers.m_HasAuraShotgunEnabled && ! m_PowersData.m_HasAuraShotgunSpawned)
-            {
-	    	    new CAura(&GameServer()->m_World, m_ClientID, g_Config.m_SvEffectAuraShotgunAmount, WEAPON_SHOTGUN, true);
-	        }
+	if(GetCharacter())
+	{
+		if(m_pCharacter->m_FreezeTime)
+		{
+			if(m_Powers.m_HasAuraDot && m_Powers.m_HasAuraDotEnabled && !m_PowersData.m_HasAuraDotSpawned)
+			{
+				new CAura(&GameServer()->m_World, m_ClientID, g_Config.m_SvEffectAuraDotAmount, WEAPON_HAMMER, true);
+			}
+			if(m_Powers.m_HasAuraGun && m_Powers.m_HasAuraGunEnabled && !m_PowersData.m_HasAuraGunSpawned)
+			{
+				new CAura(&GameServer()->m_World, m_ClientID, g_Config.m_SvEffectAuraGunAmount, WEAPON_GUN, true);
+			}
+			if(m_Powers.m_HasAuraShotgun && m_Powers.m_HasAuraShotgunEnabled && !m_PowersData.m_HasAuraShotgunSpawned)
+			{
+				new CAura(&GameServer()->m_World, m_ClientID, g_Config.m_SvEffectAuraShotgunAmount, WEAPON_SHOTGUN, true);
+			}
 		}
 	}
 
 	// handle trail spawn
 	// only try to spawn trail with valid character
 	// otherwise the game will try to spawn on a spectating user and will crash
-	if(GetCharacter()) {
-		if(m_Powers.m_HasTrail && m_Powers.m_HasTrailEnabled && ! m_PowersData.m_HasTrailSpawned)
-        {
-	    	new CTrail(&GameServer()->m_World, m_ClientID);
-	    }
+	if(GetCharacter())
+	{
+		if(m_Powers.m_HasTrail && m_Powers.m_HasTrailEnabled && !m_PowersData.m_HasTrailSpawned)
+		{
+			new CTrail(&GameServer()->m_World, m_ClientID);
+		}
 	}
 
 	// handle carry effect
@@ -704,12 +710,13 @@ void CPlayer::KillCharacter(int Weapon)
 		delete m_pCharacter;
 		m_pCharacter = 0;
 	}
-	
+
 	// reset carry (only change carried player)
-    if(m_PowersData.m_CarryCharacter && m_PowersData.m_CarryCharacter->m_BeingCarried) {
+	if(m_PowersData.m_CarryCharacter && m_PowersData.m_CarryCharacter->m_BeingCarried)
+	{
 		m_PowersData.m_CarryCharacter->SetCollideOthers(true);
-    	m_PowersData.m_CarryCharacter->m_BeingCarried = false;
-    }
+		m_PowersData.m_CarryCharacter->m_BeingCarried = false;
+	}
 }
 
 void CPlayer::Respawn(bool WeakHook)
@@ -1031,7 +1038,7 @@ void CPlayer::ProcessScoreResult(CScorePlayerResult &Result)
 				m_Score = -10000;
 
 			// OpenGores
-            m_Powers.m_HasRainbow = Result.m_Data.m_Info.m_Powers.m_HasRainbow;
+			m_Powers.m_HasRainbow = Result.m_Data.m_Info.m_Powers.m_HasRainbow;
 			m_Powers.m_HasRainbowEnabled = Result.m_Data.m_Info.m_Powers.m_HasRainbowEnabled;
 
 			m_Powers.m_HasRainbowBlack = Result.m_Data.m_Info.m_Powers.m_HasRainbowBlack;
@@ -1102,50 +1109,58 @@ void CPlayer::ProcessScoreResult(CScorePlayerResult &Result)
 // OpenGores
 void CPlayer::ProcessPauseEffect()
 {
-	if(m_Powers.m_HasSplash && m_Powers.m_HasSplashEnabled) {
+	if(m_Powers.m_HasSplash && m_Powers.m_HasSplashEnabled)
+	{
 		GameServer()->CreateDeath(m_pCharacter->m_Pos, m_ClientID, GameServer()->m_pController->GetMaskForPlayerWorldEvent(m_ClientID));
 	}
 
-	if(m_Powers.m_HasExplosion && m_Powers.m_HasExplosionEnabled) {
+	if(m_Powers.m_HasExplosion && m_Powers.m_HasExplosionEnabled)
+	{
 		GameServer()->CreateExplosionEvent(m_pCharacter->m_Pos, GameServer()->m_pController->GetMaskForPlayerWorldEvent(m_ClientID));
 	}
 }
 
-
 bool CPlayer::DropLoot(int LootType, bool Guided)
 {
-	if(GetCharacter()->GetCore().m_Solo) {
-        GameServer()->SendChatTarget( GetCID(), "You cannot drop something on solo." );
+	if(GetCharacter()->GetCore().m_Solo)
+	{
+		GameServer()->SendChatTarget(GetCID(), "You cannot drop something on solo.");
 		return false;
 	}
 
 	int xPos = (GetCharacter()->GetLastSightInput().x < 0) ? -50 : 50;
 
-	if(GameServer()->Collision()->CheckPoint(GetCharacter()->m_Pos + vec2(xPos, 0))) {
-		GameServer()->SendChatTarget( GetCID(), "You cannot drop something in an obstructed place." );
+	if(GameServer()->Collision()->CheckPoint(GetCharacter()->m_Pos + vec2(xPos, 0)))
+	{
+		GameServer()->SendChatTarget(GetCID(), "You cannot drop something in an obstructed place.");
 		return false;
 	}
 
 	bool CheckCollisionTop = GameServer()->Collision()->CheckPoint(GetCharacter()->m_Pos + vec2(xPos, -25));
-    bool CheckCollisionBottom = GameServer()->Collision()->CheckPoint(GetCharacter()->m_Pos + vec2(xPos, 25));
+	bool CheckCollisionBottom = GameServer()->Collision()->CheckPoint(GetCharacter()->m_Pos + vec2(xPos, 25));
 
 	vec2 Pos;
-	if(CheckCollisionTop && CheckCollisionBottom) {
-        Pos = GetCharacter()->m_Pos + vec2(xPos, 0);
-	} else if(CheckCollisionTop) {
+	if(CheckCollisionTop && CheckCollisionBottom)
+	{
+		Pos = GetCharacter()->m_Pos + vec2(xPos, 0);
+	}
+	else if(CheckCollisionTop)
+	{
 		Pos = GetCharacter()->m_Pos + vec2(xPos, 25);
-	} else {
+	}
+	else
+	{
 		Pos = GetCharacter()->m_Pos + vec2(xPos, -25);
 	}
 
-    new CLoot(&GameServer()->m_World, m_ClientID, Server()->ClientName(m_ClientID), GetCharacter()->Team(), Pos, LootType, true, Guided);
+	new CLoot(&GameServer()->m_World, m_ClientID, Server()->ClientName(m_ClientID), GetCharacter()->Team(), Pos, LootType, true, Guided);
 
 	return true;
 }
 
 bool CPlayer::DropSoundtrack()
 {
-    new CSoundtrack(&GameServer()->m_World, m_ClientID);
+	new CSoundtrack(&GameServer()->m_World, m_ClientID);
 
 	return true;
 }
@@ -1153,35 +1168,40 @@ bool CPlayer::DropSoundtrack()
 bool CPlayer::CarrySomeone()
 {
 	// check if user started race
-	if(!g_Config.m_SvEffectCarryWithRace && GetCharacter()->m_DDRaceState != DDRACE_NONE) {
-		GameServer()->SendChatTarget( GetCID(), "Your cannot carry someone after starting a race." );
+	if(!g_Config.m_SvEffectCarryWithRace && GetCharacter()->m_DDRaceState != DDRACE_NONE)
+	{
+		GameServer()->SendChatTarget(GetCID(), "Your cannot carry someone after starting a race.");
 		return false;
 	}
 
-	// Do not change carrying person 
-	if(m_PowersData.m_CarryCharacter) {
-		GameServer()->SendChatTarget( GetCID(), "You are already carrying someone at the moment." );
+	// Do not change carrying person
+	if(m_PowersData.m_CarryCharacter)
+	{
+		GameServer()->SendChatTarget(GetCID(), "You are already carrying someone at the moment.");
 		return false;
 	}
 
 	// Do not carry someone while being carried
-	if(GetCharacter()->m_BeingCarried) {
-		GameServer()->SendChatTarget( GetCID(), "You cannot carry someone while being carried." );
+	if(GetCharacter()->m_BeingCarried)
+	{
+		GameServer()->SendChatTarget(GetCID(), "You cannot carry someone while being carried.");
 		return false;
 	}
 
-    // Find a closer character && Looping for every player to find
+	// Find a closer character && Looping for every player to find
 	CCharacter *Victim = NULL;
-	for(CCharacter *Player = (CCharacter*) GameServer()->m_World.FindFirst(CGameWorld::ENTTYPE_CHARACTER); Player; Player= (CCharacter *)Player->TypeNext())
+	for(CCharacter *Player = (CCharacter *)GameServer()->m_World.FindFirst(CGameWorld::ENTTYPE_CHARACTER); Player; Player = (CCharacter *)Player->TypeNext())
 	{
-		if(Player->GetPlayer()->GetCID() != GetCID() && distance(Player->m_Pos, GetCharacter()->m_Pos) < 60) 
+		if(Player->GetPlayer()->GetCID() != GetCID() && distance(Player->m_Pos, GetCharacter()->m_Pos) < 60)
 		{
 			int64_t TeamMask = GetCharacter()->Teams()->TeamMask(GetCharacter()->Team(), -1, GetCID());
-	        if(!CmaskIsSet(TeamMask, Player->GetPlayer()->GetCID())) {
-		        continue;
-	        }
+			if(!CmaskIsSet(TeamMask, Player->GetPlayer()->GetCID()))
+			{
+				continue;
+			}
 
-			if(Player->m_BeingCarried) {
+			if(Player->m_BeingCarried)
+			{
 				continue;
 			}
 
@@ -1189,12 +1209,13 @@ bool CPlayer::CarrySomeone()
 		}
 	}
 
-	if(! Victim) {
-		GameServer()->SendChatTarget( GetCID(), "No player found near you to carry." );
+	if(!Victim)
+	{
+		GameServer()->SendChatTarget(GetCID(), "No player found near you to carry.");
 		return false;
 	}
 
-    m_PowersData.m_CarryCharacter = Victim;
+	m_PowersData.m_CarryCharacter = Victim;
 	m_PowersData.m_CarryTimeRemaining = Server()->TickSpeed() * g_Config.m_SvEffectCarryDuration;
 
 	Victim->m_BeingCarried = true;
@@ -1206,8 +1227,9 @@ bool CPlayer::CarrySomeone()
 
 bool CPlayer::StopCarrySomeone()
 {
-	if(! m_PowersData.m_CarryCharacter) {
-		GameServer()->SendChatTarget( GetCID(), "You are currently not carrying anyone." );
+	if(!m_PowersData.m_CarryCharacter)
+	{
+		GameServer()->SendChatTarget(GetCID(), "You are currently not carrying anyone.");
 		return false;
 	}
 
@@ -1218,7 +1240,8 @@ bool CPlayer::StopCarrySomeone()
 
 bool CPlayer::DropSuperHeart(bool Guided)
 {
-	if(! GetCharacter() || IsPaused()) {
+	if(!GetCharacter() || IsPaused())
+	{
 		return false;
 	}
 
@@ -1229,23 +1252,23 @@ bool CPlayer::DropSuperHeart(bool Guided)
 		m_ClientID, // Owner
 		"someone", // OwnerName
 		GetCharacter()->Team(), // Team
-		Guided
-	);
+		Guided);
 }
 
-bool CPlayer::DropSuperHeartName(const char* DestinationName, bool Guided)
+bool CPlayer::DropSuperHeartName(const char *DestinationName, bool Guided)
 {
 	CCharacter *DestinationChar = NULL;
 
-    for(CCharacter *p = (CCharacter*) GameServer()->m_World.FindFirst(CGameWorld::ENTTYPE_CHARACTER); p; p = (CCharacter *)p->TypeNext())
+	for(CCharacter *p = (CCharacter *)GameServer()->m_World.FindFirst(CGameWorld::ENTTYPE_CHARACTER); p; p = (CCharacter *)p->TypeNext())
 	{
-		if(str_comp(Server()->ClientName(p->GetPlayer()->GetCID()), DestinationName) == 0) 
+		if(str_comp(Server()->ClientName(p->GetPlayer()->GetCID()), DestinationName) == 0)
 		{
 			DestinationChar = p;
 		}
 	}
 
-	if(! DestinationChar) {
+	if(!DestinationChar)
+	{
 		return false;
 	}
 
@@ -1256,42 +1279,54 @@ bool CPlayer::DropSuperHeartName(const char* DestinationName, bool Guided)
 		m_ClientID, // Owner
 		"someone", // OwnerName
 		DestinationChar->Team(), // Team
-		Guided
-	);
+		Guided);
 }
 
-bool CPlayer::DropSuperHeartRaw(vec2 StartPos, int XHeartDistance, int YHeartDistance, int Owner, const char* OwnerName, int Team, bool Guided)
+bool CPlayer::DropSuperHeartRaw(vec2 StartPos, int XHeartDistance, int YHeartDistance, int Owner, const char *OwnerName, int Team, bool Guided)
 {
-	if(GetCharacter()->GetCore().m_Solo) {
-        GameServer()->SendChatTarget( GetCID(), "You cannot drop something on solo." );
+	if(GetCharacter()->GetCore().m_Solo)
+	{
+		GameServer()->SendChatTarget(GetCID(), "You cannot drop something on solo.");
 		return false;
 	}
 
-    for (int line = 1; line < (9 + 1); line++)
+	for(int line = 1; line < (9 + 1); line++)
 	{
 		int columnLimit = 0;
 
-		if(line == 1) {
+		if(line == 1)
+		{
 			columnLimit = 2;
-		} else if(line == 2) {
+		}
+		else if(line == 2)
+		{
 			columnLimit = 4;
-		} else if(line == 3 || line == 9) {
+		}
+		else if(line == 3 || line == 9)
+		{
 			columnLimit = 6;
-		} else if(line == 4 || line == 8) {
+		}
+		else if(line == 4 || line == 8)
+		{
 			columnLimit = 8;
-		} else if(line == 5 || line == 6 || line == 7) {
+		}
+		else if(line == 5 || line == 6 || line == 7)
+		{
 			columnLimit = 10;
 		}
 
-		for (int column = 0; column < columnLimit; column++)
+		for(int column = 0; column < columnLimit; column++)
 		{
 			int calculatedSpace = (10 - columnLimit) * XHeartDistance / 2;
 			vec2 Pos = StartPos + vec2(calculatedSpace + (column * XHeartDistance), -YHeartDistance * line);
 
-			if(line == 9 && (column == 2 || column == 3)) {
+			if(line == 9 && (column == 2 || column == 3))
+			{
 				// no spawn
-			} else {
-                new CLoot(&GameServer()->m_World, Owner, OwnerName, GetCharacter()->Team(), Pos, POWERUP_HEALTH, false, Guided);
+			}
+			else
+			{
+				new CLoot(&GameServer()->m_World, Owner, OwnerName, GetCharacter()->Team(), Pos, POWERUP_HEALTH, false, Guided);
 			}
 		}
 	}
@@ -1301,29 +1336,34 @@ bool CPlayer::DropSuperHeartRaw(vec2 StartPos, int XHeartDistance, int YHeartDis
 
 bool CPlayer::TickCarrying()
 {
-    if(m_PowersData.m_CarryTimeRemaining <= 0) { 
-        return CancelCarrying();
+	if(m_PowersData.m_CarryTimeRemaining <= 0)
+	{
+		return CancelCarrying();
 	}
 
 	// Check if the carried player didn't reset
-	if(! m_PowersData.m_CarryCharacter || ! m_PowersData.m_CarryCharacter->m_BeingCarried) {
+	if(!m_PowersData.m_CarryCharacter || !m_PowersData.m_CarryCharacter->m_BeingCarried)
+	{
 		return CancelCarrying();
 	}
 
 	// only compare team after checking if is valid character
-	if(GetCharacter()) {
-	    // Check if the carrying player didn't started a race
-		if(!g_Config.m_SvEffectCarryWithRace && GetCharacter()->m_DDRaceState != DDRACE_NONE) {
+	if(GetCharacter())
+	{
+		// Check if the carrying player didn't started a race
+		if(!g_Config.m_SvEffectCarryWithRace && GetCharacter()->m_DDRaceState != DDRACE_NONE)
+		{
 			return CancelCarrying();
 		}
 
 		// Check if the carried player is in a different team mask
 		int64_t TeamMask = GetCharacter()->Teams()->TeamMask(GetCharacter()->Team());
-	    if(!CmaskIsSet(TeamMask, m_PowersData.m_CarryCharacter->GetPlayer()->GetCID())) {
-		    return CancelCarrying();
-	    }
+		if(!CmaskIsSet(TeamMask, m_PowersData.m_CarryCharacter->GetPlayer()->GetCID()))
+		{
+			return CancelCarrying();
+		}
 
-        // redefine carried player position every tick
+		// redefine carried player position every tick
 		vec2 Direction = (GetCharacter()->GetLastSightInput().x < 0) ? vec2(-24, 20) : vec2(24, 20);
 		vec2 FinalPos = GetCharacter()->m_Pos - Direction;
 
@@ -1334,8 +1374,8 @@ bool CPlayer::TickCarrying()
 		//     }
 		// }
 
-	    m_PowersData.m_CarryCharacter->Core()->m_Pos = m_PowersData.m_CarryCharacter->m_Pos = FinalPos; // teeware code
-	    m_PowersData.m_CarryCharacter->Core()->m_Vel = vec2(0,0); // no speed
+		m_PowersData.m_CarryCharacter->Core()->m_Pos = m_PowersData.m_CarryCharacter->m_Pos = FinalPos; // teeware code
+		m_PowersData.m_CarryCharacter->Core()->m_Vel = vec2(0, 0); // no speed
 	}
 
 	m_PowersData.m_CarryTimeRemaining--;
@@ -1345,19 +1385,22 @@ bool CPlayer::TickCarrying()
 
 bool CPlayer::CancelCarrying()
 {
-	if(m_PowersData.m_CarryCharacter) {
-		if (m_PowersData.m_CarryCharacter->IsAlive()) {
-            m_PowersData.m_CarryCharacter->SetCollideOthers(true);
+	if(m_PowersData.m_CarryCharacter)
+	{
+		if(m_PowersData.m_CarryCharacter->IsAlive())
+		{
+			m_PowersData.m_CarryCharacter->SetCollideOthers(true);
 			m_PowersData.m_CarryCharacter->SetHitOthers(true);
 
-	        m_PowersData.m_CarryCharacter->m_BeingCarried = false;
+			m_PowersData.m_CarryCharacter->m_BeingCarried = false;
 		}
 
 		m_PowersData.m_CarryCharacter = NULL;
 	}
 
-	if(m_PowersData.m_CarryTimeRemaining > 0) {
-        m_PowersData.m_CarryTimeRemaining = 0;
+	if(m_PowersData.m_CarryTimeRemaining > 0)
+	{
+		m_PowersData.m_CarryTimeRemaining = 0;
 	}
 
 	return false;

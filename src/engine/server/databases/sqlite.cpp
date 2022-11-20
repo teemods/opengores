@@ -54,7 +54,7 @@ public:
 
 	bool AddPoints(const char *pPlayer, int Points, char *pError, int ErrorSize) override;
 	bool AddSeasonPoints(const char *pPlayer, int Points, char *pError, int ErrorSize) override;
-	bool ChangePowerStatus(const char *pPlayer, const char * PowerName, int Status, char *pError, int ErrorSize) override;
+	bool ChangePowerStatus(const char *pPlayer, const char *PowerName, int Status, char *pError, int ErrorSize) override;
 
 private:
 	// copy of config vars
@@ -410,7 +410,7 @@ bool CSqliteConnection::AddSeasonPoints(const char *pPlayer, int Points, char *p
 	return false;
 }
 
-bool CSqliteConnection::ChangePowerStatus(const char *pPlayer, const char * PowerName, int Status, char *pError, int ErrorSize)
+bool CSqliteConnection::ChangePowerStatus(const char *pPlayer, const char *PowerName, int Status, char *pError, int ErrorSize)
 {
 	char aBuf[512];
 	str_format(aBuf, sizeof(aBuf),

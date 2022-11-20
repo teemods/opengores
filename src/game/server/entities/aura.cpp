@@ -9,11 +9,11 @@
 #include "aura.h"
 #include "character.h"
 
-CAura::CAura(CGameWorld *pGameWorld, int Owner, int Num, int Type, bool Changing)
-: CEntity(pGameWorld, CGameWorld::ENTTYPE_PROJECTILE)
+CAura::CAura(CGameWorld *pGameWorld, int Owner, int Num, int Type, bool Changing) :
+	CEntity(pGameWorld, CGameWorld::ENTTYPE_PROJECTILE)
 {
-    CPlayer *pOwner = GameServer()->m_apPlayers[Owner];
-    if(!pOwner || !pOwner->GetCharacter())
+	CPlayer *pOwner = GameServer()->m_apPlayers[Owner];
+	if(!pOwner || !pOwner->GetCharacter())
 	{
 		return;
 	}
@@ -28,42 +28,48 @@ CAura::CAura(CGameWorld *pGameWorld, int Owner, int Num, int Type, bool Changing
 	m_Changing = Changing;
 
 	GameWorld()->InsertEntity(this);
-	for(int i=0; i<m_Num; i++)
+	for(int i = 0; i < m_Num; i++)
 		m_IDs[i] = Server()->SnapNewID();
 
-    if(m_Type == WEAPON_HAMMER) {
-        pOwner->m_PowersData.m_HasAuraDotSpawned = true;
-    }
-    if(m_Type == WEAPON_GUN) {
-        pOwner->m_PowersData.m_HasAuraGunSpawned = true;
-    }
-    if(m_Type == WEAPON_SHOTGUN) {
-        pOwner->m_PowersData.m_HasAuraShotgunSpawned = true;
-    }
+	if(m_Type == WEAPON_HAMMER)
+	{
+		pOwner->m_PowersData.m_HasAuraDotSpawned = true;
+	}
+	if(m_Type == WEAPON_GUN)
+	{
+		pOwner->m_PowersData.m_HasAuraGunSpawned = true;
+	}
+	if(m_Type == WEAPON_SHOTGUN)
+	{
+		pOwner->m_PowersData.m_HasAuraShotgunSpawned = true;
+	}
 }
 
 CAura::~CAura()
 {
-	for(int i=0; i<m_Num; i++)
+	for(int i = 0; i < m_Num; i++)
 		Server()->SnapFreeID(m_IDs[i]);
 }
 
 void CAura::Reset()
 {
-    // verify if player exists
-    // without this verification, if player disconnect, the server will crash
-    if(GameServer()->m_apPlayers[m_Owner])
-    {
-        if(m_Type == WEAPON_HAMMER) {
-            GameServer()->m_apPlayers[m_Owner]->m_PowersData.m_HasAuraDotSpawned = false;
-        }
-        if(m_Type == WEAPON_GUN) {
-            GameServer()->m_apPlayers[m_Owner]->m_PowersData.m_HasAuraGunSpawned = false;
-        }
-        if(m_Type == WEAPON_SHOTGUN) {
-            GameServer()->m_apPlayers[m_Owner]->m_PowersData.m_HasAuraShotgunSpawned = false;
-        }
-    }
+	// verify if player exists
+	// without this verification, if player disconnect, the server will crash
+	if(GameServer()->m_apPlayers[m_Owner])
+	{
+		if(m_Type == WEAPON_HAMMER)
+		{
+			GameServer()->m_apPlayers[m_Owner]->m_PowersData.m_HasAuraDotSpawned = false;
+		}
+		if(m_Type == WEAPON_GUN)
+		{
+			GameServer()->m_apPlayers[m_Owner]->m_PowersData.m_HasAuraGunSpawned = false;
+		}
+		if(m_Type == WEAPON_SHOTGUN)
+		{
+			GameServer()->m_apPlayers[m_Owner]->m_PowersData.m_HasAuraShotgunSpawned = false;
+		}
+	}
 
 	m_MarkedForDestroy = true;
 }
@@ -77,25 +83,28 @@ void CAura::Tick()
 		return;
 	}
 
-    bool IsFreezed = pOwner->GetCharacter()->m_FreezeTime > Server()->Tick() - (g_Config.m_SvFreezeDelay * Server()->TickSpeed());
-    bool HasTheAura = false;
+	bool IsFreezed = pOwner->GetCharacter()->m_FreezeTime > Server()->Tick() - (g_Config.m_SvFreezeDelay * Server()->TickSpeed());
+	bool HasTheAura = false;
 
-    if(m_Type == WEAPON_HAMMER) {
-        HasTheAura = pOwner->m_Powers.m_HasAuraDot && pOwner->m_Powers.m_HasAuraDotEnabled;
-    }
-    if(m_Type == WEAPON_GUN) {
-        HasTheAura = pOwner->m_Powers.m_HasAuraGun && pOwner->m_Powers.m_HasAuraGunEnabled;
-    }
-    if(m_Type == WEAPON_SHOTGUN) {
-        HasTheAura = pOwner->m_Powers.m_HasAuraShotgun && pOwner->m_Powers.m_HasAuraShotgunEnabled;
-    }
+	if(m_Type == WEAPON_HAMMER)
+	{
+		HasTheAura = pOwner->m_Powers.m_HasAuraDot && pOwner->m_Powers.m_HasAuraDotEnabled;
+	}
+	if(m_Type == WEAPON_GUN)
+	{
+		HasTheAura = pOwner->m_Powers.m_HasAuraGun && pOwner->m_Powers.m_HasAuraGunEnabled;
+	}
+	if(m_Type == WEAPON_SHOTGUN)
+	{
+		HasTheAura = pOwner->m_Powers.m_HasAuraShotgun && pOwner->m_Powers.m_HasAuraShotgunEnabled;
+	}
 
-    // check if player has power and power enabled and is freezed
-    if(! HasTheAura || ! IsFreezed)
-    {
-        Reset();
+	// check if player has power and power enabled and is freezed
+	if(!HasTheAura || !IsFreezed)
+	{
+		Reset();
 		return;
-    }
+	}
 
 	if(m_Changing && !m_boolreback)
 	{
@@ -111,7 +120,6 @@ void CAura::Tick()
 	}
 	m_Pos = pOwner->GetCharacter()->m_Pos;
 }
-
 
 void CAura::Snap(int SnappingClient)
 {
@@ -131,18 +139,19 @@ void CAura::Snap(int SnappingClient)
 		return;
 
 	// Check if char is moving
-	if(! pOwnerChar->IsGrounded()) {
+	if(!pOwnerChar->IsGrounded())
+	{
 		return;
 	}
 
-	float AngleStart = (2.0f * pi * (Server()->Tick() + (m_Type + 1) * 4 * Server()->TickSpeed())/static_cast<float>(Server()->TickSpeed()))/10.0f;
+	float AngleStart = (2.0f * pi * (Server()->Tick() + (m_Type + 1) * 4 * Server()->TickSpeed()) / static_cast<float>(Server()->TickSpeed())) / 10.0f;
 	float AngleStep = 2.0f * pi / CAura::m_Num;
-	float R = 60.0f+m_LoadingTick;
-	AngleStart = AngleStart*2.0f;
-	for(int i=0; i<CAura::m_Num; i++)
+	float R = 60.0f + m_LoadingTick;
+	AngleStart = AngleStart * 2.0f;
+	for(int i = 0; i < CAura::m_Num; i++)
 	{
-		vec2 PosStart = m_Pos + vec2(R * cos(AngleStart + AngleStep*i), R * sin(AngleStart + AngleStep*i));
-		
+		vec2 PosStart = m_Pos + vec2(R * cos(AngleStart + AngleStep * i), R * sin(AngleStart + AngleStep * i));
+
 		CNetObj_Projectile *pObj = static_cast<CNetObj_Projectile *>(Server()->SnapNewItem(NETOBJTYPE_PROJECTILE, m_IDs[i], sizeof(CNetObj_Projectile)));
 		if(!pObj)
 			return;
@@ -151,7 +160,7 @@ void CAura::Snap(int SnappingClient)
 		pObj->m_Y = (int)PosStart.y;
 		pObj->m_VelX = 0;
 		pObj->m_VelY = 0;
-		pObj->m_StartTick = Server()->Tick()-1;
+		pObj->m_StartTick = Server()->Tick() - 1;
 		pObj->m_Type = m_Type;
 	}
 }

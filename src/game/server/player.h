@@ -72,7 +72,7 @@ public:
 	bool StopCarrySomeone();
 	bool DropSuperHeart(bool Guided);
 	bool DropSuperHeartName(const char *DestinationName, bool Guided);
-	bool DropSuperHeartRaw(vec2 StartPos, int XHeartDistance, int YHeartDistance, int Owner, const char* OwnerName, int Team, bool Guided);
+	bool DropSuperHeartRaw(vec2 StartPos, int XHeartDistance, int YHeartDistance, int Owner, const char *OwnerName, int Team, bool Guided);
 	bool TickCarrying();
 	bool CancelCarrying();
 
@@ -138,38 +138,38 @@ public:
 	struct
 	{
 		// powers
-        bool m_HasRainbow;
-	    bool m_HasRainbowEnabled;
+		bool m_HasRainbow;
+		bool m_HasRainbowEnabled;
 
-	    bool m_HasRainbowBlack;
-	    bool m_HasRainbowBlackEnabled;
+		bool m_HasRainbowBlack;
+		bool m_HasRainbowBlackEnabled;
 
-	    bool m_HasSplash;
-	    bool m_HasSplashEnabled;
+		bool m_HasSplash;
+		bool m_HasSplashEnabled;
 
-	    bool m_HasExplosion;
-	    bool m_HasExplosionEnabled;
+		bool m_HasExplosion;
+		bool m_HasExplosionEnabled;
 
-	    bool m_HasSplashPistol;
-	    bool m_HasSplashPistolEnabled;
+		bool m_HasSplashPistol;
+		bool m_HasSplashPistolEnabled;
 
-	    bool m_HasExplosionPistol;
-	    bool m_HasExplosionPistolEnabled;
+		bool m_HasExplosionPistol;
+		bool m_HasExplosionPistolEnabled;
 
 		bool m_HasStar;
-	    bool m_HasStarEnabled;
+		bool m_HasStarEnabled;
 
 		bool m_HasAuraDot;
-	    bool m_HasAuraDotEnabled;
+		bool m_HasAuraDotEnabled;
 
 		bool m_HasAuraGun;
-	    bool m_HasAuraGunEnabled;
+		bool m_HasAuraGunEnabled;
 
 		bool m_HasAuraShotgun;
-	    bool m_HasAuraShotgunEnabled;
+		bool m_HasAuraShotgunEnabled;
 
 		bool m_HasTrail;
-	    bool m_HasTrailEnabled;
+		bool m_HasTrailEnabled;
 	} m_Powers;
 
 	struct
@@ -186,10 +186,11 @@ public:
 	} m_PowersActivable;
 
 	// extra data for powers
-	struct {
-        int m_RainbowColor;
-	    int m_RainbowColorLight;
-	    int m_RainbowColorNumber;
+	struct
+	{
+		int m_RainbowColor;
+		int m_RainbowColorLight;
+		int m_RainbowColorNumber;
 
 		int m_LastCarryTick;
 		int m_CarryTimeRemaining;
@@ -207,7 +208,7 @@ public:
 		int m_HasTrailSpawned;
 	} m_PowersData;
 
-    // flag system
+	// flag system
 	int m_ShowFlag;
 
 private:
@@ -301,7 +302,7 @@ public:
 	bool m_NotEligibleForFinish;
 	int64_t m_EligibleForFinishCheck;
 	bool m_VotedForPractice;
-	int m_SwapTargetsClientID; //Client ID of the swap target for the given player
+	int m_SwapTargetsClientID; // Client ID of the swap target for the given player
 	bool m_BirthdayAnnounced;
 };
 

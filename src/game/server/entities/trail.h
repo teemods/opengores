@@ -15,7 +15,7 @@ public:
 	virtual void Tick() override;
 	virtual void Reset() override;
 
-private: 
+private:
 	int m_IDs[1];
 
 public:

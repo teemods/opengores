@@ -482,8 +482,8 @@ protected:
 
 	// found in menus.cpp
 	int Render();
-	//void render_background();
-	//void render_loading(float percent);
+	// void render_background();
+	// void render_loading(float percent);
 	int RenderMenubar(CUIRect r);
 	void RenderNews(CUIRect MainView);
 	static void ConchainUpdateMusicState(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);

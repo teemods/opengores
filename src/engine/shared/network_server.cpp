@@ -306,7 +306,7 @@ void CNetServer::OnPreConnMsg(NETADDR &Addr, CNetPacketConstruct &Packet)
 	int CtrlMsg = m_RecvUnpacker.m_Data.m_aChunkData[0];
 
 	// log flooding
-	//TODO: remove
+	// TODO: remove
 	if(g_Config.m_Debug)
 	{
 		int64_t Now = time_get();
@@ -747,7 +747,7 @@ int CNetServer::Send(CNetChunk *pChunk)
 		}
 		else
 		{
-			//Drop(pChunk->m_ClientID, "Error sending data");
+			// Drop(pChunk->m_ClientID, "Error sending data");
 		}
 	}
 	return 0;

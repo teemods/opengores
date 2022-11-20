@@ -223,7 +223,7 @@ void CMenuBackground::LoadMenuBackground(bool HasDayHint, bool HasNightHint)
 		}
 		else if(str_comp(pMenuMap, "rand") == 0)
 		{
-			//make sure to load themes
+			// make sure to load themes
 			std::vector<CTheme> &vThemesRef = GetThemes();
 			int RandomThemeIndex = rand() % (vThemesRef.size() - PREDEFINED_THEMES_COUNT);
 			if(RandomThemeIndex + PREDEFINED_THEMES_COUNT < (int)vThemesRef.size())

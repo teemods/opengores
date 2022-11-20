@@ -313,7 +313,7 @@ private:
 	bool m_VoteWillPass;
 	CScore *m_pScore;
 
-	//DDRace Console Commands
+	// DDRace Console Commands
 
 	static void ConKillPlayer(IConsole::IResult *pResult, void *pUserData);
 
@@ -396,8 +396,8 @@ private:
 	static void ConSuperHeart(IConsole::IResult *pResult, void *pUserData);
 	static void ConGuidedSuperHeart(IConsole::IResult *pResult, void *pUserData);
 
-    static void ExecuteSuperHeart(IConsole::IResult *pResult, void *pUserData, bool Guided);
-    static void ExecuteDrop(IConsole::IResult *pResult, void *pUserData, int Emoticon, int Emote, int DropType, bool Guided);
+	static void ExecuteSuperHeart(IConsole::IResult *pResult, void *pUserData, bool Guided);
+	static void ExecuteDrop(IConsole::IResult *pResult, void *pUserData, int Emoticon, int Emote, int DropType, bool Guided);
 	static void ExecuteEmotion(IConsole::IResult *pResult, void *pUserData, int Emoticon, int Emote, int SoundID);
 	// Finish - OpenGores
 

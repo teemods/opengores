@@ -1673,7 +1673,7 @@ void CMenus::RenderSettingsGraphics(CUIRect MainView)
 	CUIRect Text;
 	MainView.HSplitTop(20.0f, 0, &MainView);
 	MainView.HSplitTop(20.0f, &Text, &MainView);
-	//text.VSplitLeft(15.0f, 0, &text);
+	// text.VSplitLeft(15.0f, 0, &text);
 	UI()->DoLabel(&Text, Localize("UI Color"), 14.0f, TEXTALIGN_LEFT);
 	CUIRect HSLBar = MainView;
 	RenderHSLScrollbars(&HSLBar, &g_Config.m_UiColor, true);

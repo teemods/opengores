@@ -33,7 +33,7 @@ class CCharacter : public CEntity
 public:
 	~CCharacter();
 
-	//character's size
+	// character's size
 	static const int ms_PhysSize = 28;
 
 	void PreTick() override;

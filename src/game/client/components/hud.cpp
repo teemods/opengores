@@ -105,7 +105,7 @@ void CHud::RenderGameTimer()
 		}
 		else if(m_pClient->m_Snap.m_pGameInfoObj->m_GameStateFlags & GAMESTATEFLAG_RACETIME)
 		{
-			//The Warmup timer is negative in this case to make sure that incompatible clients will not see a warmup timer
+			// The Warmup timer is negative in this case to make sure that incompatible clients will not see a warmup timer
 			Time = (Client()->GameTick(g_Config.m_ClDummy) + m_pClient->m_Snap.m_pGameInfoObj->m_WarmupTimer) / Client()->GameTickSpeed();
 		}
 		else
@@ -118,7 +118,10 @@ void CHud::RenderGameTimer()
 		static float s_TextWidth0D = TextRender()->TextWidth(0, FontSize, "0d 00:00:00", -1, -1.0f);
 		static float s_TextWidth00D = TextRender()->TextWidth(0, FontSize, "00d 00:00:00", -1, -1.0f);
 		static float s_TextWidth000D = TextRender()->TextWidth(0, FontSize, "000d 00:00:00", -1, -1.0f);
-		float w = Time >= 3600 * 24 * 100 ? s_TextWidth000D : Time >= 3600 * 24 * 10 ? s_TextWidth00D : Time >= 3600 * 24 ? s_TextWidth0D : Time >= 3600 ? s_TextWidthH : s_TextWidthM;
+		float w = Time >= 3600 * 24 * 100 ? s_TextWidth000D : Time >= 3600 * 24 * 10 ? s_TextWidth00D :
+							      Time >= 3600 * 24              ? s_TextWidth0D :
+							      Time >= 3600                   ? s_TextWidthH :
+											       s_TextWidthM;
 		// last 60 sec red, last 10 sec blink
 		if(m_pClient->m_Snap.m_pGameInfoObj->m_TimeLimit && Time <= 60 && (m_pClient->m_Snap.m_pGameInfoObj->m_WarmupTimer <= 0))
 		{
@@ -519,7 +522,7 @@ void CHud::RenderTextInfo()
 		static float s_aTextWidth[5] = {s_TextWidth0, s_TextWidth00, s_TextWidth000, s_TextWidth0000, s_TextWidth00000};
 
 		int DigitIndex = GetDigitsIndex(FrameTime, 4);
-		//TextRender()->Text(0, m_Width-10-TextRender()->TextWidth(0,12,Buf,-1,-1.0f), 5, 12, Buf, -1.0f);
+		// TextRender()->Text(0, m_Width-10-TextRender()->TextWidth(0,12,Buf,-1,-1.0f), 5, 12, Buf, -1.0f);
 
 		CTextCursor Cursor;
 		TextRender()->SetCursor(&Cursor, m_Width - 10 - s_aTextWidth[DigitIndex], 5, 12, TEXTFLAG_RENDER);

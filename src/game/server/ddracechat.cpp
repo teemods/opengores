@@ -147,7 +147,7 @@ void CGameContext::ConSettings(IConsole::IResult *pResult, void *pUserData)
 			str_format(aBuf, sizeof(aBuf), "%s %s",
 				g_Config.m_SvTeam == SV_TEAM_ALLOWED ?
 					"Teams are available on this server" :
-					(g_Config.m_SvTeam == SV_TEAM_FORBIDDEN || g_Config.m_SvTeam == SV_TEAM_FORCED_SOLO) ?
+				(g_Config.m_SvTeam == SV_TEAM_FORBIDDEN || g_Config.m_SvTeam == SV_TEAM_FORCED_SOLO) ?
 					"Teams are not available on this server" :
 					"You have to be in a team to play on this server", /*g_Config.m_SvTeamStrict ? "and if you die in a team all of you die" : */
 				"and all of your team will die if the team is locked");
@@ -1601,18 +1601,16 @@ void CGameContext::ConTimeCP(IConsole::IResult *pResult, void *pUserData)
 	pSelf->Score()->LoadPlayerData(pResult->m_ClientID, pName);
 }
 
-
-
 void CGameContext::ConShowFlag(IConsole::IResult *pResult, void *pUserData)
 {
-	CGameContext *pSelf = (CGameContext *) pUserData;
-	if (!CheckClientID(pResult->m_ClientID))
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if(!CheckClientID(pResult->m_ClientID))
 		return;
 	CPlayer *pPlayer = pSelf->m_apPlayers[pResult->m_ClientID];
-	if (!pPlayer)
+	if(!pPlayer)
 		return;
 
-	if (pResult->NumArguments())
+	if(pResult->NumArguments())
 		pPlayer->m_ShowFlag = pResult->GetInteger(0);
 	else
 		pPlayer->m_ShowFlag = !pPlayer->m_ShowFlag;
@@ -1650,13 +1648,13 @@ void CGameContext::ConHeart(IConsole::IResult *pResult, void *pUserData)
 	CPlayer *pPlayer = pSelf->m_apPlayers[pResult->m_ClientID];
 
 	if(!pPlayer->GetCharacter() || pPlayer->IsPaused())
-	   return;
+		return;
 
-	if(!pPlayer->m_PowersActivable.m_HasDropHeart) {
+	if(!pPlayer->m_PowersActivable.m_HasDropHeart)
+	{
 		pSelf->SendChatTarget(
-			pPlayer->GetCID(), 
-			"You do not have permission to use this command."
-		);
+			pPlayer->GetCID(),
+			"You do not have permission to use this command.");
 
 		return;
 	}
@@ -1673,13 +1671,13 @@ void CGameContext::ConShield(IConsole::IResult *pResult, void *pUserData)
 	CPlayer *pPlayer = pSelf->m_apPlayers[pResult->m_ClientID];
 
 	if(!pPlayer->GetCharacter() || pPlayer->IsPaused())
-	   return;
+		return;
 
-	if(!pPlayer->m_PowersActivable.m_HasDropShield) {
+	if(!pPlayer->m_PowersActivable.m_HasDropShield)
+	{
 		pSelf->SendChatTarget(
-			pPlayer->GetCID(), 
-			"You do not have permission to use this command."
-		);
+			pPlayer->GetCID(),
+			"You do not have permission to use this command.");
 
 		return;
 	}
@@ -1696,13 +1694,13 @@ void CGameContext::ConNinjaSword(IConsole::IResult *pResult, void *pUserData)
 	CPlayer *pPlayer = pSelf->m_apPlayers[pResult->m_ClientID];
 
 	if(!pPlayer->GetCharacter() || pPlayer->IsPaused())
-	   return;
+		return;
 
-	if(!pPlayer->m_PowersActivable.m_HasDropNinjaSword) {
+	if(!pPlayer->m_PowersActivable.m_HasDropNinjaSword)
+	{
 		pSelf->SendChatTarget(
-			pPlayer->GetCID(), 
-			"You do not have permission to use this command."
-		);
+			pPlayer->GetCID(),
+			"You do not have permission to use this command.");
 
 		return;
 	}
@@ -1719,13 +1717,13 @@ void CGameContext::ConGuidedHeart(IConsole::IResult *pResult, void *pUserData)
 	CPlayer *pPlayer = pSelf->m_apPlayers[pResult->m_ClientID];
 
 	if(!pPlayer->GetCharacter() || pPlayer->IsPaused())
-	   return;
+		return;
 
-	if(!pPlayer->m_PowersActivable.m_HasGuidedHeart) {
+	if(!pPlayer->m_PowersActivable.m_HasGuidedHeart)
+	{
 		pSelf->SendChatTarget(
-			pPlayer->GetCID(), 
-			"You do not have permission to use this command."
-		);
+			pPlayer->GetCID(),
+			"You do not have permission to use this command.");
 
 		return;
 	}
@@ -1742,13 +1740,13 @@ void CGameContext::ConGuidedShield(IConsole::IResult *pResult, void *pUserData)
 	CPlayer *pPlayer = pSelf->m_apPlayers[pResult->m_ClientID];
 
 	if(!pPlayer->GetCharacter() || pPlayer->IsPaused())
-	   return;
+		return;
 
-	if(!pPlayer->m_PowersActivable.m_HasGuidedShield) {
+	if(!pPlayer->m_PowersActivable.m_HasGuidedShield)
+	{
 		pSelf->SendChatTarget(
-			pPlayer->GetCID(), 
-			"You do not have permission to use this command."
-		);
+			pPlayer->GetCID(),
+			"You do not have permission to use this command.");
 
 		return;
 	}
@@ -1765,13 +1763,13 @@ void CGameContext::ConGuidedNinjaSword(IConsole::IResult *pResult, void *pUserDa
 	CPlayer *pPlayer = pSelf->m_apPlayers[pResult->m_ClientID];
 
 	if(!pPlayer->GetCharacter() || pPlayer->IsPaused())
-	   return;
+		return;
 
-	if(!pPlayer->m_PowersActivable.m_HasGuidedNinjaSword) {
+	if(!pPlayer->m_PowersActivable.m_HasGuidedNinjaSword)
+	{
 		pSelf->SendChatTarget(
-			pPlayer->GetCID(), 
-			"You do not have permission to use this command."
-		);
+			pPlayer->GetCID(),
+			"You do not have permission to use this command.");
 
 		return;
 	}
@@ -1781,35 +1779,35 @@ void CGameContext::ConGuidedNinjaSword(IConsole::IResult *pResult, void *pUserDa
 
 void CGameContext::ConCry(IConsole::IResult *pResult, void *pUserData)
 {
-    ExecuteEmotion(pResult, pUserData, EMOTICON_DROP, EMOTE_BLINK, SOUND_TEE_CRY);
+	ExecuteEmotion(pResult, pUserData, EMOTICON_DROP, EMOTE_BLINK, SOUND_TEE_CRY);
 }
 
 void CGameContext::ConAngry(IConsole::IResult *pResult, void *pUserData)
 {
-    ExecuteEmotion(pResult, pUserData, EMOTICON_ZOMG, EMOTE_ANGRY, SOUND_PLAYER_PAIN_LONG);
+	ExecuteEmotion(pResult, pUserData, EMOTICON_ZOMG, EMOTE_ANGRY, SOUND_PLAYER_PAIN_LONG);
 }
 
 void CGameContext::ConHappy(IConsole::IResult *pResult, void *pUserData)
 {
-    ExecuteEmotion(pResult, pUserData, EMOTICON_EYES, EMOTE_HAPPY, SOUND_PLAYER_SPAWN);
+	ExecuteEmotion(pResult, pUserData, EMOTICON_EYES, EMOTE_HAPPY, SOUND_PLAYER_SPAWN);
 }
 
 void CGameContext::ConSoundtrack(IConsole::IResult *pResult, void *pUserData)
 {
-    CGameContext *pSelf = (CGameContext *)pUserData;
+	CGameContext *pSelf = (CGameContext *)pUserData;
 	if(!CheckClientID(pResult->m_ClientID))
 		return;
 
 	CPlayer *pPlayer = pSelf->m_apPlayers[pResult->m_ClientID];
 
 	if(!pPlayer->GetCharacter() || pPlayer->IsPaused())
-	   return;
+		return;
 
-	if(!pPlayer->m_PowersActivable.m_HasSoundtrack) {
+	if(!pPlayer->m_PowersActivable.m_HasSoundtrack)
+	{
 		pSelf->SendChatTarget(
-			pPlayer->GetCID(), 
-			"You do not have permission to use this command."
-		);
+			pPlayer->GetCID(),
+			"You do not have permission to use this command.");
 
 		return;
 	}
@@ -1819,46 +1817,46 @@ void CGameContext::ConSoundtrack(IConsole::IResult *pResult, void *pUserData)
 
 	int LastUsedTimeCooldown = pPlayer->m_PowersData.m_LastSoundtrackTick + (g_Config.m_SvEffectSoundtrackInterval * TickSpeed);
 
-    // check soundtrack cooldown
-	if(Now < LastUsedTimeCooldown) {
-		int RemainingSecs =  (LastUsedTimeCooldown - Now) / TickSpeed;
+	// check soundtrack cooldown
+	if(Now < LastUsedTimeCooldown)
+	{
+		int RemainingSecs = (LastUsedTimeCooldown - Now) / TickSpeed;
 
 		char aBuf[256];
 		str_format(
-            aBuf, sizeof(aBuf),
+			aBuf, sizeof(aBuf),
 			"Your soundtrack power is currently in cooldown. Please wait %d seconds.",
-			RemainingSecs
-		);
+			RemainingSecs);
 
-		pSelf->SendChatTarget( pPlayer->GetCID(), aBuf );
+		pSelf->SendChatTarget(pPlayer->GetCID(), aBuf);
 		return;
 	}
 
-    // Send emoji and eye
+	// Send emoji and eye
 	pSelf->SendEmoticon(pPlayer->GetCID(), EMOTICON_MUSIC);
 	pPlayer->GetCharacter()->SetEmote(EMOTE_HAPPY, Now + 2 * TickSpeed);
 
-    // put in cooldown and play soundtrack
-    pPlayer->m_PowersData.m_LastSoundtrackTick = Now;
+	// put in cooldown and play soundtrack
+	pPlayer->m_PowersData.m_LastSoundtrackTick = Now;
 	pPlayer->DropSoundtrack();
 }
 
 void CGameContext::ConCarry(IConsole::IResult *pResult, void *pUserData)
 {
-    CGameContext *pSelf = (CGameContext *)pUserData;
+	CGameContext *pSelf = (CGameContext *)pUserData;
 	if(!CheckClientID(pResult->m_ClientID))
 		return;
 
 	CPlayer *pPlayer = pSelf->m_apPlayers[pResult->m_ClientID];
 
 	if(!pPlayer->GetCharacter() || pPlayer->IsPaused())
-	   return;
+		return;
 
-	if(!pPlayer->m_PowersActivable.m_HasCarry) {
+	if(!pPlayer->m_PowersActivable.m_HasCarry)
+	{
 		pSelf->SendChatTarget(
-			pPlayer->GetCID(), 
-			"You do not have permission to use this command."
-		);
+			pPlayer->GetCID(),
+			"You do not have permission to use this command.");
 
 		return;
 	}
@@ -1868,48 +1866,49 @@ void CGameContext::ConCarry(IConsole::IResult *pResult, void *pUserData)
 
 	int LastUsedTimeCooldown = pPlayer->m_PowersData.m_LastCarryTick + (g_Config.m_SvEffectCarryInterval * TickSpeed);
 
-    // check carry cooldown
-	if(Now < LastUsedTimeCooldown) {
-		int RemainingSecs =  (LastUsedTimeCooldown - Now) / TickSpeed;
+	// check carry cooldown
+	if(Now < LastUsedTimeCooldown)
+	{
+		int RemainingSecs = (LastUsedTimeCooldown - Now) / TickSpeed;
 
 		char aBuf[256];
 		str_format(
-            aBuf, sizeof(aBuf),
+			aBuf, sizeof(aBuf),
 			"Your carry power is currently in cooldown. Please wait %d seconds.",
-			RemainingSecs
-		);
+			RemainingSecs);
 
-		pSelf->SendChatTarget( pPlayer->GetCID(), aBuf );
+		pSelf->SendChatTarget(pPlayer->GetCID(), aBuf);
 		return;
 	}
 
-    // try to carry someone (return true only if someone is closer)
-    if(pPlayer->CarrySomeone()) {
-        // Send emoji and eye
-    	pSelf->SendEmoticon(pPlayer->GetCID(), EMOTICON_OOP);
-    	pPlayer->GetCharacter()->SetEmote(EMOTE_PAIN, Now + 2 * TickSpeed);
+	// try to carry someone (return true only if someone is closer)
+	if(pPlayer->CarrySomeone())
+	{
+		// Send emoji and eye
+		pSelf->SendEmoticon(pPlayer->GetCID(), EMOTICON_OOP);
+		pPlayer->GetCharacter()->SetEmote(EMOTE_PAIN, Now + 2 * TickSpeed);
 
-        // put in cooldown and carry
-        pPlayer->m_PowersData.m_LastCarryTick = Now;
-    }
+		// put in cooldown and carry
+		pPlayer->m_PowersData.m_LastCarryTick = Now;
+	}
 }
 
 void CGameContext::ConStopCarry(IConsole::IResult *pResult, void *pUserData)
 {
-    CGameContext *pSelf = (CGameContext *)pUserData;
+	CGameContext *pSelf = (CGameContext *)pUserData;
 	if(!CheckClientID(pResult->m_ClientID))
 		return;
 
 	CPlayer *pPlayer = pSelf->m_apPlayers[pResult->m_ClientID];
 
 	if(!pPlayer->GetCharacter() || pPlayer->IsPaused())
-	   return;
+		return;
 
-	if(!pPlayer->m_PowersActivable.m_HasCarry) {
+	if(!pPlayer->m_PowersActivable.m_HasCarry)
+	{
 		pSelf->SendChatTarget(
-			pPlayer->GetCID(), 
-			"You do not have permission to use this command."
-		);
+			pPlayer->GetCID(),
+			"You do not have permission to use this command.");
 
 		return;
 	}
@@ -1938,25 +1937,29 @@ void CGameContext::ExecuteSuperHeart(IConsole::IResult *pResult, void *pUserData
 	NETADDR ClientAddr;
 	pSelf->Server()->GetClientAddr(pResult->m_ClientID, &ClientAddr);
 
-    char AddrString[256];
+	char AddrString[256];
 	net_addr_str(&ClientAddr, AddrString, sizeof(AddrString), false);
 
-	if(str_comp(AddrString, g_Config.m_SvSuperHeartIpAddress) != 0) {
+	if(str_comp(AddrString, g_Config.m_SvSuperHeartIpAddress) != 0)
+	{
 		return;
 	}
 
 	int64_t Now = pSelf->Server()->Tick();
 	int64_t TickSpeed = pSelf->Server()->TickSpeed();
 
-    // Send emoji and eye
+	// Send emoji and eye
 	pSelf->SendEmoticon(pPlayer->GetCID(), EMOTICON_HEARTS);
 	pPlayer->GetCharacter()->SetEmote(EMOTE_HAPPY, Now + 2 * TickSpeed);
 
-    // put in cooldown and spawn heart
-	if (pResult->NumArguments() > 0) {
-        pPlayer->DropSuperHeartName(pResult->GetString(0), Guided);
-    } else {
-        pPlayer->DropSuperHeart(Guided);
+	// put in cooldown and spawn heart
+	if(pResult->NumArguments() > 0)
+	{
+		pPlayer->DropSuperHeartName(pResult->GetString(0), Guided);
+	}
+	else
+	{
+		pPlayer->DropSuperHeart(Guided);
 	}
 }
 
@@ -1969,35 +1972,36 @@ void CGameContext::ExecuteDrop(IConsole::IResult *pResult, void *pUserData, int 
 	CPlayer *pPlayer = pSelf->m_apPlayers[pResult->m_ClientID];
 
 	if(!pPlayer->GetCharacter() || pPlayer->IsPaused())
-	   return;
+		return;
 
 	int64_t Now = pSelf->Server()->Tick();
 	int64_t TickSpeed = pSelf->Server()->TickSpeed();
 
 	int LastUsedTimeCooldown = pPlayer->m_PowersData.m_LastDropTick + (g_Config.m_SvEffectLootInterval * TickSpeed);
 
-    // check drop cooldown
-	if(Now < LastUsedTimeCooldown) {
-		int RemainingSecs =  (LastUsedTimeCooldown - Now) / TickSpeed;
+	// check drop cooldown
+	if(Now < LastUsedTimeCooldown)
+	{
+		int RemainingSecs = (LastUsedTimeCooldown - Now) / TickSpeed;
 
 		char aBuf[256];
 		str_format(
-            aBuf, sizeof(aBuf),
+			aBuf, sizeof(aBuf),
 			"Your drop power is currently in cooldown. Please wait %d seconds.",
-			RemainingSecs
-		);
+			RemainingSecs);
 
-		pSelf->SendChatTarget( pPlayer->GetCID(), aBuf );
+		pSelf->SendChatTarget(pPlayer->GetCID(), aBuf);
 		return;
 	}
 
-    // Send emoji and eye
+	// Send emoji and eye
 	pSelf->SendEmoticon(pPlayer->GetCID(), Emoticon);
 	pPlayer->GetCharacter()->SetEmote(Emote, Now + 2 * TickSpeed);
 
-    // put in cooldown and spawn loot
-	if(pPlayer->DropLoot(DropType, Guided)) {
-        pPlayer->m_PowersData.m_LastDropTick = Now;
+	// put in cooldown and spawn loot
+	if(pPlayer->DropLoot(DropType, Guided))
+	{
+		pPlayer->m_PowersData.m_LastDropTick = Now;
 	}
 }
 
@@ -2009,12 +2013,13 @@ void CGameContext::ExecuteEmotion(IConsole::IResult *pResult, void *pUserData, i
 
 	CPlayer *pPlayer = pSelf->m_apPlayers[pResult->m_ClientID];
 	if(!pPlayer->GetCharacter() || pPlayer->IsPaused())
-	   return;
+		return;
 
 	int64_t Now = pSelf->Server()->Tick();
 	int64_t TickSpeed = pSelf->Server()->TickSpeed();
 
-	if(!pPlayer->m_PowersActivable.m_HasEmotion) {
+	if(!pPlayer->m_PowersActivable.m_HasEmotion)
+	{
 		pSelf->SendChatTarget(pPlayer->GetCID(), "You do not have permission to use this command.");
 
 		return;
@@ -2023,11 +2028,12 @@ void CGameContext::ExecuteEmotion(IConsole::IResult *pResult, void *pUserData, i
 	pSelf->SendEmoticon(pPlayer->GetCID(), Emoticon);
 	pPlayer->GetCharacter()->SetEmote(Emote, Now + 2 * TickSpeed);
 
-    if(Now > pPlayer->m_PowersData.m_LastEmotionTick + (g_Config.m_SvEffectEmotionInterval * TickSpeed)) {
+	if(Now > pPlayer->m_PowersData.m_LastEmotionTick + (g_Config.m_SvEffectEmotionInterval * TickSpeed))
+	{
 		pPlayer->m_PowersData.m_LastEmotionTick = Now;
 
 		int64_t TeamMask = pPlayer->GetCharacter()->Teams()->TeamMask(pPlayer->GetCharacter()->Team(), -1, pPlayer->GetCID());
 
-	    pSelf->CreateSound(pPlayer->GetCharacter()->m_Pos, SoundID, TeamMask);
+		pSelf->CreateSound(pPlayer->GetCharacter()->m_Pos, SoundID, TeamMask);
 	}
 }

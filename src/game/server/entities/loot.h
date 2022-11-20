@@ -15,7 +15,7 @@ public:
 	};
 
 public:
-	CLoot(CGameWorld *pGameWorld, int Owner, const char* OwnerName, int ResponsibleTeam, vec2 Pos, int LootType, bool DotsEffect, bool Guided);
+	CLoot(CGameWorld *pGameWorld, int Owner, const char *OwnerName, int ResponsibleTeam, vec2 Pos, int LootType, bool DotsEffect, bool Guided);
 	virtual ~CLoot();
 
 	virtual void Reset() override;
@@ -26,15 +26,15 @@ public:
 	virtual void MoveGuided();
 
 private:
-    int m_Owner;
+	int m_Owner;
 	char m_OwnerName[16];
 
-    int64_t m_TeamMask;
+	int64_t m_TeamMask;
 	int m_ResponsibleTeam;
 	int m_LootType;
 	int m_DotsEffect;
 	int m_Guided;
-	CCharacter* m_GuidedTarget;
+	CCharacter *m_GuidedTarget;
 	vec2 m_GuidedLefpos;
 
 	int m_IDs[NUM_IDS];

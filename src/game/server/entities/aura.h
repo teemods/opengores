@@ -13,7 +13,7 @@ public:
 		NUM_SIDE = 64,
 		NUM_IDS = NUM_SIDE,
 	};
-	
+
 public:
 	CAura(CGameWorld *pGameWorld, int Owner, int Num, int Type, bool Changing);
 	~CAura();
@@ -22,9 +22,9 @@ public:
 	virtual void Tick() override;
 	virtual void Reset() override;
 
-private: 
+private:
 	int m_IDs[NUM_IDS];
-	
+
 public:
 	int m_Owner;
 

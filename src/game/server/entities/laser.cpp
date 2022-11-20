@@ -258,7 +258,7 @@ void CLaser::DoBounce()
 		}
 	}
 
-	//m_Owner = -1;
+	// m_Owner = -1;
 }
 
 void CLaser::Reset()
@@ -326,7 +326,8 @@ void CLaser::Snap(int SnappingClient)
 		pObj->m_FromY = (int)m_From.y;
 		pObj->m_StartTick = m_EvalTick;
 		pObj->m_Owner = m_Owner;
-		pObj->m_Type = m_Type == WEAPON_LASER ? LASERTYPE_RIFLE : m_Type == WEAPON_SHOTGUN ? LASERTYPE_SHOTGUN : -1;
+		pObj->m_Type = m_Type == WEAPON_LASER ? LASERTYPE_RIFLE : m_Type == WEAPON_SHOTGUN ? LASERTYPE_SHOTGUN :
+												     -1;
 	}
 	else
 	{
@@ -344,5 +345,6 @@ void CLaser::Snap(int SnappingClient)
 
 void CLaser::SwapClients(int Client1, int Client2)
 {
-	m_Owner = m_Owner == Client1 ? Client2 : m_Owner == Client2 ? Client1 : m_Owner;
+	m_Owner = m_Owner == Client1 ? Client2 : m_Owner == Client2 ? Client1 :
+								      m_Owner;
 }

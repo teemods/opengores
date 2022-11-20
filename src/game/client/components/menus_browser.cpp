@@ -116,7 +116,7 @@ void CMenus::RenderServerbrowserServerList(CUIRect View)
 
 			if(i + 1 < NumCols)
 			{
-				//Cols[i].flags |= SPACER;
+				// Cols[i].flags |= SPACER;
 				Headers.VSplitLeft(2, &s_aCols[i].m_Spacer, &Headers);
 			}
 		}
@@ -241,13 +241,13 @@ void CMenus::RenderServerbrowserServerList(CUIRect View)
 		CUIRect Row;
 
 		const int UIRectCount = 2 + (COL_VERSION + 1) * 3;
-		//initialize
+		// initialize
 		if(pItem->m_pUIElement == NULL)
 		{
 			pItem->m_pUIElement = UI()->GetNewUIElement(UIRectCount);
 		}
 
-		int Selected = str_comp(pItem->m_aAddress, g_Config.m_UiServerAddress) == 0; //selected_index==ItemIndex;
+		int Selected = str_comp(pItem->m_aAddress, g_Config.m_UiServerAddress) == 0; // selected_index==ItemIndex;
 
 		View.HSplitTop(ms_ListheaderHeight, &Row, &View);
 
@@ -509,7 +509,7 @@ void CMenus::RenderServerbrowserServerList(CUIRect View)
 		}
 	}
 
-	//Status.Draw(ms_ColorTabbarActive, IGraphics::CORNER_B, 5.0f);
+	// Status.Draw(ms_ColorTabbarActive, IGraphics::CORNER_B, 5.0f);
 	Status.Margin(5.0f, &Status);
 
 	CUIRect SearchInfoAndAddr, ServersAndConnect, Status3;
@@ -758,7 +758,7 @@ void CMenus::RenderServerbrowserFilters(CUIRect View)
 
 	CUIRect ResetButton;
 
-	//ServerFilter.HSplitBottom(5.0f, &ServerFilter, 0);
+	// ServerFilter.HSplitBottom(5.0f, &ServerFilter, 0);
 	ServerFilter.HSplitBottom(ms_ButtonHeight - 5.0f, &ServerFilter, &ResetButton);
 
 	// ddnet country filters

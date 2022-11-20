@@ -23,7 +23,7 @@ public:
 	virtual void Snap(int SnappingClient) override;
 
 private:
-    int m_Owner;
+	int m_Owner;
 
 	int m_IDs[NUM_IDS];
 	int m_TicksActive;

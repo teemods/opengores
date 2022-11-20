@@ -325,7 +325,7 @@ public:
 
 	/**
 	 * Used to report custom player info to master servers.
-	 * 
+	 *
 	 * @param aBuf Should be the json key values to add, starting with a ',' beforehand, like: ',"skin": "default", "team": 1'
 	 * @param i The client id.
 	 */

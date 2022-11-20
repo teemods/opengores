@@ -2,9 +2,9 @@
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
 #include <engine/shared/config.h>
 
-#include <game/server/teams.h>
 #include <game/generated/protocol.h>
 #include <game/mapitems.h>
+#include <game/server/teams.h>
 #include <game/teamscore.h>
 
 #include "gamecontext.h"
@@ -214,11 +214,11 @@ bool IGameController::OnEntity(int Index, vec2 Pos, int Layer, int Flags, int Nu
 			if(aSides[i] >= ENTITY_LASER_SHORT && aSides[i] <= ENTITY_LASER_LONG)
 			{
 				new CDoor(
-					&GameServer()->m_World, //GameWorld
-					Pos, //Pos
-					pi / 4 * i, //Rotation
-					32 * 3 + 32 * (aSides[i] - ENTITY_LASER_SHORT) * 3, //Length
-					Number //Number
+					&GameServer()->m_World, // GameWorld
+					Pos, // Pos
+					pi / 4 * i, // Rotation
+					32 * 3 + 32 * (aSides[i] - ENTITY_LASER_SHORT) * 3, // Length
+					Number // Number
 				);
 			}
 		}
@@ -237,15 +237,15 @@ bool IGameController::OnEntity(int Index, vec2 Pos, int Layer, int Flags, int Nu
 		float Deg = Dir * (pi / 2);
 		CProjectile *pBullet = new CProjectile(
 			&GameServer()->m_World,
-			WEAPON_SHOTGUN, //Type
-			-1, //Owner
-			Pos, //Pos
-			vec2(sin(Deg), cos(Deg)), //Dir
-			-2, //Span
-			true, //Freeze
-			true, //Explosive
-			0, //Force
-			(g_Config.m_SvShotgunBulletSound) ? SOUND_GRENADE_EXPLODE : -1, //SoundImpact
+			WEAPON_SHOTGUN, // Type
+			-1, // Owner
+			Pos, // Pos
+			vec2(sin(Deg), cos(Deg)), // Dir
+			-2, // Span
+			true, // Freeze
+			true, // Explosive
+			0, // Force
+			(g_Config.m_SvShotgunBulletSound) ? SOUND_GRENADE_EXPLODE : -1, // SoundImpact
 			Layer,
 			Number);
 		pBullet->SetBouncing(2 - (Dir % 2));
@@ -264,13 +264,13 @@ bool IGameController::OnEntity(int Index, vec2 Pos, int Layer, int Flags, int Nu
 		float Deg = Dir * (pi / 2);
 		CProjectile *pBullet = new CProjectile(
 			&GameServer()->m_World,
-			WEAPON_SHOTGUN, //Type
-			-1, //Owner
-			Pos, //Pos
-			vec2(sin(Deg), cos(Deg)), //Dir
-			-2, //Span
-			true, //Freeze
-			false, //Explosive
+			WEAPON_SHOTGUN, // Type
+			-1, // Owner
+			Pos, // Pos
+			vec2(sin(Deg), cos(Deg)), // Dir
+			-2, // Span
+			true, // Freeze
+			false, // Explosive
 			0,
 			SOUND_GRENADE_EXPLODE,
 			Layer,
@@ -457,7 +457,7 @@ const char *IGameController::GetTeamName(int Team)
 	return "spectators";
 }
 
-//static bool IsSeparator(char c) { return c == ';' || c == ' ' || c == ',' || c == '\t'; }
+// static bool IsSeparator(char c) { return c == ';' || c == ' ' || c == ',' || c == '\t'; }
 
 void IGameController::StartRound()
 {
@@ -789,9 +789,10 @@ void IGameController::UpdateRecordFlag()
 	{
 		if(GameServer()->m_apPlayers[i] && GameServer()->m_apPlayers[i]->GetCharacter())
 		{
-			if(str_comp(Server()->ClientName(i), m_CurrentRecordHolder) == 0) {
-                RecordChar = GameServer()->m_apPlayers[i]->GetCharacter();
-			    break;
+			if(str_comp(Server()->ClientName(i), m_CurrentRecordHolder) == 0)
+			{
+				RecordChar = GameServer()->m_apPlayers[i]->GetCharacter();
+				break;
 			}
 		}
 	}
@@ -802,29 +803,28 @@ void IGameController::UpdateRecordFlag()
 int IGameController::SnapRecordFlag(int SnappingClient)
 {
 	// Verify if owner character exists (not spectator or not null/not in game)
-	if (! m_pRecordFlagChar)
+	if(!m_pRecordFlagChar)
 		return FLAG_MISSING;
 
 	CPlayer *pFlagOwner = m_pRecordFlagChar->GetPlayer();
-	CPlayer* pSnapPlayer = GameServer()->m_apPlayers[SnappingClient];
+	CPlayer *pSnapPlayer = GameServer()->m_apPlayers[SnappingClient];
 
-	if (pSnapPlayer->GetCharacter() && pSnapPlayer->GetCharacter()->NetworkClipped(SnappingClient, m_pRecordFlagChar->m_Pos))
+	if(pSnapPlayer->GetCharacter() && pSnapPlayer->GetCharacter()->NetworkClipped(SnappingClient, m_pRecordFlagChar->m_Pos))
 		return pFlagOwner->GetCID();
 
 	// Verify if user want to show the flag
-	if(! pFlagOwner->m_ShowFlag)
-	   return pFlagOwner->GetCID();
+	if(!pFlagOwner->m_ShowFlag)
+		return pFlagOwner->GetCID();
 
-    // Verify if user is not paused (/spec)
+	// Verify if user is not paused (/spec)
 	if(
-		pFlagOwner->IsPaused() == -2 && 
-		pFlagOwner->GetCharacter()->IsGrounded() && 
-		pFlagOwner->GetCharacter()->m_Pos == pFlagOwner->GetCharacter()->m_PrevPos
-	)
-	   return pFlagOwner->GetCID();
+		pFlagOwner->IsPaused() == -2 &&
+		pFlagOwner->GetCharacter()->IsGrounded() &&
+		pFlagOwner->GetCharacter()->m_Pos == pFlagOwner->GetCharacter()->m_PrevPos)
+		return pFlagOwner->GetCID();
 
 	// Verify flag owner team mask
-    int64_t TeamMask = -1LL;
+	int64_t TeamMask = -1LL;
 	TeamMask = m_pRecordFlagChar->Teams()->TeamMask(m_pRecordFlagChar->Team(), -1, pFlagOwner->GetCID());
 	if(!CmaskIsSet(TeamMask, SnappingClient))
 		return pFlagOwner->GetCID();
@@ -845,7 +845,7 @@ void IGameController::SnapFlags(int SnappingClient)
 {
 	if(Server()->IsSixup(SnappingClient))
 	{
-		int *pGameDataFlag = (int*)Server()->SnapNewItem(8 + 26, 0, 4*4); // NETOBJTYPE_GAMEDATAFLAG
+		int *pGameDataFlag = (int *)Server()->SnapNewItem(8 + 26, 0, 4 * 4); // NETOBJTYPE_GAMEDATAFLAG
 		pGameDataFlag[0] = FLAG_MISSING;
 		pGameDataFlag[1] = SnapRecordFlag(SnappingClient);
 		pGameDataFlag[2] = 0; // m_FlagDropTickRed
@@ -862,4 +862,3 @@ void IGameController::SnapFlags(int SnappingClient)
 		pGameDataObj->m_FlagCarrierBlue = SnapRecordFlag(SnappingClient);
 	}
 }
-

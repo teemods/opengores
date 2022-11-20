@@ -52,54 +52,54 @@ struct CScorePlayerResult : ISqlResult
 			int m_Birthday; // 0 indicates no birthday
 
 			// OpenGores
-		    struct
-		    {
-		    	int m_HasRainbow;
-		    	int m_HasRainbowEnabled;
+			struct
+			{
+				int m_HasRainbow;
+				int m_HasRainbowEnabled;
 
-		    	int m_HasRainbowBlack;
-		    	int m_HasRainbowBlackEnabled;
+				int m_HasRainbowBlack;
+				int m_HasRainbowBlackEnabled;
 
-		    	int m_HasSplash;
-		    	int m_HasSplashEnabled;
+				int m_HasSplash;
+				int m_HasSplashEnabled;
 
-		    	int m_HasExplosion;
-		    	int m_HasExplosionEnabled;
+				int m_HasExplosion;
+				int m_HasExplosionEnabled;
 
-		    	int m_HasSplashPistol;
-		    	int m_HasSplashPistolEnabled;
+				int m_HasSplashPistol;
+				int m_HasSplashPistolEnabled;
 
-		    	int m_HasExplosionPistol;
-		    	int m_HasExplosionPistolEnabled;
+				int m_HasExplosionPistol;
+				int m_HasExplosionPistolEnabled;
 
-		    	int m_HasStar;
-		    	int m_HasStarEnabled;
+				int m_HasStar;
+				int m_HasStarEnabled;
 
-		    	int m_HasAuraDot;
-		    	int m_HasAuraDotEnabled;
+				int m_HasAuraDot;
+				int m_HasAuraDotEnabled;
 
-		    	int m_HasAuraGun;
-		    	int m_HasAuraGunEnabled;
+				int m_HasAuraGun;
+				int m_HasAuraGunEnabled;
 
-		    	int m_HasAuraShotgun;
-		    	int m_HasAuraShotgunEnabled;
+				int m_HasAuraShotgun;
+				int m_HasAuraShotgunEnabled;
 
-		    	int m_HasTrail;
-		    	int m_HasTrailEnabled;
-		    } m_Powers;
+				int m_HasTrail;
+				int m_HasTrailEnabled;
+			} m_Powers;
 
-		    struct
-		    {
-		    	int m_HasEmotion;
-		    	int m_HasSoundtrack;
-		    	int m_HasDropHeart;
-                int m_HasDropShield;
-		    	int m_HasDropNinjaSword;
+			struct
+			{
+				int m_HasEmotion;
+				int m_HasSoundtrack;
+				int m_HasDropHeart;
+				int m_HasDropShield;
+				int m_HasDropNinjaSword;
 				int m_HasGuidedHeart;
-                int m_HasGuidedShield;
-		    	int m_HasGuidedNinjaSword;
+				int m_HasGuidedShield;
+				int m_HasGuidedNinjaSword;
 				int m_HasCarry;
-		    } m_PowersActivable;
+			} m_PowersActivable;
 
 			char m_PowerStatusMessage[512];
 		} m_Info;

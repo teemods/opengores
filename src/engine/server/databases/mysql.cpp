@@ -106,7 +106,7 @@ public:
 
 	bool AddPoints(const char *pPlayer, int Points, char *pError, int ErrorSize) override;
 	bool AddSeasonPoints(const char *pPlayer, int Points, char *pError, int ErrorSize) override;
-	bool ChangePowerStatus(const char *pPlayer, const char * PowerName, int Status, char *pError, int ErrorSize) override;
+	bool ChangePowerStatus(const char *pPlayer, const char *PowerName, int Status, char *pError, int ErrorSize) override;
 
 private:
 	class CStmtDeleter
@@ -120,7 +120,7 @@ private:
 	void StoreErrorStmt(const char *pContext);
 	bool ConnectImpl();
 	bool PrepareAndExecuteStatement(const char *pStmt);
-	//static void DeleteResult(MYSQL_RES *pResult);
+	// static void DeleteResult(MYSQL_RES *pResult);
 
 	union UParameterExtra
 	{
@@ -738,7 +738,7 @@ bool CMysqlConnection::AddSeasonPoints(const char *pPlayer, int Points, char *pE
 	return false;
 }
 
-bool CMysqlConnection::ChangePowerStatus(const char *pPlayer, const char * PowerName, int Status, char *pError, int ErrorSize)
+bool CMysqlConnection::ChangePowerStatus(const char *pPlayer, const char *PowerName, int Status, char *pError, int ErrorSize)
 {
 	char aBuf[512];
 	str_format(aBuf, sizeof(aBuf),

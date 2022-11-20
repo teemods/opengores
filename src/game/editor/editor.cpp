@@ -385,7 +385,7 @@ int CEditor::DoButton_Editor_Common(const void *pID, const char *pText, int Chec
 	return UI()->DoButtonLogic(pID, Checked, pRect);
 
 	// Draw here
-	//return UI()->DoButton(id, text, checked, r, draw_func, 0);
+	// return UI()->DoButton(id, text, checked, r, draw_func, 0);
 }
 
 int CEditor::DoButton_Editor(const void *pID, const char *pText, int Checked, const CUIRect *pRect, int Flags, const char *pToolTip, int AlignVert)
@@ -2124,7 +2124,7 @@ void CEditor::DoQuadEnvelopes(const std::vector<CQuad> &vQuads, IGraphics::CText
 				apEnvelope[i] = m_Map.m_vpEnvelopes[vQuads[i].m_PosEnv];
 	}
 
-	//Draw Lines
+	// Draw Lines
 	Graphics()->TextureClear();
 	Graphics()->LinesBegin();
 	Graphics()->SetColor(80.0f / 255, 150.0f / 255, 230.f / 255, 0.5f);
@@ -2133,7 +2133,7 @@ void CEditor::DoQuadEnvelopes(const std::vector<CQuad> &vQuads, IGraphics::CText
 		if(!apEnvelope[j])
 			continue;
 
-		//QuadParams
+		// QuadParams
 		const CPoint *pPoints = vQuads[j].m_aPoints;
 		for(size_t i = 0; i < apEnvelope[j]->m_vPoints.size() - 1; i++)
 		{
@@ -2152,7 +2152,7 @@ void CEditor::DoQuadEnvelopes(const std::vector<CQuad> &vQuads, IGraphics::CText
 	Graphics()->SetColor(1.0f, 1.0f, 1.0f, 1.0f);
 	Graphics()->LinesEnd();
 
-	//Draw Quads
+	// Draw Quads
 	Graphics()->TextureSet(Texture);
 	Graphics()->QuadsBegin();
 
@@ -2161,17 +2161,17 @@ void CEditor::DoQuadEnvelopes(const std::vector<CQuad> &vQuads, IGraphics::CText
 		if(!apEnvelope[j])
 			continue;
 
-		//QuadParams
+		// QuadParams
 		const CPoint *pPoints = vQuads[j].m_aPoints;
 
 		for(size_t i = 0; i < apEnvelope[j]->m_vPoints.size(); i++)
 		{
-			//Calc Env Position
+			// Calc Env Position
 			float OffsetX = fx2f(apEnvelope[j]->m_vPoints[i].m_aValues[0]);
 			float OffsetY = fx2f(apEnvelope[j]->m_vPoints[i].m_aValues[1]);
 			float Rot = fx2f(apEnvelope[j]->m_vPoints[i].m_aValues[2]) / 360.0f * pi * 2;
 
-			//Set Colours
+			// Set Colours
 			float Alpha = (m_SelectedQuadEnvelope == vQuads[j].m_PosEnv && m_SelectedEnvelopePoint == (int)i) ? 0.65f : 0.35f;
 			IGraphics::CColorVertex aArray[4] = {
 				IGraphics::CColorVertex(0, vQuads[j].m_aColors[0].r, vQuads[j].m_aColors[0].g, vQuads[j].m_aColors[0].b, Alpha),
@@ -2180,7 +2180,7 @@ void CEditor::DoQuadEnvelopes(const std::vector<CQuad> &vQuads, IGraphics::CText
 				IGraphics::CColorVertex(3, vQuads[j].m_aColors[3].r, vQuads[j].m_aColors[3].g, vQuads[j].m_aColors[3].b, Alpha)};
 			Graphics()->SetColorVertex(aArray, 4);
 
-			//Rotation
+			// Rotation
 			if(Rot != 0)
 			{
 				static CPoint aRotated[4];
@@ -2196,14 +2196,14 @@ void CEditor::DoQuadEnvelopes(const std::vector<CQuad> &vQuads, IGraphics::CText
 				Rotate(&vQuads[j].m_aPoints[4], &aRotated[3], Rot);
 			}
 
-			//Set Texture Coords
+			// Set Texture Coords
 			Graphics()->QuadsSetSubsetFree(
 				fx2f(vQuads[j].m_aTexcoords[0].x), fx2f(vQuads[j].m_aTexcoords[0].y),
 				fx2f(vQuads[j].m_aTexcoords[1].x), fx2f(vQuads[j].m_aTexcoords[1].y),
 				fx2f(vQuads[j].m_aTexcoords[2].x), fx2f(vQuads[j].m_aTexcoords[2].y),
 				fx2f(vQuads[j].m_aTexcoords[3].x), fx2f(vQuads[j].m_aTexcoords[3].y));
 
-			//Set Quad Coords & Draw
+			// Set Quad Coords & Draw
 			IGraphics::CFreeformItem Freeform(
 				fx2f(pPoints[0].x) + OffsetX, fx2f(pPoints[0].y) + OffsetY,
 				fx2f(pPoints[1].x) + OffsetX, fx2f(pPoints[1].y) + OffsetY,
@@ -2945,7 +2945,7 @@ void CEditor::DoMapEditor(CUIRect View)
 
 		// possible screen sizes (white border)
 		float aLastPoints[4];
-		float Start = 1.0f; //9.0f/16.0f;
+		float Start = 1.0f; // 9.0f/16.0f;
 		float End = 16.0f / 9.0f;
 		const int NumSteps = 20;
 		for(int i = 0; i <= NumSteps; i++)
@@ -4465,7 +4465,7 @@ void CEditor::RenderFileDialog()
 	}
 	else
 	{
-		//searchbox
+		// searchbox
 		FileBox.VSplitRight(250, &FileBox, nullptr);
 		CUIRect ClearBox;
 		FileBox.VSplitRight(15, &FileBox, &ClearBox);
@@ -4552,9 +4552,10 @@ void CEditor::RenderFileDialog()
 			}
 			if(NewIndex > -1 && NewIndex < (int)m_vFileList.size())
 			{
-				//scroll
+				// scroll
 				float IndexY = View.y - m_FileDialogScrollValue * ScrollNum * 17.0f + NewIndex * 17.0f;
-				int ScrollPos = View.y > IndexY ? -1 : View.y + View.h < IndexY + 17.0f ? 1 : 0;
+				int ScrollPos = View.y > IndexY ? -1 : View.y + View.h < IndexY + 17.0f ? 1 :
+													  0;
 				if(ScrollPos)
 				{
 					if(ScrollPos < 0)
@@ -5134,7 +5135,7 @@ void CEditor::RenderEnvelopeEditor(CUIRect View)
 				{
 					// add point
 					int Time = (int)(((UI()->MouseX() - View.x) * TimeScale) * 1000.0f);
-					//float env_y = (UI()->MouseY()-view.y)/TimeScale;
+					// float env_y = (UI()->MouseY()-view.y)/TimeScale;
 					ColorRGBA Channels;
 					pEnvelope->Eval(Time / 1000.0f, Channels);
 					pEnvelope->AddPoint(Time,
@@ -5190,7 +5191,7 @@ void CEditor::RenderEnvelopeEditor(CUIRect View)
 				float t0 = pEnvelope->m_vPoints[i].m_Time / 1000.0f / EndTime;
 				float t1 = pEnvelope->m_vPoints[i + 1].m_Time / 1000.0f / EndTime;
 
-				//dbg_msg("", "%f", end_time);
+				// dbg_msg("", "%f", end_time);
 
 				CUIRect v;
 				v.x = CurveBar.x + (t0 + (t1 - t0) * 0.5f) * CurveBar.w;
@@ -5234,7 +5235,7 @@ void CEditor::RenderEnvelopeEditor(CUIRect View)
 				float x0 = pEnvelope->m_vPoints[i].m_Time / 1000.0f / EndTime;
 				//				float y0 = (fx2f(envelope->points[i].values[c])-bottom)/(top-bottom);
 				float x1 = pEnvelope->m_vPoints[i + 1].m_Time / 1000.0f / EndTime;
-				//float y1 = (fx2f(envelope->points[i+1].values[c])-bottom)/(top-bottom);
+				// float y1 = (fx2f(envelope->points[i+1].values[c])-bottom)/(top-bottom);
 				CUIRect v;
 				v.x = ColorBar.x + x0 * ColorBar.w;
 				v.y = ColorBar.y;
@@ -6090,7 +6091,7 @@ void CEditor::Reset(bool CreateDefault)
 {
 	m_Map.Clean();
 
-	//delete undo file
+	// delete undo file
 	char aBuffer[1024];
 	m_pStorage->GetCompletePath(IStorage::TYPE_SAVE, "editor/", aBuffer, sizeof(aBuffer));
 

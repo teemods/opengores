@@ -159,7 +159,7 @@ public: // TODO: Maybe make protected
 	// OpenGores
 	// Fixing static definition
 	virtual bool TryToTeleportOwner(int Owner, int Type) { return false; }
-	virtual void TeleportOwnerToProjectile() {} 
+	virtual void TeleportOwnerToProjectile() {}
 };
 
 bool NetworkClipped(const CGameContext *pGameServer, int SnappingClient, vec2 CheckPos);

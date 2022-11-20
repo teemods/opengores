@@ -77,7 +77,7 @@ public:
 		return *this;
 	}
 
-	bool operator==(const vector2_base &vec) const { return x == vec.x && y == vec.y; } //TODO: do this with an eps instead
+	bool operator==(const vector2_base &vec) const { return x == vec.x && y == vec.y; } // TODO: do this with an eps instead
 	bool operator!=(const vector2_base &vec) const { return x != vec.x || y != vec.y; }
 
 	T &operator[](const int index) { return index ? y : x; }
@@ -243,7 +243,7 @@ public:
 		return *this;
 	}
 
-	bool operator==(const vector3_base &vec) const { return x == vec.x && y == vec.y && z == vec.z; } //TODO: do this with an eps instead
+	bool operator==(const vector3_base &vec) const { return x == vec.x && y == vec.y && z == vec.z; } // TODO: do this with an eps instead
 	bool operator!=(const vector3_base &vec) const { return x != vec.x || y != vec.y || z != vec.z; }
 };
 
@@ -377,7 +377,7 @@ public:
 		return *this;
 	}
 
-	bool operator==(const vector4_base &vec) const { return x == vec.x && y == vec.y && z == vec.z && w == vec.w; } //TODO: do this with an eps instead
+	bool operator==(const vector4_base &vec) const { return x == vec.x && y == vec.y && z == vec.z && w == vec.w; } // TODO: do this with an eps instead
 };
 
 typedef vector4_base<float> vec4;

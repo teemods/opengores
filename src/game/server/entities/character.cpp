@@ -452,7 +452,7 @@ void CCharacter::FireWeapon()
 		{
 			auto *pTarget = static_cast<CCharacter *>(apEnts[i]);
 
-			//if ((pTarget == this) || Collision()->IntersectLine(ProjStartPos, pTarget->m_Pos, NULL, NULL))
+			// if ((pTarget == this) || Collision()->IntersectLine(ProjStartPos, pTarget->m_Pos, NULL, NULL))
 			if((pTarget == this || (pTarget->IsAlive() && !CanCollide(pTarget->GetPlayer()->GetCID()))))
 				continue;
 
@@ -514,15 +514,15 @@ void CCharacter::FireWeapon()
 
 			new CProjectile(
 				GameWorld(),
-				WEAPON_GUN, //Type
-				m_pPlayer->GetCID(), //Owner
-				ProjStartPos, //Pos
-				Direction, //Dir
-				Lifetime, //Span
-				false, //Freeze
-				false, //Explosive
-				0, //Force
-				-1 //SoundImpact
+				WEAPON_GUN, // Type
+				m_pPlayer->GetCID(), // Owner
+				ProjStartPos, // Pos
+				Direction, // Dir
+				Lifetime, // Span
+				false, // Freeze
+				false, // Explosive
+				0, // Force
+				-1 // SoundImpact
 			);
 
 			GameServer()->CreateSound(m_Pos, SOUND_GUN_FIRE, TeamMask());
@@ -551,24 +551,26 @@ void CCharacter::FireWeapon()
 		else
 			Lifetime = (int)(Server()->TickSpeed() * GameServer()->TuningList()[m_TuneZone].m_GrenadeLifetime);
 
-		if(g_Config.m_SvGoresGrenadeTele || g_Config.m_SvKogGrenadeTele) {
-            if(GameWorld()->CheckForProjectileTeleport(m_pPlayer->GetCID(), WEAPON_GRENADE)) {
-			    break;
-		    }
+		if(g_Config.m_SvGoresGrenadeTele || g_Config.m_SvKogGrenadeTele)
+		{
+			if(GameWorld()->CheckForProjectileTeleport(m_pPlayer->GetCID(), WEAPON_GRENADE))
+			{
+				break;
+			}
 		}
 
 		new CProjectile(
 			GameWorld(),
-			WEAPON_GRENADE, //Type
-			m_pPlayer->GetCID(), //Owner
-			ProjStartPos, //Pos
-			Direction, //Dir
-			Lifetime, //Span
-			false, //Freeze
-			true, //Explosive
-			0, //Force
-			SOUND_GRENADE_EXPLODE //SoundImpact
-		); //SoundImpact
+			WEAPON_GRENADE, // Type
+			m_pPlayer->GetCID(), // Owner
+			ProjStartPos, // Pos
+			Direction, // Dir
+			Lifetime, // Span
+			false, // Freeze
+			true, // Explosive
+			0, // Force
+			SOUND_GRENADE_EXPLODE // SoundImpact
+		); // SoundImpact
 
 		GameServer()->CreateSound(m_Pos, SOUND_GRENADE_FIRE, TeamMask());
 	}
@@ -616,7 +618,7 @@ void CCharacter::FireWeapon()
 
 void CCharacter::HandleWeapons()
 {
-	//ninja
+	// ninja
 	HandleNinja();
 	HandleJetpack();
 
@@ -798,7 +800,7 @@ void CCharacter::TickDeferred()
 		m_ReckoningCore.Quantize();
 	}
 
-	//lastsentcore
+	// lastsentcore
 	vec2 StartPos = m_Core.m_Pos;
 	vec2 StartVel = m_Core.m_Vel;
 	bool StuckBefore = Collision()->TestBox(m_Core.m_Pos, CCharacterCore::PhysicalSizeVec2());
@@ -967,7 +969,7 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon)
 	return true;
 }
 
-//TODO: Move the emote stuff to a function
+// TODO: Move the emote stuff to a function
 void CCharacter::SnapCharacter(int SnappingClient, int ID)
 {
 	int SnappingClientVersion = GameServer()->GetClientVersion(SnappingClient);
@@ -1211,7 +1213,8 @@ void CCharacter::Snap(int SnappingClient)
 	if(m_Core.m_LiveFrozen)
 		pDDNetCharacter->m_Flags |= CHARACTERFLAG_MOVEMENTS_DISABLED;
 
-	pDDNetCharacter->m_FreezeEnd = m_Core.m_DeepFrozen ? -1 : m_FreezeTime == 0 ? 0 : Server()->Tick() + m_FreezeTime;
+	pDDNetCharacter->m_FreezeEnd = m_Core.m_DeepFrozen ? -1 : m_FreezeTime == 0 ? 0 :
+										      Server()->Tick() + m_FreezeTime;
 	pDDNetCharacter->m_Jumps = m_Core.m_Jumps;
 	pDDNetCharacter->m_TeleCheckpoint = m_TeleCheckpoint;
 	pDDNetCharacter->m_StrongWeakID = m_StrongWeakID;
@@ -1416,7 +1419,7 @@ void CCharacter::SetTimeCheckpoint(int TimeCheckpoint)
 void CCharacter::HandleTiles(int Index)
 {
 	int MapIndex = Index;
-	//int PureMapIndex = Collision()->GetPureMapIndex(m_Pos);
+	// int PureMapIndex = Collision()->GetPureMapIndex(m_Pos);
 	m_TileIndex = Collision()->GetTileIndex(MapIndex);
 	m_TileFIndex = Collision()->GetFTileIndex(MapIndex);
 	m_MoveRestrictions = Collision()->GetMoveRestrictions(IsSwitchActiveCb, this, m_Pos, 18.0f, MapIndex);
@@ -2343,21 +2346,23 @@ int64_t CCharacter::TeamMask()
 
 void CCharacter::SwapClients(int Client1, int Client2)
 {
-	m_Core.SetHookedPlayer(m_Core.m_HookedPlayer == Client1 ? Client2 : m_Core.m_HookedPlayer == Client2 ? Client1 : m_Core.m_HookedPlayer);
+	m_Core.SetHookedPlayer(m_Core.m_HookedPlayer == Client1 ? Client2 : m_Core.m_HookedPlayer == Client2 ? Client1 :
+													       m_Core.m_HookedPlayer);
 }
 
 // OpenGores
 vec2 CCharacter::GetLastSightInput()
 {
-    return normalize(vec2(m_LatestInput.m_TargetX, m_LatestInput.m_TargetY));
+	return normalize(vec2(m_LatestInput.m_TargetX, m_LatestInput.m_TargetY));
 }
 
 void CCharacter::SetCollideOthers(bool on)
 {
-	if (m_Core.m_CollisionDisabled == on) return;
+	if(m_Core.m_CollisionDisabled == on)
+		return;
 
 	m_Core.m_CollisionDisabled = on;
-	if (on)
+	if(on)
 		m_NeededFaketuning &= ~FAKETUNE_NOCOLL;
 	else
 		m_NeededFaketuning |= FAKETUNE_NOCOLL;
@@ -2381,7 +2386,7 @@ void CCharacter::SetHitOthers(bool on)
 		m_Core.m_LaserHitDisabled = true;
 	}
 
-	if (on)
+	if(on)
 		m_NeededFaketuning &= ~FAKETUNE_NOHAMMER;
 	else
 		m_NeededFaketuning |= FAKETUNE_NOHAMMER;

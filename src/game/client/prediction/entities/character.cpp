@@ -373,15 +373,15 @@ void CCharacter::FireWeapon()
 
 			new CProjectile(
 				GameWorld(),
-				WEAPON_GUN, //Type
-				GetCID(), //Owner
-				ProjStartPos, //Pos
-				Direction, //Dir
-				Lifetime, //Span
-				false, //Freeze
-				false, //Explosive
-				0, //Force
-				-1 //SoundImpact
+				WEAPON_GUN, // Type
+				GetCID(), // Owner
+				ProjStartPos, // Pos
+				Direction, // Dir
+				Lifetime, // Span
+				false, // Freeze
+				false, // Explosive
+				0, // Force
+				-1 // SoundImpact
 			);
 		}
 	}
@@ -401,15 +401,15 @@ void CCharacter::FireWeapon()
 				float Speed = mix((float)Tuning()->m_ShotgunSpeeddiff, 1.0f, v);
 				new CProjectile(
 					GameWorld(),
-					WEAPON_SHOTGUN, //Type
-					GetCID(), //Owner
-					ProjStartPos, //Pos
-					vec2(cosf(a), sinf(a)) * Speed, //Dir
-					(int)(GameWorld()->GameTickSpeed() * Tuning()->m_ShotgunLifetime), //Span
-					false, //Freeze
-					false, //Explosive
-					0, //Force
-					-1 //SoundImpact
+					WEAPON_SHOTGUN, // Type
+					GetCID(), // Owner
+					ProjStartPos, // Pos
+					vec2(cosf(a), sinf(a)) * Speed, // Dir
+					(int)(GameWorld()->GameTickSpeed() * Tuning()->m_ShotgunLifetime), // Span
+					false, // Freeze
+					false, // Explosive
+					0, // Force
+					-1 // SoundImpact
 				);
 			}
 		}
@@ -428,16 +428,16 @@ void CCharacter::FireWeapon()
 
 		new CProjectile(
 			GameWorld(),
-			WEAPON_GRENADE, //Type
-			GetCID(), //Owner
-			ProjStartPos, //Pos
-			Direction, //Dir
-			Lifetime, //Span
-			false, //Freeze
-			true, //Explosive
-			0, //Force
-			SOUND_GRENADE_EXPLODE //SoundImpact
-		); //SoundImpact
+			WEAPON_GRENADE, // Type
+			GetCID(), // Owner
+			ProjStartPos, // Pos
+			Direction, // Dir
+			Lifetime, // Span
+			false, // Freeze
+			true, // Explosive
+			0, // Force
+			SOUND_GRENADE_EXPLODE // SoundImpact
+		); // SoundImpact
 	}
 	break;
 
@@ -474,7 +474,7 @@ void CCharacter::FireWeapon()
 
 void CCharacter::HandleWeapons()
 {
-	//ninja
+	// ninja
 	HandleNinja();
 	HandleJetpack();
 
@@ -512,7 +512,7 @@ void CCharacter::OnPredictedInput(CNetObj_PlayerInput *pNewInput)
 
 	// copy new input
 	mem_copy(&m_Input, pNewInput, sizeof(m_Input));
-	//m_NumInputs++;
+	// m_NumInputs++;
 
 	// it is not allowed to aim in the center
 	if(m_Input.m_TargetX == 0 && m_Input.m_TargetY == 0)
@@ -954,7 +954,7 @@ void CCharacter::DDRaceTick()
 	{
 		m_Input.m_Direction = 0;
 		m_Input.m_Jump = 0;
-		//Hook and weapons are possible in live freeze
+		// Hook and weapons are possible in live freeze
 	}
 	if(m_FreezeTime > 0 || m_FreezeTime == -1)
 	{

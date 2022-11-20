@@ -6,14 +6,14 @@
 #include <game/server/player.h>
 #include <game/server/teams.h>
 
-#include "trail.h"
 #include "character.h"
+#include "trail.h"
 
-CTrail::CTrail(CGameWorld *pGameWorld, int Owner)
-: CEntity(pGameWorld, CGameWorld::ENTTYPE_PROJECTILE)
+CTrail::CTrail(CGameWorld *pGameWorld, int Owner) :
+	CEntity(pGameWorld, CGameWorld::ENTTYPE_PROJECTILE)
 {
-    CPlayer *pOwner = GameServer()->m_apPlayers[Owner];
-    if(!pOwner || !pOwner->GetCharacter())
+	CPlayer *pOwner = GameServer()->m_apPlayers[Owner];
+	if(!pOwner || !pOwner->GetCharacter())
 	{
 		return;
 	}
@@ -24,7 +24,7 @@ CTrail::CTrail(CGameWorld *pGameWorld, int Owner)
 	GameWorld()->InsertEntity(this);
 	m_IDs[0] = Server()->SnapNewID();
 
-    pOwner->m_PowersData.m_HasTrailSpawned = true;
+	pOwner->m_PowersData.m_HasTrailSpawned = true;
 }
 
 CTrail::~CTrail()
@@ -34,12 +34,12 @@ CTrail::~CTrail()
 
 void CTrail::Reset()
 {
-    // verify if player exists
-    // without this verification, if player disconnect, the server will crash
-    if(GameServer()->m_apPlayers[m_Owner])
-    {
-        GameServer()->m_apPlayers[m_Owner]->m_PowersData.m_HasTrailSpawned = false;
-    }
+	// verify if player exists
+	// without this verification, if player disconnect, the server will crash
+	if(GameServer()->m_apPlayers[m_Owner])
+	{
+		GameServer()->m_apPlayers[m_Owner]->m_PowersData.m_HasTrailSpawned = false;
+	}
 
 	m_MarkedForDestroy = true;
 }
@@ -53,18 +53,17 @@ void CTrail::Tick()
 		return;
 	}
 
-    bool HasTheTrail = pOwner->m_Powers.m_HasTrail && pOwner->m_Powers.m_HasTrailEnabled;
+	bool HasTheTrail = pOwner->m_Powers.m_HasTrail && pOwner->m_Powers.m_HasTrailEnabled;
 
-    // check if player has power and power enabled
-    if(! HasTheTrail)
-    {
-        Reset();
+	// check if player has power and power enabled
+	if(!HasTheTrail)
+	{
+		Reset();
 		return;
-    }
+	}
 
 	m_Pos = pOwner->GetCharacter()->m_Pos;
 }
-
 
 void CTrail::Snap(int SnappingClient)
 {
@@ -77,9 +76,9 @@ void CTrail::Snap(int SnappingClient)
 	if(m_Owner >= 0)
 		pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
 
-    // need to verify also here if char exists (or the server will crash)
+	// need to verify also here if char exists (or the server will crash)
 	if(pOwnerChar && pOwnerChar->IsPaused())
-	   return;
+		return;
 
 	if(pOwnerChar && pOwnerChar->IsAlive())
 		TeamMask = pOwnerChar->Teams()->TeamMask(pOwnerChar->Team(), -1, m_Owner);
@@ -94,6 +93,6 @@ void CTrail::Snap(int SnappingClient)
 	pObj->m_Y = (int)m_Pos.y;
 	pObj->m_VelX = 0;
 	pObj->m_VelY = 0;
-	pObj->m_StartTick = Server()->Tick()-1;
+	pObj->m_StartTick = Server()->Tick() - 1;
 	pObj->m_Type = WEAPON_HAMMER;
 }

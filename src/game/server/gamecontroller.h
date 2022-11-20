@@ -130,7 +130,7 @@ public:
 
 	virtual void Snap(int SnappingClient);
 
-	//spawn
+	// spawn
 	virtual bool CanSpawn(int Team, vec2 *pOutPos, int DDTeam);
 
 	virtual void DoTeamChange(class CPlayer *pPlayer, int Team, bool DoChatMsg = true);
@@ -152,7 +152,7 @@ public:
 	int SnapRecordFlag(int SnappingClient);
 	int SnapFastcapFlag(int SnappingClient);
 	void SnapFlags(int SnappingClient);
-	
+
 	char m_CurrentRecordHolder[16];
 
 	CCharacter *m_pRecordFlagChar;

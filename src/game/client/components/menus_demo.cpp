@@ -609,7 +609,7 @@ void CMenus::UiDoListboxStart(const void *pID, const CUIRect *pRect, float RowHe
 	View.HSplitTop(gs_ListBoxRowHeight, &Row, 0);
 
 	int NumViewable = (int)(gs_ListBoxOriginalView.h / Row.h) * gs_ListBoxItemsPerRow;
-	//int Num = (NumItems + gs_ListBoxItemsPerRow - 1) / gs_ListBoxItemsPerRow - NumViewable + 1;
+	// int Num = (NumItems + gs_ListBoxItemsPerRow - 1) / gs_ListBoxItemsPerRow - NumViewable + 1;
 	int Num = ceil((NumItems - NumViewable) / (float)gs_ListBoxItemsPerRow);
 	if(Num <= 0)
 	{
@@ -645,11 +645,11 @@ CMenus::CListboxItem CMenus::UiDoListboxNextRow()
 	s_RowView.VSplitLeft(s_RowView.w / (gs_ListBoxItemsPerRow - gs_ListBoxItemIndex % gs_ListBoxItemsPerRow), &Item.m_Rect, &s_RowView);
 
 	Item.m_Visible = 1;
-	//item.rect = row;
+	// item.rect = row;
 
 	Item.m_HitRect = Item.m_Rect;
 
-	//CUIRect select_hit_box = item.rect;
+	// CUIRect select_hit_box = item.rect;
 
 	if(gs_ListBoxSelectedIndex == gs_ListBoxItemIndex)
 		Item.m_Selected = 1;
@@ -741,8 +741,9 @@ CMenus::CListboxItem CMenus::UiDoListboxNextItem(const void *pId, bool Selected,
 					{
 						// scroll
 						float Offset = (NewIndex / gs_ListBoxItemsPerRow - gs_ListBoxNewSelected / gs_ListBoxItemsPerRow) * gs_ListBoxRowHeight;
-						int Scroll = gs_ListBoxOriginalView.y > Item.m_Rect.y + Offset ? -1 :
-														 gs_ListBoxOriginalView.y + gs_ListBoxOriginalView.h < Item.m_Rect.y + Item.m_Rect.h + Offset ? 1 : 0;
+						int Scroll = gs_ListBoxOriginalView.y > Item.m_Rect.y + Offset                                            ? -1 :
+							     gs_ListBoxOriginalView.y + gs_ListBoxOriginalView.h < Item.m_Rect.y + Item.m_Rect.h + Offset ? 1 :
+																			    0;
 						if(Scroll)
 						{
 							int NumViewable = (int)(gs_ListBoxOriginalView.h / gs_ListBoxRowHeight) + 1;
@@ -770,7 +771,7 @@ CMenus::CListboxItem CMenus::UiDoListboxNextItem(const void *pId, bool Selected,
 			}
 		}
 
-		//selected_index = i;
+		// selected_index = i;
 		CUIRect r = Item.m_Rect;
 		r.Margin(1.5f, &r);
 		r.Draw(ColorRGBA(1, 1, 1, 0.5f), IGraphics::CORNER_ALL, 4.0f);
@@ -878,8 +879,9 @@ void CMenus::DemolistOnUpdate(bool Reset)
 			m_DemolistSelectedIndex = SelectedIndex;
 	}
 
-	m_DemolistSelectedIndex = Reset ? !m_vDemos.empty() ? 0 : -1 :
-					  m_DemolistSelectedIndex >= (int)m_vDemos.size() ? m_vDemos.size() - 1 : m_DemolistSelectedIndex;
+	m_DemolistSelectedIndex = Reset                                           ? !m_vDemos.empty() ? 0 : -1 :
+				  m_DemolistSelectedIndex >= (int)m_vDemos.size() ? m_vDemos.size() - 1 :
+										    m_DemolistSelectedIndex;
 	m_DemolistSelectedIsDir = m_DemolistSelectedIndex < 0 ? false : m_vDemos[m_DemolistSelectedIndex].m_IsDir;
 }
 
@@ -1095,7 +1097,7 @@ void CMenus::RenderDemoList(CUIRect MainView)
 
 			if(i + 1 < NumCols)
 			{
-				//Cols[i].flags |= SPACER;
+				// Cols[i].flags |= SPACER;
 				Headers.VSplitLeft(2, &s_aCols[i].m_Spacer, &Headers);
 			}
 		}

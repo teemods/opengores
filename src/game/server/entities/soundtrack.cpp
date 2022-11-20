@@ -5,14 +5,14 @@
 #include <game/server/player.h>
 #include <game/server/teams.h>
 
-#include "soundtrack.h"
 #include "character.h"
+#include "soundtrack.h"
 
-CSoundtrack::CSoundtrack(CGameWorld *pGameWorld, int Owner)
-: CEntity(pGameWorld, CGameWorld::ENTTYPE_PICKUP)
+CSoundtrack::CSoundtrack(CGameWorld *pGameWorld, int Owner) :
+	CEntity(pGameWorld, CGameWorld::ENTTYPE_PICKUP)
 {
 	CPlayer *pOwner = GameServer()->m_apPlayers[Owner];
-    if(!pOwner || !pOwner->GetCharacter())
+	if(!pOwner || !pOwner->GetCharacter())
 	{
 		return;
 	}
@@ -25,7 +25,7 @@ CSoundtrack::CSoundtrack(CGameWorld *pGameWorld, int Owner)
 	int64_t TeamMask = pOwner->GetCharacter()->Teams()->TeamMask(pOwner->GetCharacter()->Team(), -1, Owner);
 	GameServer()->CreateSound(m_Pos, SOUND_MENU, TeamMask);
 
-	for(int i=0; i<NUM_IDS; i++)
+	for(int i = 0; i < NUM_IDS; i++)
 	{
 		m_IDs[i] = Server()->SnapNewID();
 	}
@@ -33,7 +33,7 @@ CSoundtrack::CSoundtrack(CGameWorld *pGameWorld, int Owner)
 
 CSoundtrack::~CSoundtrack()
 {
-	for(int i=0; i<NUM_IDS; i++)
+	for(int i = 0; i < NUM_IDS; i++)
 	{
 		Server()->SnapFreeID(m_IDs[i]);
 	}
@@ -44,11 +44,12 @@ void CSoundtrack::Reset()
 	m_MarkedForDestroy = true;
 }
 
-void CSoundtrack::Tick() 
+void CSoundtrack::Tick()
 {
 	m_TicksActive++;
 
-	if((m_TicksActive / Server()->TickSpeed()) > 25) {
+	if((m_TicksActive / Server()->TickSpeed()) > 25)
+	{
 		Reset();
 		return;
 	}
@@ -71,14 +72,14 @@ void CSoundtrack::Snap(int SnappingClient)
 	if(!CmaskIsSet(TeamMask, SnappingClient))
 		return;
 
-	float AngleStart = (2.0f * pi * Server()->Tick()/static_cast<float>(Server()->TickSpeed()))/10.0f;
+	float AngleStart = (2.0f * pi * Server()->Tick() / static_cast<float>(Server()->TickSpeed())) / 10.0f;
 	float AngleStep = (2.0f * pi / NUM_SIDE);
 	float R = 30.0f;
 
-	AngleStart = AngleStart*3.0f;
-	for(int i=0; i<NUM_SIDE; ++i)
+	AngleStart = AngleStart * 3.0f;
+	for(int i = 0; i < NUM_SIDE; ++i)
 	{
-		vec2 PosStart = m_Pos + vec2(R * cos((AngleStart + AngleStep*i)), R * sin((AngleStart + AngleStep*i)));
+		vec2 PosStart = m_Pos + vec2(R * cos((AngleStart + AngleStep * i)), R * sin((AngleStart + AngleStep * i)));
 		CNetObj_Projectile *pObj = static_cast<CNetObj_Projectile *>(Server()->SnapNewItem(NETOBJTYPE_PROJECTILE, m_IDs[i], sizeof(CNetObj_Projectile)));
 		if(pObj)
 		{

@@ -1435,18 +1435,18 @@ int str_comp_filenames(const char *a, const char *b);
 
 /*
        Function: str_startswith_nocase
-               Checks case insensitive whether the string begins with a certain prefix.
+	       Checks case insensitive whether the string begins with a certain prefix.
 
        Parameter:
-               str - String to check.
-               prefix - Prefix to look for.
+	       str - String to check.
+	       prefix - Prefix to look for.
 
        Returns:
-               A pointer to the string str after the string prefix, or 0 if
-               the string prefix isn't a prefix of the string str.
+	       A pointer to the string str after the string prefix, or 0 if
+	       the string prefix isn't a prefix of the string str.
 
        Remarks:
-               - The strings are treated as zero-terminated strings.
+	       - The strings are treated as zero-terminated strings.
 */
 const char *str_startswith_nocase(const char *str, const char *prefix);
 
@@ -1467,18 +1467,18 @@ const char *str_startswith(const char *str, const char *prefix);
 
 /*
        Function: str_endswith_nocase
-               Checks case insensitive whether the string ends with a certain suffix.
+	       Checks case insensitive whether the string ends with a certain suffix.
 
        Parameter:
-               str - String to check.
-               suffix - Suffix to look for.
+	       str - String to check.
+	       suffix - Suffix to look for.
 
        Returns:
-               A pointer to the beginning of the suffix in the string str, or
-               0 if the string suffix isn't a suffix of the string str.
+	       A pointer to the beginning of the suffix in the string str, or
+	       0 if the string suffix isn't a suffix of the string str.
 
        Remarks:
-               - The strings are treated as zero-terminated strings.
+	       - The strings are treated as zero-terminated strings.
 */
 const char *str_endswith_nocase(const char *str, const char *suffix);
 
@@ -1541,7 +1541,7 @@ int str_utf8_dist_buffer(const char *a, const char *b, int *buf, int buf_len);
 		b_len - Length of the second string.
 		buf - Buffer for the function.
 		buf_len - Length of the buffer, must be at least as long as
-		          the length of both strings combined plus two.
+			  the length of both strings combined plus two.
 
 	Returns:
 		The edit distance between the both strings.
@@ -1854,10 +1854,10 @@ int fs_is_dir(const char *path);
 
 /*
     Function: fs_is_relative_path
-        Checks whether a given path is relative or absolute.
+	Checks whether a given path is relative or absolute.
 
     Returns:
-        Returns 1 if relative, 0 if absolute.
+	Returns 1 if relative, 0 if absolute.
 */
 int fs_is_relative_path(const char *path);
 

@@ -40,7 +40,7 @@ private:
 	int m_LifeSpan;
 	int m_Owner;
 	int m_Type;
-	//int m_Damage;
+	// int m_Damage;
 	int m_SoundImpact;
 	float m_Force;
 	int m_StartTick;

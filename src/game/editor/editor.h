@@ -24,7 +24,7 @@ using namespace std::chrono_literals;
 
 typedef void (*INDEX_MODIFY_FUNC)(int *pIndex);
 
-//CRenderTools m_RenderTools;
+// CRenderTools m_RenderTools;
 
 // CEditor SPECIFIC
 enum
@@ -970,7 +970,10 @@ public:
 		int m_StorageType;
 		bool m_IsVisible;
 
-		bool operator<(const CFilelistItem &Other) const { return !str_comp(m_aFilename, "..") ? true : !str_comp(Other.m_aFilename, "..") ? false : m_IsDir && !Other.m_IsDir ? true : !m_IsDir && Other.m_IsDir ? false : str_comp_filenames(m_aFilename, Other.m_aFilename) < 0; }
+		bool operator<(const CFilelistItem &Other) const { return !str_comp(m_aFilename, "..") ? true : !str_comp(Other.m_aFilename, "..") ? false :
+													m_IsDir && !Other.m_IsDir                  ? true :
+													!m_IsDir && Other.m_IsDir                  ? false :
+																		     str_comp_filenames(m_aFilename, Other.m_aFilename) < 0; }
 	};
 	std::vector<CFilelistItem> m_vFileList;
 	int m_FilesStartAt;
@@ -1197,7 +1200,7 @@ public:
 	void SortImages();
 	bool SelectLayerByTile();
 
-	//Tile Numbers For Explanations - TODO: Add/Improve tiles and explanations
+	// Tile Numbers For Explanations - TODO: Add/Improve tiles and explanations
 	enum
 	{
 		TILE_PUB_AIR,
@@ -1262,7 +1265,7 @@ public:
 		TILE_VANILLA_LASER,
 	};
 
-	//Explanations
+	// Explanations
 	enum
 	{
 		EXPLANATION_DDNET,
