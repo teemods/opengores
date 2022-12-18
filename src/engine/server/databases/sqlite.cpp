@@ -403,11 +403,8 @@ bool CSqliteConnection::AddSeasonPoints(const char *pPlayer, int Points, char *p
 	BindInt(2, Points);
 	BindInt(3, Points);
 	bool End;
-	if(Step(&End, pError, ErrorSize))
-	{
-		return true;
-	}
-	return false;
+
+	return Step(&End, pError, ErrorSize);
 }
 
 bool CSqliteConnection::ChangePowerStatus(const char *pPlayer, const char *PowerName, int Status, char *pError, int ErrorSize)
@@ -423,11 +420,8 @@ bool CSqliteConnection::ChangePowerStatus(const char *pPlayer, const char *Power
 	BindInt(1, Status);
 	BindString(2, pPlayer);
 	bool End;
-	if(Step(&End, pError, ErrorSize))
-	{
-		return true;
-	}
-	return false;
+
+	return Step(&End, pError, ErrorSize);
 }
 
 std::unique_ptr<IDbConnection> CreateSqliteConnection(const char *pFilename, bool Setup)

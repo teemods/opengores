@@ -25,18 +25,14 @@ CSoundtrack::CSoundtrack(CGameWorld *pGameWorld, int Owner) :
 	int64_t TeamMask = pOwner->GetCharacter()->Teams()->TeamMask(pOwner->GetCharacter()->Team(), -1, Owner);
 	GameServer()->CreateSound(m_Pos, SOUND_MENU, TeamMask);
 
-	for(int i = 0; i < NUM_IDS; i++)
-	{
+	for(int i : m_IDs)
 		m_IDs[i] = Server()->SnapNewID();
-	}
 }
 
 CSoundtrack::~CSoundtrack()
 {
-	for(int i = 0; i < NUM_IDS; i++)
-	{
+	for(int i : m_IDs)
 		Server()->SnapFreeID(m_IDs[i]);
-	}
 }
 
 void CSoundtrack::Reset()

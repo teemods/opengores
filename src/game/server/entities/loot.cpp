@@ -23,18 +23,15 @@ CLoot::CLoot(CGameWorld *pGameWorld, int Owner, const char *OwnerName, int Respo
 	m_Pos = Pos;
 
 	GameWorld()->InsertEntity(this);
-	for(int i = 0; i < NUM_IDS; i++)
-	{
+
+	for(int i : m_IDs)
 		m_IDs[i] = Server()->SnapNewID();
-	}
 }
 
 CLoot::~CLoot()
 {
-	for(int i = 0; i < NUM_IDS; i++)
-	{
+	for(int i : m_IDs)
 		Server()->SnapFreeID(m_IDs[i]);
-	}
 }
 
 void CLoot::Reset()

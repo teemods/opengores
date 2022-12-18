@@ -823,11 +823,14 @@ int IGameController::SnapRecordFlag(int SnappingClient)
 		pFlagOwner->GetCharacter()->m_Pos == pFlagOwner->GetCharacter()->m_PrevPos)
 		return pFlagOwner->GetCID();
 
-	// Verify flag owner team mask
-	int64_t TeamMask = -1LL;
-	TeamMask = m_pRecordFlagChar->Teams()->TeamMask(m_pRecordFlagChar->Team(), -1, pFlagOwner->GetCID());
-	if(!CmaskIsSet(TeamMask, SnappingClient))
-		return pFlagOwner->GetCID();
+	// Verify flag owner team mask (cannot check that when demo client)
+	if(SnappingClient != SERVER_DEMO_CLIENT)
+	{
+		int64_t TeamMask = -1LL;
+		TeamMask = m_pRecordFlagChar->Teams()->TeamMask(m_pRecordFlagChar->Team(), -1, pFlagOwner->GetCID());
+		if(!CmaskIsSet(TeamMask, SnappingClient))
+			return pFlagOwner->GetCID();
+	}
 
 	// insert flag
 	CNetObj_Flag *pFlag = (CNetObj_Flag *)Server()->SnapNewItem(NETOBJTYPE_FLAG, TEAM_BLUE, sizeof(CNetObj_Flag));

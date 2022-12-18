@@ -131,8 +131,10 @@ void CAura::Snap(int SnappingClient)
 
 	if(m_Owner >= 0)
 		pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
+	if(!pOwnerChar)
+		return;
 
-	if(pOwnerChar && pOwnerChar->IsAlive())
+	if(pOwnerChar->IsAlive())
 		TeamMask = pOwnerChar->Teams()->TeamMask(pOwnerChar->Team(), -1, m_Owner);
 
 	if(!CmaskIsSet(TeamMask, SnappingClient))

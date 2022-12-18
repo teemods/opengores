@@ -2358,11 +2358,12 @@ vec2 CCharacter::GetLastSightInput()
 
 void CCharacter::SetCollideOthers(bool on)
 {
-	if(m_Core.m_CollisionDisabled == on)
+	bool disable = !on;
+	if(m_Core.m_CollisionDisabled == disable)
 		return;
 
-	m_Core.m_CollisionDisabled = on;
-	if(on)
+	m_Core.m_CollisionDisabled = disable;
+	if(disable)
 		m_NeededFaketuning &= ~FAKETUNE_NOCOLL;
 	else
 		m_NeededFaketuning |= FAKETUNE_NOCOLL;
