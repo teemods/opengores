@@ -420,7 +420,7 @@ static inline bool RepackMsg(const CMsgPacker *pMsg, CPacker &Packer)
 	}
 	else
 	{
-		Packer.AddInt((0 << 1) | (pMsg->m_System ? 1 : 0)); // NETMSG_EX, NETMSGTYPE_EX
+		Packer.AddInt(pMsg->m_System ? 1 : 0); // NETMSG_EX, NETMSGTYPE_EX
 		g_UuidManager.PackUuid(pMsg->m_MsgID, &Packer);
 	}
 	Packer.AddRaw(pMsg->Data(), pMsg->Size());
@@ -894,7 +894,7 @@ void CClient::Disconnect()
 	// make sure to remove replay tmp demo
 	if(g_Config.m_ClReplays)
 	{
-		Storage()->RemoveFile(m_aDemoRecorder[RECORDER_REPLAYS].GetCurrentFilename(), IStorage::TYPE_SAVE);
+		DemoRecorder_Stop(RECORDER_REPLAYS, true);
 	}
 }
 
@@ -2884,8 +2884,7 @@ void CClient::Update()
 	}
 
 	// update the server browser
-	m_ServerBrowser.Update(m_ResortServerBrowser);
-	m_ResortServerBrowser = false;
+	m_ServerBrowser.Update();
 
 	// update editor/gameclient
 	if(m_EditorActive)
@@ -2965,7 +2964,7 @@ void CClient::InitInterfaces()
 
 void CClient::Run()
 {
-	m_LocalStartTime = time_get();
+	m_LocalStartTime = m_GlobalStartTime = time_get();
 #if defined(CONF_VIDEORECORDER)
 	IVideo::SetLocalStartTime(m_LocalStartTime);
 #endif
@@ -3120,9 +3119,7 @@ void CClient::Run()
 		// handle pending demo play
 		if(m_aCmdPlayDemo[0])
 		{
-			const char *pError = DemoPlayer_Play(m_aCmdPlayDemo, IStorage::TYPE_ALL);
-			if(pError && !fs_is_relative_path(m_aCmdPlayDemo))
-				pError = DemoPlayer_Play(m_aCmdPlayDemo, IStorage::TYPE_ABSOLUTE);
+			const char *pError = DemoPlayer_Play(m_aCmdPlayDemo, IStorage::TYPE_ALL_OR_ABSOLUTE);
 			if(pError)
 				dbg_msg("demo_player", "playing passed demo file '%s' failed: %s", m_aCmdPlayDemo, pError);
 			m_aCmdPlayDemo[0] = 0;
@@ -3131,9 +3128,7 @@ void CClient::Run()
 		// handle pending map edits
 		if(m_aCmdEditMap[0])
 		{
-			int Result = m_pEditor->Load(m_aCmdEditMap, IStorage::TYPE_ALL);
-			if(!Result && !fs_is_relative_path(m_aCmdEditMap))
-				Result = m_pEditor->Load(m_aCmdEditMap, IStorage::TYPE_ABSOLUTE);
+			int Result = m_pEditor->Load(m_aCmdEditMap, IStorage::TYPE_ALL_OR_ABSOLUTE);
 			if(Result)
 				g_Config.m_ClEditor = true;
 			else
@@ -3389,8 +3384,9 @@ void CClient::Run()
 			g_Config.m_DbgHitch = 0;
 		}
 
-		// update local time
+		// update local and global time
 		m_LocalTime = (time_get() - m_LocalStartTime) / (float)time_freq();
+		m_GlobalTime = (time_get() - m_GlobalStartTime) / (float)time_freq();
 	}
 
 #if defined(CONF_FAMILY_UNIX)
@@ -4036,7 +4032,7 @@ void CClient::UpdateAndSwap()
 
 void CClient::ServerBrowserUpdate()
 {
-	m_ResortServerBrowser = true;
+	m_ServerBrowser.RequestResort();
 }
 
 void CClient::ConchainServerBrowserUpdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData)
@@ -4376,7 +4372,7 @@ void CClient::RegisterCommands()
 	m_pConsole->Register("connect", "r[host|ip]", CFGFLAG_CLIENT, Con_Connect, this, "Connect to the specified host/ip");
 	m_pConsole->Register("disconnect", "", CFGFLAG_CLIENT, Con_Disconnect, this, "Disconnect from the server");
 	m_pConsole->Register("ping", "", CFGFLAG_CLIENT, Con_Ping, this, "Ping the current server");
-	m_pConsole->Register("screenshot", "", CFGFLAG_CLIENT, Con_Screenshot, this, "Take a screenshot");
+	m_pConsole->Register("screenshot", "", CFGFLAG_CLIENT | CFGFLAG_STORE, Con_Screenshot, this, "Take a screenshot");
 	m_pConsole->Register("reset", "s[config-name]", CFGFLAG_CLIENT | CFGFLAG_STORE, Con_Reset, this, "Reset a config its default value");
 
 #if defined(CONF_VIDEORECORDER)
@@ -4445,10 +4441,18 @@ void CClient::HandleConnectAddress(const NETADDR *pAddr)
 
 void CClient::HandleConnectLink(const char *pLink)
 {
-	if(str_startswith(pLink, CONNECTLINK))
-		str_copy(m_aCmdConnect, pLink + sizeof(CONNECTLINK) - 1);
+	// Chrome works fine with ddnet:// but not with ddnet:
+	// Check ddnet:// before ddnet: because we don't want the // as part of connect command
+	if(str_startswith(pLink, CONNECTLINK_DOUBLE_SLASH))
+		str_copy(m_aCmdConnect, pLink + sizeof(CONNECTLINK_DOUBLE_SLASH) - 1);
+	else if(str_startswith(pLink, CONNECTLINK_NO_SLASH))
+		str_copy(m_aCmdConnect, pLink + sizeof(CONNECTLINK_NO_SLASH) - 1);
 	else
 		str_copy(m_aCmdConnect, pLink);
+	// Edge appends / to the URL
+	const int len = str_length(m_aCmdConnect);
+	if(m_aCmdConnect[len - 1] == '/')
+		m_aCmdConnect[len - 1] = '\0';
 }
 
 void CClient::HandleDemoPath(const char *pPath)
@@ -4464,7 +4468,7 @@ void CClient::HandleMapPath(const char *pPath)
 static bool UnknownArgumentCallback(const char *pCommand, void *pUser)
 {
 	CClient *pClient = static_cast<CClient *>(pUser);
-	if(str_startswith(pCommand, CONNECTLINK))
+	if(str_startswith(pCommand, CONNECTLINK_NO_SLASH))
 	{
 		pClient->HandleConnectLink(pCommand);
 		return true;
@@ -4680,7 +4684,7 @@ int main(int argc, const char **argv)
 	log_set_loglevel((LEVEL)g_Config.m_Loglevel);
 	if(g_Config.m_Logfile[0])
 	{
-		IOHANDLE Logfile = pStorage->OpenFile(g_Config.m_Logfile, IOFLAG_WRITE, fs_is_relative_path(g_Config.m_Logfile) ? IStorage::TYPE_SAVE : IStorage::TYPE_ABSOLUTE);
+		IOHANDLE Logfile = pStorage->OpenFile(g_Config.m_Logfile, IOFLAG_WRITE, IStorage::TYPE_SAVE_OR_ABSOLUTE);
 		if(Logfile)
 		{
 			pFutureFileLogger->Set(log_logger_file(Logfile));

@@ -97,8 +97,7 @@ void CProjectile::TeleportOwnerToProjectile()
 
 void CProjectile::Reset()
 {
-	if(m_LifeSpan > -2)
-		m_MarkedForDestroy = true;
+	m_MarkedForDestroy = true;
 }
 
 vec2 CProjectile::GetPos(float Time)

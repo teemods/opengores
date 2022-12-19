@@ -191,8 +191,12 @@ void CMenus::RenderSettingsGeneral(CUIRect MainView)
 		UI()->DoLabel(&Label, aBuf, 13.0f, TEXTALIGN_LEFT);
 		Left.HSplitTop(20.0f, &Button, &Left);
 		g_Config.m_ClRefreshRate = static_cast<int>(UI()->DoScrollbarH(&g_Config.m_ClRefreshRate, &Button, g_Config.m_ClRefreshRate / 10000.0f) * 10000.0f + 0.1f);
+		Left.HSplitTop(5.0f, 0, &Left);
+		Left.HSplitTop(20.0f, &Button, &Left);
+		int s_LowerRefreshRate;
+		if(DoButton_CheckBox(&s_LowerRefreshRate, Localize("Save power by lowering refresh rate (higher input latency)"), g_Config.m_ClRefreshRate <= 480 && g_Config.m_ClRefreshRate != 0, &Button))
+			g_Config.m_ClRefreshRate = g_Config.m_ClRefreshRate > 480 || g_Config.m_ClRefreshRate == 0 ? 480 : 0;
 
-		Left.HSplitTop(15.0f, 0, &Left);
 		CUIRect SettingsButton;
 		Left.HSplitBottom(25.0f, &Left, &SettingsButton);
 
@@ -618,7 +622,6 @@ void CMenus::RenderSettingsTee(CUIRect MainView)
 	EyesLabel.VSplitLeft(20.0f, 0, &EyesLabel);
 	EyesLabel.HSplitTop(50.0f, &EyesLabel, &Eyes);
 
-	float Highlight = 0.0f;
 	static CButtonContainer s_aEyeButtons[6];
 	static int s_aEyesToolTip[6];
 	for(int CurrentEyeEmote = 0; CurrentEyeEmote < 6; CurrentEyeEmote++)
@@ -631,7 +634,7 @@ void CMenus::RenderSettingsTee(CUIRect MainView)
 			Eyes.HSplitTop(60.0f, &EyesLabel, 0);
 			EyesLabel.HSplitTop(10.0f, 0, &EyesLabel);
 		}
-		Highlight = (m_Dummy) ? g_Config.m_ClDummyDefaultEyes == CurrentEyeEmote : g_Config.m_ClPlayerDefaultEyes == CurrentEyeEmote;
+		float Highlight = (m_Dummy ? g_Config.m_ClDummyDefaultEyes == CurrentEyeEmote : g_Config.m_ClPlayerDefaultEyes == CurrentEyeEmote) ? 1.0f : 0.0f;
 		if(DoButton_Menu(&s_aEyeButtons[CurrentEyeEmote], "", 0, &EyesTee, 0, IGraphics::CORNER_ALL, 10.0f, 0.0f, vec4(1, 1, 1, 0.5f + Highlight * 0.25f), vec4(1, 1, 1, 0.25f + Highlight * 0.25f)))
 		{
 			if(m_Dummy)
@@ -727,9 +730,6 @@ void CMenus::RenderSettingsTee(CUIRect MainView)
 
 			// no special skins
 			if((pSkinToBeSelected->GetName()[0] == 'x' && pSkinToBeSelected->GetName()[1] == '_'))
-				return false;
-
-			if(pSkinToBeSelected == 0)
 				return false;
 
 			return true;
@@ -1115,7 +1115,7 @@ float CMenus::RenderSettingsControlsJoystick(CUIRect View)
 		{
 			View.HSplitTop((View.h - ButtonHeight) / 2.0f, 0, &View);
 			View.HSplitTop(ButtonHeight, &Button, &View);
-			UI()->DoLabel(&Button, Localize("No controller found. Plug in a controller and restart the game."), 13.0f, TEXTALIGN_CENTER);
+			UI()->DoLabel(&Button, Localize("No controller found. Plug in a controller."), 13.0f, TEXTALIGN_CENTER);
 		}
 	}
 
@@ -1337,19 +1337,8 @@ void CMenus::RenderSettingsControls(CUIRect MainView)
 			static CButtonContainer s_DefaultButton;
 			if(DoButton_Menu(&s_DefaultButton, Localize("Reset to defaults"), 0, &ResetButton))
 			{
-				m_pClient->m_Binds.SetDefaults();
-
-				g_Config.m_InpMousesens = 200;
-				g_Config.m_UiMousesens = 200;
-
-				g_Config.m_InpControllerEnable = 0;
-				g_Config.m_InpControllerGUID[0] = '\0';
-				g_Config.m_InpControllerAbsolute = 0;
-				g_Config.m_InpControllerSens = 100;
-				g_Config.m_InpControllerX = 0;
-				g_Config.m_InpControllerY = 1;
-				g_Config.m_InpControllerTolerance = 5;
-				g_Config.m_UiControllerSens = 100;
+				PopupConfirm(Localize("Reset controls"), Localize("Are you sure that you want to reset the controls to their defaults?"),
+					Localize("Reset"), Localize("Cancel"), &CMenus::ResetSettingsControls);
 			}
 		}
 	}
@@ -1419,6 +1408,23 @@ void CMenus::RenderSettingsControls(CUIRect MainView)
 	}
 
 	s_ScrollRegion.End();
+}
+
+void CMenus::ResetSettingsControls()
+{
+	m_pClient->m_Binds.SetDefaults();
+
+	g_Config.m_InpMousesens = 200;
+	g_Config.m_UiMousesens = 200;
+
+	g_Config.m_InpControllerEnable = 0;
+	g_Config.m_InpControllerGUID[0] = '\0';
+	g_Config.m_InpControllerAbsolute = 0;
+	g_Config.m_InpControllerSens = 100;
+	g_Config.m_InpControllerX = 0;
+	g_Config.m_InpControllerY = 1;
+	g_Config.m_InpControllerTolerance = 5;
+	g_Config.m_UiControllerSens = 100;
 }
 
 int CMenus::RenderDropDown(int &CurDropDownState, CUIRect *pRect, int CurSelection, const void **pIDs, const char **pStr, int PickNum, CButtonContainer *pButtonContainer, float &ScrollVal)
@@ -1735,7 +1741,7 @@ void CMenus::RenderSettingsGraphics(CUIRect MainView)
 		char aTmpBackendName[256];
 
 		auto IsInfoDefault = [](const SMenuBackendInfo &CheckInfo) {
-			return str_comp_nocase(CheckInfo.m_pBackendName, "OpenGL") == 0 && CheckInfo.m_Major == 3 && CheckInfo.m_Minor == 0 && CheckInfo.m_Patch == 0;
+			return str_comp_nocase(CheckInfo.m_pBackendName, g_Config.ms_pGfxBackend) == 0 && CheckInfo.m_Major == g_Config.ms_GfxGLMajor && CheckInfo.m_Minor == g_Config.ms_GfxGLMinor && CheckInfo.m_Patch == g_Config.ms_GfxGLPatch;
 		};
 
 		int OldSelectedBackend = -1;

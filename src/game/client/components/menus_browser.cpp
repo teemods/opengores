@@ -7,6 +7,7 @@
 #include <engine/keys.h>
 #include <engine/serverbrowser.h>
 #include <engine/shared/config.h>
+#include <engine/shared/localization.h>
 #include <engine/textrender.h>
 
 #include <game/client/components/console.h>
@@ -38,13 +39,13 @@ void FormatServerbrowserPing(char *pBuffer, int BufferLength, const CServerInfo 
 	}
 	static const char *LOCATION_NAMES[CServerInfo::NUM_LOCS] = {
 		"", // LOC_UNKNOWN
-		"AFR", // LOC_AFRICA // Localize("AFR")
-		"ASI", // LOC_ASIA // Localize("ASI")
-		"AUS", // LOC_AUSTRALIA // Localize("AUS")
-		"EUR", // LOC_EUROPE // Localize("EUR")
-		"NA", // LOC_NORTH_AMERICA // Localize("NA")
-		"SA", // LOC_SOUTH_AMERICA // Localize("SA")
-		"CHN", // LOC_CHINA // Localize("CHN")
+		Localizable("AFR"), // LOC_AFRICA
+		Localizable("ASI"), // LOC_ASIA
+		Localizable("AUS"), // LOC_AUSTRALIA
+		Localizable("EUR"), // LOC_EUROPE
+		Localizable("NA"), // LOC_NORTH_AMERICA
+		Localizable("SA"), // LOC_SOUTH_AMERICA
+		Localizable("CHN"), // LOC_CHINA
 	};
 	dbg_assert(0 <= pInfo->m_Location && pInfo->m_Location < CServerInfo::NUM_LOCS, "location out of range");
 	str_copy(pBuffer, Localize(LOCATION_NAMES[pInfo->m_Location]), BufferLength);
@@ -69,16 +70,12 @@ void CMenus::RenderServerbrowserServerList(CUIRect View)
 		CLocConstString m_Caption;
 		int m_Direction;
 		float m_Width;
-		int m_Flags;
 		CUIRect m_Rect;
 		CUIRect m_Spacer;
 	};
 
 	enum
 	{
-		FIXED = 1,
-		SPACER = 2,
-
 		COL_FLAG_LOCK = 0,
 		COL_FLAG_FAV,
 		COL_FLAG_OFFICIAL,
@@ -91,19 +88,17 @@ void CMenus::RenderServerbrowserServerList(CUIRect View)
 	};
 
 	CColumn s_aCols[] = {
-		{-1, -1, " ", -1, 2.0f, 0, {0}, {0}},
-		{COL_FLAG_LOCK, -1, " ", -1, 14.0f, 0, {0}, {0}},
-		{COL_FLAG_FAV, -1, " ", -1, 14.0f, 0, {0}, {0}},
-		{COL_FLAG_OFFICIAL, -1, " ", -1, 14.0f, 0, {0}, {0}},
-		{COL_NAME, IServerBrowser::SORT_NAME, "Name", 0, 50.0f, 0, {0}, {0}}, // Localize - these strings are localized within CLocConstString
-		{COL_GAMETYPE, IServerBrowser::SORT_GAMETYPE, "Type", 1, 50.0f, 0, {0}, {0}},
-		{COL_MAP, IServerBrowser::SORT_MAP, "Map", 1, 120.0f + (Headers.w - 480) / 8, 0, {0}, {0}},
-		{COL_PLAYERS, IServerBrowser::SORT_NUMPLAYERS, "Players", 1, 75.0f, 0, {0}, {0}},
-		{-1, -1, " ", 1, 10.0f, 0, {0}, {0}},
-		{COL_PING, IServerBrowser::SORT_PING, "Ping", 1, 40.0f, FIXED, {0}, {0}},
+		{-1, -1, " ", -1, 2.0f, {0}, {0}},
+		{COL_FLAG_LOCK, -1, " ", -1, 14.0f, {0}, {0}},
+		{COL_FLAG_FAV, -1, " ", -1, 14.0f, {0}, {0}},
+		{COL_FLAG_OFFICIAL, -1, " ", -1, 14.0f, {0}, {0}},
+		{COL_NAME, IServerBrowser::SORT_NAME, "Name", 0, 50.0f, {0}, {0}}, // Localize - these strings are localized within CLocConstString
+		{COL_GAMETYPE, IServerBrowser::SORT_GAMETYPE, Localizable("Type"), 1, 50.0f, {0}, {0}},
+		{COL_MAP, IServerBrowser::SORT_MAP, "Map", 1, 120.0f + (Headers.w - 480) / 8, {0}, {0}},
+		{COL_PLAYERS, IServerBrowser::SORT_NUMPLAYERS, "Players", 1, 85.0f, {0}, {0}},
+		{-1, -1, " ", 1, 10.0f, {0}, {0}},
+		{COL_PING, IServerBrowser::SORT_PING, "Ping", 1, 40.0f, {0}, {0}},
 	};
-	// This is just for scripts/update_localization.py to work correctly (all other strings are already Localize()'d somewhere else). Don't remove!
-	// Localize("Type");
 
 	int NumCols = std::size(s_aCols);
 
@@ -116,7 +111,6 @@ void CMenus::RenderServerbrowserServerList(CUIRect View)
 
 			if(i + 1 < NumCols)
 			{
-				// Cols[i].flags |= SPACER;
 				Headers.VSplitLeft(2, &s_aCols[i].m_Spacer, &Headers);
 			}
 		}
@@ -255,12 +249,14 @@ void CMenus::RenderServerbrowserServerList(CUIRect View)
 			m_SelectedIndex = i;
 
 		// update friend counter
+		int FriendsOnServer = 0;
 		if(pItem->m_FriendState != IFriends::FRIEND_NO)
 		{
 			for(int j = 0; j < pItem->m_NumReceivedClients; ++j)
 			{
 				if(pItem->m_aClients[j].m_FriendState != IFriends::FRIEND_NO)
 				{
+					FriendsOnServer++;
 					unsigned NameHash = str_quickhash(pItem->m_aClients[j].m_aName);
 					unsigned ClanHash = str_quickhash(pItem->m_aClients[j].m_aClan);
 					for(auto &Friend : m_vFriends)
@@ -420,13 +416,22 @@ void CMenus::RenderServerbrowserServerList(CUIRect View)
 			}
 			else if(ID == COL_PLAYERS)
 			{
-				CUIRect Icon;
-				Button.VMargin(4.0f, &Button);
+				CUIRect Icon, IconText;
+				Button.VMargin(2.0f, &Button);
 				if(pItem->m_FriendState != IFriends::FRIEND_NO)
 				{
-					Button.VSplitLeft(Button.h, &Icon, &Button);
+					Button.VSplitRight(50.0f, &Icon, &Button);
 					Icon.Margin(2.0f, &Icon);
-					RenderBrowserIcons(*pItem->m_pUIElement->Rect(gs_OffsetColFav + 1), &Icon, {0.94f, 0.4f, 0.4f, 1}, TextRender()->DefaultTextOutlineColor(), "\xEF\x80\x84", TEXTALIGN_LEFT);
+					Icon.HSplitBottom(6.0f, 0, &IconText);
+					RenderBrowserIcons(*pItem->m_pUIElement->Rect(gs_OffsetColFav + 1), &Icon, {0.94f, 0.4f, 0.4f, 1}, TextRender()->DefaultTextOutlineColor(), "\xEF\x80\x84", TEXTALIGN_CENTER);
+					if(FriendsOnServer > 1)
+					{
+						char aBufFriendsOnServer[64];
+						str_format(aBufFriendsOnServer, sizeof(aBufFriendsOnServer), "%i", FriendsOnServer);
+						TextRender()->TextColor(0.94f, 0.8f, 0.8f, 1);
+						UI()->DoLabel(&IconText, aBufFriendsOnServer, 10.0f, TEXTALIGN_CENTER);
+						TextRender()->TextColor(1.0f, 1.0f, 1.0f, 1);
+					}
 				}
 
 				str_format(aTemp, sizeof(aTemp), "%i/%i", pItem->m_NumFilteredPlayers, ServerBrowser()->Max(*pItem));
@@ -472,6 +477,10 @@ void CMenus::RenderServerbrowserServerList(CUIRect View)
 						hsl = ColorHSLA(0.00f, 1.0f, 0.75f);
 					else if(str_find_nocase(pItem->m_aGameType, "fng"))
 						hsl = ColorHSLA(0.83f, 1.0f, 0.75f);
+					else if(str_find_nocase(pItem->m_aGameType, "gores"))
+						hsl = ColorHSLA(0.525f, 1.0f, 0.75f);
+					else if(str_find_nocase(pItem->m_aGameType, "BW"))
+						hsl = ColorHSLA(0.050f, 1.0f, 0.75f);
 					else if(str_find_nocase(pItem->m_aGameType, "ddracenet") || str_find_nocase(pItem->m_aGameType, "ddnet"))
 						hsl = ColorHSLA(0.58f, 1.0f, 0.75f);
 					else if(str_find_nocase(pItem->m_aGameType, "ddrace") || str_find_nocase(pItem->m_aGameType, "mkrace"))
@@ -498,15 +507,7 @@ void CMenus::RenderServerbrowserServerList(CUIRect View)
 		const CServerInfo *pItem = ServerBrowser()->SortedGet(NewSelected);
 		str_copy(g_Config.m_UiServerAddress, pItem->m_aAddress);
 		if(DoubleClicked && Input()->MouseDoubleClick())
-		{
-			if(Client()->State() == IClient::STATE_ONLINE && Client()->GetCurrentRaceTime() / 60 >= g_Config.m_ClConfirmDisconnectTime && g_Config.m_ClConfirmDisconnectTime >= 0)
-			{
-				m_Popup = POPUP_SWITCH_SERVER;
-				str_copy(m_aNextServer, g_Config.m_UiServerAddress);
-			}
-			else
-				Client()->Connect(g_Config.m_UiServerAddress);
-		}
+			Connect(g_Config.m_UiServerAddress);
 	}
 
 	// Status.Draw(ms_ColorTabbarActive, IGraphics::CORNER_B, 5.0f);
@@ -657,15 +658,25 @@ void CMenus::RenderServerbrowserServerList(CUIRect View)
 			   m_ConnectButton, &s_JoinButton, []() -> const char * { return Localize("Connect"); }, 0, &ButtonConnect, false, false, IGraphics::CORNER_ALL, 5, 0, vec4(0.7f, 1, 0.7f, 0.1f), vec4(0.7f, 1, 0.7f, 0.2f)) ||
 			UI()->ConsumeHotkey(CUI::HOTKEY_ENTER))
 		{
-			if(Client()->State() == IClient::STATE_ONLINE && Client()->GetCurrentRaceTime() / 60 >= g_Config.m_ClConfirmDisconnectTime && g_Config.m_ClConfirmDisconnectTime >= 0)
-			{
-				m_Popup = POPUP_SWITCH_SERVER;
-				str_copy(m_aNextServer, g_Config.m_UiServerAddress);
-			}
-			else
-				Client()->Connect(g_Config.m_UiServerAddress);
+			Connect(g_Config.m_UiServerAddress);
 		}
 	}
+}
+
+void CMenus::Connect(const char *pAddress)
+{
+	if(Client()->State() == IClient::STATE_ONLINE && Client()->GetCurrentRaceTime() / 60 >= g_Config.m_ClConfirmDisconnectTime && g_Config.m_ClConfirmDisconnectTime >= 0)
+	{
+		str_copy(m_aNextServer, pAddress);
+		PopupConfirm(Localize("Disconnect"), Localize("Are you sure that you want to disconnect and switch to a different server?"), Localize("Yes"), Localize("No"), &CMenus::PopupConfirmSwitchServer);
+	}
+	else
+		Client()->Connect(pAddress);
+}
+
+void CMenus::PopupConfirmSwitchServer()
+{
+	Client()->Connect(m_aNextServer);
 }
 
 void CMenus::RenderServerbrowserFilters(CUIRect View)
@@ -1352,7 +1363,15 @@ void CMenus::RenderServerbrowserFriends(CUIRect View)
 	{
 		static CButtonContainer s_RemoveButton;
 		if(DoButton_Menu(&s_RemoveButton, Localize("Remove"), 0, &Button))
-			m_Popup = POPUP_REMOVE_FRIEND;
+		{
+			const CFriendInfo *pRemoveFriend = m_vFriends[m_FriendlistSelectedIndex].m_pFriendInfo;
+			const bool IsPlayer = m_pClient->Friends()->GetFriendState(pRemoveFriend->m_aName, pRemoveFriend->m_aClan) == IFriends::FRIEND_PLAYER;
+			char aBuf[256];
+			str_format(aBuf, sizeof(aBuf),
+				IsPlayer ? Localize("Are you sure that you want to remove the player '%s' from your friends list?") : Localize("Are you sure that you want to remove the clan '%s' from your friends list?"),
+				IsPlayer ? pRemoveFriend->m_aName : pRemoveFriend->m_aClan);
+			PopupConfirm(Localize("Remove friend"), aBuf, Localize("Yes"), Localize("No"), &CMenus::PopupConfirmRemoveFriend);
+		}
 	}
 
 	// add friend
@@ -1387,6 +1406,14 @@ void CMenus::RenderServerbrowserFriends(CUIRect View)
 			Client()->ServerBrowserUpdate();
 		}
 	}
+}
+
+void CMenus::PopupConfirmRemoveFriend()
+{
+	const CFriendInfo *pRemoveFriend = m_vFriends[m_FriendlistSelectedIndex].m_pFriendInfo;
+	m_pClient->Friends()->RemoveFriend(pRemoveFriend->m_aName, pRemoveFriend->m_aClan);
+	FriendlistOnUpdate();
+	Client()->ServerBrowserUpdate();
 }
 
 void CMenus::RenderServerbrowser(CUIRect MainView)

@@ -3,6 +3,7 @@
 #ifndef GAME_EDITOR_EDITOR_H
 #define GAME_EDITOR_EDITOR_H
 
+#include <base/bezier.h>
 #include <base/system.h>
 
 #include <game/client/render.h>
@@ -800,8 +801,10 @@ public:
 		m_EditorOffsetX = 0.0f;
 		m_EditorOffsetY = 0.0f;
 
+		m_Zoom = 200.0f;
+		m_Zooming = false;
 		m_WorldZoom = 1.0f;
-		m_ZoomLevel = 200;
+
 		m_LockMouse = false;
 		m_ShowMousePointer = true;
 		m_MouseDeltaX = 0;
@@ -987,8 +990,16 @@ public:
 	float m_WorldOffsetY;
 	float m_EditorOffsetX;
 	float m_EditorOffsetY;
+
+	// Zooming
+	CCubicBezier m_ZoomSmoothing;
+	float m_ZoomSmoothingStart;
+	float m_ZoomSmoothingEnd;
+	bool m_Zooming;
+	float m_Zoom;
+	float m_ZoomSmoothingTarget;
 	float m_WorldZoom;
-	int m_ZoomLevel;
+
 	bool m_LockMouse;
 	bool m_ShowMousePointer;
 	bool m_GuiActive;
@@ -1084,6 +1095,7 @@ public:
 	void RenderBackground(CUIRect View, IGraphics::CTextureHandle Texture, float Size, float Brightness);
 
 	void RenderGrid(CLayerGroup *pGroup);
+	void SnapToGrid(float &x, float &y);
 
 	void UiInvokePopupMenu(void *pID, int Flags, float X, float Y, float W, float H, int (*pfnFunc)(CEditor *pEditor, CUIRect Rect, void *pContext), void *pContext = nullptr);
 	void UiDoPopupMenu();
@@ -1110,6 +1122,7 @@ public:
 	static int PopupSelectGametileOp(CEditor *pEditor, CUIRect View, void *pContext);
 	static int PopupImage(CEditor *pEditor, CUIRect View, void *pContext);
 	static int PopupMenuFile(CEditor *pEditor, CUIRect View, void *pContext);
+	static int PopupMenuTools(CEditor *pEditor, CUIRect View, void *pContext);
 	static int PopupSelectConfigAutoMap(CEditor *pEditor, CUIRect View, void *pContext);
 	static int PopupSound(CEditor *pEditor, CUIRect View, void *pContext);
 	static int PopupSource(CEditor *pEditor, CUIRect View, void *pContext);
@@ -1129,6 +1142,27 @@ public:
 	static int PopupMessage(CEditor *pEditor, CUIRect View, void *pContext);
 	void ShowPopupMessage(float X, float Y, SMessagePopupContext *pContext);
 
+	struct SConfirmPopupContext
+	{
+		enum EConfirmationResult
+		{
+			UNSET = 0,
+			CONFIRMED,
+			CANCELED
+		};
+		static constexpr float POPUP_MAX_WIDTH = 200.0f;
+		static constexpr float POPUP_FONT_SIZE = 10.0f;
+		static constexpr float POPUP_BUTTON_HEIGHT = 12.0f;
+		static constexpr float POPUP_BUTTON_SPACING = 5.0f;
+		char m_aMessage[256];
+		EConfirmationResult m_Result;
+
+		SConfirmPopupContext();
+		void Reset();
+	};
+	static int PopupConfirm(CEditor *pEditor, CUIRect View, void *pContext);
+	void ShowPopupConfirm(float X, float Y, SConfirmPopupContext *pContext);
+
 	struct SSelectionPopupContext
 	{
 		static constexpr float POPUP_MAX_WIDTH = 300.0f;
@@ -1140,6 +1174,7 @@ public:
 		const std::string *m_pSelection;
 
 		SSelectionPopupContext();
+		void Reset();
 	};
 	static int PopupSelection(CEditor *pEditor, CUIRect View, void *pContext);
 	void ShowPopupSelection(float X, float Y, SSelectionPopupContext *pContext);
@@ -1182,6 +1217,7 @@ public:
 	static void AddSound(const char *pFileName, int StorageType, void *pUser);
 
 	bool IsEnvelopeUsed(int EnvelopeIndex) const;
+	void RemoveUnusedEnvelopes();
 
 	void RenderLayers(CUIRect LayersBox);
 	void RenderImagesList(CUIRect Toolbox);
@@ -1277,7 +1313,15 @@ public:
 	static const char *Explain(int ExplanationID, int Tile, int Layer);
 
 	int GetLineDistance() const;
+
+	// Zooming
+	void SetZoom(float Target);
+	void ChangeZoom(float Amount);
 	void ZoomMouseTarget(float ZoomFactor);
+	void UpdateZoom();
+	float ZoomProgress(float CurrentTime) const;
+	float MinZoomLevel() const;
+	float MaxZoomLevel() const;
 
 	static ColorHSVA ms_PickerColor;
 	static int ms_SVPicker;

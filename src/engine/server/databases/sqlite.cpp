@@ -56,6 +56,9 @@ public:
 	bool AddSeasonPoints(const char *pPlayer, int Points, char *pError, int ErrorSize) override;
 	bool ChangePowerStatus(const char *pPlayer, const char *PowerName, int Status, char *pError, int ErrorSize) override;
 
+	// fail safe
+	bool CreateFailsafeTables();
+
 private:
 	// copy of config vars
 	char m_aFilename[IO_MAX_PATH_LENGTH];
@@ -141,20 +144,32 @@ bool CSqliteConnection::Connect(char *pError, int ErrorSize)
 
 	if(m_Setup)
 	{
+		if(Execute("PRAGMA journal_mode=WAL", pError, ErrorSize))
+			return true;
 		char aBuf[2048];
-		FormatCreateRace(aBuf, sizeof(aBuf));
+		FormatCreateRace(aBuf, sizeof(aBuf), /* Backup */ false);
 		if(Execute(aBuf, pError, ErrorSize))
 			return true;
-		FormatCreateTeamrace(aBuf, sizeof(aBuf), "BLOB");
+		FormatCreateTeamrace(aBuf, sizeof(aBuf), "BLOB", /* Backup */ false);
 		if(Execute(aBuf, pError, ErrorSize))
 			return true;
 		FormatCreateMaps(aBuf, sizeof(aBuf));
 		if(Execute(aBuf, pError, ErrorSize))
 			return true;
-		FormatCreateSaves(aBuf, sizeof(aBuf));
+		FormatCreateSaves(aBuf, sizeof(aBuf), /* Backup */ false);
 		if(Execute(aBuf, pError, ErrorSize))
 			return true;
 		FormatCreatePoints(aBuf, sizeof(aBuf));
+		if(Execute(aBuf, pError, ErrorSize))
+			return true;
+
+		FormatCreateRace(aBuf, sizeof(aBuf), /* Backup */ true);
+		if(Execute(aBuf, pError, ErrorSize))
+			return true;
+		FormatCreateTeamrace(aBuf, sizeof(aBuf), "BLOB", /* Backup */ true);
+		if(Execute(aBuf, pError, ErrorSize))
+			return true;
+		FormatCreateSaves(aBuf, sizeof(aBuf), /* Backup */ true);
 		if(Execute(aBuf, pError, ErrorSize))
 			return true;
 		m_Setup = false;
