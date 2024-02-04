@@ -3,10 +3,12 @@
 #ifndef ENGINE_SERVER_H
 #define ENGINE_SERVER_H
 
+#include <optional>
 #include <type_traits>
 
 #include <base/hash.h>
 #include <base/math.h>
+#include <base/system.h>
 
 #include "kernel.h"
 #include "message.h"
@@ -25,10 +27,9 @@ enum
 
 class IServer : public IInterface
 {
-	MACRO_INTERFACE("server", 0)
+	MACRO_INTERFACE("server")
 protected:
 	int m_CurrentGameTick;
-	int m_TickSpeed;
 
 public:
 	/*
@@ -45,7 +46,7 @@ public:
 	};
 
 	int Tick() const { return m_CurrentGameTick; }
-	int TickSpeed() const { return m_TickSpeed; }
+	int TickSpeed() const { return SERVER_TICK_SPEED; }
 
 	virtual int Port() const = 0;
 	virtual int MaxClients() const = 0;
@@ -156,11 +157,26 @@ public:
 		return SendPackMsgOne(&MsgCopy, Flags, ClientID);
 	}
 
+	int SendPackMsgTranslate(const CNetMsg_Sv_RaceFinish *pMsg, int Flags, int ClientID)
+	{
+		if(IsSixup(ClientID))
+		{
+			protocol7::CNetMsg_Sv_RaceFinish Msg7;
+			Msg7.m_ClientID = pMsg->m_ClientID;
+			Msg7.m_Diff = pMsg->m_Diff;
+			Msg7.m_Time = pMsg->m_Time;
+			Msg7.m_RecordPersonal = pMsg->m_RecordPersonal;
+			Msg7.m_RecordServer = pMsg->m_RecordServer;
+			return SendPackMsgOne(&Msg7, Flags, ClientID);
+		}
+		return SendPackMsgOne(pMsg, Flags, ClientID);
+	}
+
 	template<class T>
 	int SendPackMsgOne(const T *pMsg, int Flags, int ClientID)
 	{
 		dbg_assert(ClientID != -1, "SendPackMsgOne called with -1");
-		CMsgPacker Packer(pMsg->MsgID(), false, protocol7::is_sixup<T>::value);
+		CMsgPacker Packer(T::ms_MsgID, false, protocol7::is_sixup<T>::value);
 
 		if(pMsg->Pack(&Packer))
 			return -1;
@@ -204,15 +220,23 @@ public:
 	virtual void GetMapInfo(char *pMapName, int MapNameSize, int *pMapSize, SHA256_DIGEST *pSha256, int *pMapCrc) = 0;
 
 	virtual bool WouldClientNameChange(int ClientID, const char *pNameRequest) = 0;
-	virtual void SetClientName(int ClientID, char const *pName) = 0;
-	virtual void SetClientClan(int ClientID, char const *pClan) = 0;
+	virtual bool WouldClientClanChange(int ClientID, const char *pClanRequest) = 0;
+	virtual void SetClientName(int ClientID, const char *pName) = 0;
+	virtual void SetClientClan(int ClientID, const char *pClan) = 0;
 	virtual void SetClientCountry(int ClientID, int Country) = 0;
-	virtual void SetClientScore(int ClientID, int Score) = 0;
+	virtual void SetClientScore(int ClientID, std::optional<int> Score) = 0;
 	virtual void SetClientFlags(int ClientID, int Flags) = 0;
 
 	virtual int SnapNewID() = 0;
 	virtual void SnapFreeID(int ID) = 0;
 	virtual void *SnapNewItem(int Type, int ID, int Size) = 0;
+
+	template<typename T>
+	T *SnapNewItem(int ID)
+	{
+		const int Type = protocol7::is_sixup<T>::value ? -T::ms_MsgID : T::ms_MsgID;
+		return static_cast<T *>(SnapNewItem(Type, ID, sizeof(T)));
+	}
 
 	virtual void SnapSetStaticsize(int ItemType, int Size) = 0;
 
@@ -226,6 +250,7 @@ public:
 	virtual const char *GetAuthName(int ClientID) const = 0;
 	virtual void Kick(int ClientID, const char *pReason) = 0;
 	virtual void Ban(int ClientID, int Seconds, const char *pReason) = 0;
+	virtual void RedirectClient(int ClientID, int Port, bool Verbose = false) = 0;
 	virtual void ChangeMap(const char *pMap) = 0;
 
 	virtual void DemoRecorder_HandleAutoStart() = 0;
@@ -236,6 +261,7 @@ public:
 	virtual void StartRecord(int ClientID) = 0;
 	virtual void StopRecord(int ClientID) = 0;
 	virtual bool IsRecording(int ClientID) = 0;
+	virtual void StopDemos() = 0;
 
 	virtual void GetClientAddr(int ClientID, NETADDR *pAddr) const = 0;
 
@@ -244,7 +270,7 @@ public:
 	virtual bool DnsblWhite(int ClientID) = 0;
 	virtual bool DnsblPending(int ClientID) = 0;
 	virtual bool DnsblBlack(int ClientID) = 0;
-	virtual const char *GetAnnouncementLine(char const *pFileName) = 0;
+	virtual const char *GetAnnouncementLine(const char *pFileName) = 0;
 	virtual bool ClientPrevIngame(int ClientID) = 0;
 	virtual const char *GetNetErrorString(int ClientID) = 0;
 	virtual void ResetNetErrorString(int ClientID) = 0;
@@ -253,6 +279,8 @@ public:
 
 	virtual void SetErrorShutdown(const char *pReason) = 0;
 	virtual void ExpireServerInfo() = 0;
+
+	virtual void FillAntibot(CAntibotRoundData *pData) = 0;
 
 	virtual void SendMsgRaw(int ClientID, const void *pData, int Size, int Flags) = 0;
 
@@ -263,13 +291,17 @@ public:
 
 class IGameServer : public IInterface
 {
-	MACRO_INTERFACE("gameserver", 0)
+	MACRO_INTERFACE("gameserver")
 protected:
 public:
-	virtual void OnInit() = 0;
+	// `pPersistentData` may be null if this is the first time `IGameServer`
+	// is instantiated.
+	virtual void OnInit(const void *pPersistentData) = 0;
 	virtual void OnConsoleInit() = 0;
 	virtual void OnMapChange(char *pNewMapName, int MapNameSize) = 0;
-	virtual void OnShutdown() = 0;
+	// `pPersistentData` may be null if this is the last time `IGameServer`
+	// is destroyed.
+	virtual void OnShutdown(void *pPersistentData) = 0;
 
 	virtual void OnTick() = 0;
 	virtual void OnPreSnap() = 0;
@@ -304,6 +336,7 @@ public:
 	virtual bool IsClientReady(int ClientID) const = 0;
 	virtual bool IsClientPlayer(int ClientID) const = 0;
 
+	virtual int PersistentDataSize() const = 0;
 	virtual int PersistentClientDataSize() const = 0;
 
 	virtual CUuid GameUuid() const = 0;
@@ -318,8 +351,10 @@ public:
 	virtual void OnSetAuthed(int ClientID, int Level) = 0;
 	virtual bool PlayerExists(int ClientID) const = 0;
 
-	virtual void OnClientEngineJoin(int ClientID, bool Sixup) = 0;
-	virtual void OnClientEngineDrop(int ClientID, const char *pReason) = 0;
+	virtual void TeehistorianRecordAntibot(const void *pData, int DataSize) = 0;
+	virtual void TeehistorianRecordPlayerJoin(int ClientID, bool Sixup) = 0;
+	virtual void TeehistorianRecordPlayerDrop(int ClientID, const char *pReason) = 0;
+	virtual void TeehistorianRecordPlayerRejoin(int ClientID) = 0;
 
 	virtual void FillAntibot(CAntibotRoundData *pData) = 0;
 

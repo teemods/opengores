@@ -9,6 +9,9 @@
 #include <engine/input.h>
 #include <engine/keys.h>
 
+#include <string>
+#include <vector>
+
 class IEngineGraphics;
 
 class CInput : public IEngineInput
@@ -69,17 +72,25 @@ private:
 	static void ConchainJoystickGuidChanged(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
 	float GetJoystickDeadzone();
 
-	int m_InputGrabbed;
+	bool m_InputGrabbed;
 	char *m_pClipboardText;
 
 	bool m_MouseFocus;
 	bool m_MouseDoubleClick;
+#if defined(CONF_PLATFORM_ANDROID) // No relative mouse on Android
+	ivec2 m_LastMousePos = ivec2(0, 0);
+#endif
 
-	int m_VideoRestartNeeded;
+	// IME support
+	char m_aComposition[MAX_COMPOSITION_ARRAY_SIZE];
+	int m_CompositionCursor;
+	int m_CompositionLength;
+	std::vector<std::string> m_vCandidates;
+	int m_CandidateSelectedIndex;
 
 	void AddEvent(char *pText, int Key, int Flags);
 	void Clear() override;
-	bool IsEventValid(CEvent *pEvent) const override { return pEvent->m_InputCount == m_InputCounter; }
+	bool IsEventValid(const CEvent &Event) const override { return Event.m_InputCount == m_InputCounter; }
 
 	// quick access to input
 	unsigned short m_aInputCount[g_MaxKeys]; // tw-KEY
@@ -94,18 +105,17 @@ private:
 	void HandleJoystickAddedEvent(const SDL_JoyDeviceEvent &Event);
 	void HandleJoystickRemovedEvent(const SDL_JoyDeviceEvent &Event);
 
-	// IME support
-	int m_NumTextInputInstances;
-	char m_aEditingText[INPUT_TEXT_SIZE];
-	int m_EditingTextLen;
-	int m_EditingCursor;
+	char m_aDropFile[IO_MAX_PATH_LENGTH];
 
 	bool KeyState(int Key) const;
+
+	void ProcessSystemMessage(SDL_SysWMmsg *pMsg);
 
 public:
 	CInput();
 
 	void Init() override;
+	int Update() override;
 	void Shutdown() override;
 
 	bool ModifierIsPressed() const override { return KeyState(KEY_LCTRL) || KeyState(KEY_RCTRL) || KeyState(KEY_LGUI) || KeyState(KEY_RGUI); }
@@ -115,8 +125,9 @@ public:
 	bool KeyPress(int Key, bool CheckCounter) const override { return CheckCounter ? (m_aInputCount[Key] == m_InputCounter) : m_aInputCount[Key]; }
 
 	size_t NumJoysticks() const override { return m_vJoysticks.size(); }
+	CJoystick *GetJoystick(size_t Index) override { return &m_vJoysticks[Index]; }
 	CJoystick *GetActiveJoystick() override { return m_pActiveJoystick; }
-	void SelectNextJoystick() override;
+	void SetActiveJoystick(size_t Index) override;
 
 	bool MouseRelative(float *pX, float *pY) override;
 	void MouseModeAbsolute() override;
@@ -128,16 +139,18 @@ public:
 	const char *GetClipboardText() override;
 	void SetClipboardText(const char *pText) override;
 
-	int Update() override;
+	void StartTextInput() override;
+	void StopTextInput() override;
+	const char *GetComposition() const override { return m_aComposition; }
+	bool HasComposition() const override { return m_CompositionLength != COMP_LENGTH_INACTIVE; }
+	int GetCompositionCursor() const override { return m_CompositionCursor; }
+	int GetCompositionLength() const override { return m_CompositionLength; }
+	const char *GetCandidate(int Index) const override { return m_vCandidates[Index].c_str(); }
+	int GetCandidateCount() const override { return m_vCandidates.size(); }
+	int GetCandidateSelectedIndex() const override { return m_CandidateSelectedIndex; }
+	void SetCompositionWindowPosition(float X, float Y, float H) override;
 
-	int VideoRestartNeeded() override;
-
-	bool GetIMEState() override;
-	void SetIMEState(bool Activate) override;
-	int GetIMEEditingTextLength() const override { return m_EditingTextLen; }
-	const char *GetIMEEditingText() override;
-	int GetEditingCursor() override;
-	void SetEditingPosition(float X, float Y) override;
+	bool GetDropFile(char *aBuf, int Len) override;
 };
 
 #endif

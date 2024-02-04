@@ -3,13 +3,16 @@
 #include <engine/shared/config.h>
 #include <engine/storage.h>
 #include <engine/textrender.h>
+
 #include <game/client/gameclient.h>
+#include <game/client/ui_listbox.h>
 #include <game/localization.h>
 
 #include "menus.h"
 
 #include <chrono>
 
+using namespace FontIcons;
 using namespace std::chrono_literals;
 
 typedef std::function<void()> TMenuAssetScanLoadedFunc;
@@ -37,50 +40,30 @@ void CMenus::LoadEntities(SCustomEntities *pEntitiesItem, void *pUser)
 	auto *pRealUser = (SMenuAssetScanUser *)pUser;
 	auto *pThis = (CMenus *)pRealUser->m_pUser;
 
-	char aBuff[IO_MAX_PATH_LENGTH];
-
+	char aPath[IO_MAX_PATH_LENGTH];
 	if(str_comp(pEntitiesItem->m_aName, "default") == 0)
 	{
 		for(int i = 0; i < MAP_IMAGE_MOD_TYPE_COUNT; ++i)
 		{
-			str_format(aBuff, sizeof(aBuff), "editor/entities_clear/%s.png", gs_apModEntitiesNames[i]);
-			CImageInfo ImgInfo;
-			if(pThis->Graphics()->LoadPNG(&ImgInfo, aBuff, IStorage::TYPE_ALL))
-			{
-				pEntitiesItem->m_aImages[i].m_Texture = pThis->Graphics()->LoadTextureRaw(ImgInfo.m_Width, ImgInfo.m_Height, ImgInfo.m_Format, ImgInfo.m_pData, ImgInfo.m_Format, 0);
-				pThis->Graphics()->FreePNG(&ImgInfo);
-
-				if(!pEntitiesItem->m_RenderTexture.IsValid())
-					pEntitiesItem->m_RenderTexture = pEntitiesItem->m_aImages[i].m_Texture;
-			}
+			str_format(aPath, sizeof(aPath), "editor/entities_clear/%s.png", gs_apModEntitiesNames[i]);
+			pEntitiesItem->m_aImages[i].m_Texture = pThis->Graphics()->LoadTexture(aPath, IStorage::TYPE_ALL);
+			if(!pEntitiesItem->m_RenderTexture.IsValid() || pEntitiesItem->m_RenderTexture.IsNullTexture())
+				pEntitiesItem->m_RenderTexture = pEntitiesItem->m_aImages[i].m_Texture;
 		}
 	}
 	else
 	{
 		for(int i = 0; i < MAP_IMAGE_MOD_TYPE_COUNT; ++i)
 		{
-			str_format(aBuff, sizeof(aBuff), "assets/entities/%s/%s.png", pEntitiesItem->m_aName, gs_apModEntitiesNames[i]);
-			CImageInfo ImgInfo;
-			if(pThis->Graphics()->LoadPNG(&ImgInfo, aBuff, IStorage::TYPE_ALL))
+			str_format(aPath, sizeof(aPath), "assets/entities/%s/%s.png", pEntitiesItem->m_aName, gs_apModEntitiesNames[i]);
+			pEntitiesItem->m_aImages[i].m_Texture = pThis->Graphics()->LoadTexture(aPath, IStorage::TYPE_ALL);
+			if(pEntitiesItem->m_aImages[i].m_Texture.IsNullTexture())
 			{
-				pEntitiesItem->m_aImages[i].m_Texture = pThis->Graphics()->LoadTextureRaw(ImgInfo.m_Width, ImgInfo.m_Height, ImgInfo.m_Format, ImgInfo.m_pData, ImgInfo.m_Format, 0);
-				pThis->Graphics()->FreePNG(&ImgInfo);
-
-				if(!pEntitiesItem->m_RenderTexture.IsValid())
-					pEntitiesItem->m_RenderTexture = pEntitiesItem->m_aImages[i].m_Texture;
+				str_format(aPath, sizeof(aPath), "assets/entities/%s.png", pEntitiesItem->m_aName);
+				pEntitiesItem->m_aImages[i].m_Texture = pThis->Graphics()->LoadTexture(aPath, IStorage::TYPE_ALL);
 			}
-			else
-			{
-				str_format(aBuff, sizeof(aBuff), "assets/entities/%s.png", pEntitiesItem->m_aName);
-				if(pThis->Graphics()->LoadPNG(&ImgInfo, aBuff, IStorage::TYPE_ALL))
-				{
-					pEntitiesItem->m_aImages[i].m_Texture = pThis->Graphics()->LoadTextureRaw(ImgInfo.m_Width, ImgInfo.m_Height, ImgInfo.m_Format, ImgInfo.m_pData, ImgInfo.m_Format, 0);
-					pThis->Graphics()->FreePNG(&ImgInfo);
-
-					if(!pEntitiesItem->m_RenderTexture.IsValid())
-						pEntitiesItem->m_RenderTexture = pEntitiesItem->m_aImages[i].m_Texture;
-				}
-			}
+			if(!pEntitiesItem->m_RenderTexture.IsValid() || pEntitiesItem->m_RenderTexture.IsNullTexture())
+				pEntitiesItem->m_RenderTexture = pEntitiesItem->m_aImages[i].m_Texture;
 		}
 	}
 }
@@ -126,37 +109,22 @@ int CMenus::EntitiesScan(const char *pName, int IsDir, int DirType, void *pUser)
 }
 
 template<typename TName>
-static void LoadAsset(TName *pAssetItem, const char *pAssetName, IGraphics *pGraphics, void *pUser)
+static void LoadAsset(TName *pAssetItem, const char *pAssetName, IGraphics *pGraphics)
 {
-	char aBuff[IO_MAX_PATH_LENGTH];
-
+	char aPath[IO_MAX_PATH_LENGTH];
 	if(str_comp(pAssetItem->m_aName, "default") == 0)
 	{
-		str_format(aBuff, sizeof(aBuff), "%s.png", pAssetName);
-		CImageInfo ImgInfo;
-		if(pGraphics->LoadPNG(&ImgInfo, aBuff, IStorage::TYPE_ALL))
-		{
-			pAssetItem->m_RenderTexture = pGraphics->LoadTextureRaw(ImgInfo.m_Width, ImgInfo.m_Height, ImgInfo.m_Format, ImgInfo.m_pData, ImgInfo.m_Format, 0);
-			pGraphics->FreePNG(&ImgInfo);
-		}
+		str_format(aPath, sizeof(aPath), "%s.png", pAssetName);
+		pAssetItem->m_RenderTexture = pGraphics->LoadTexture(aPath, IStorage::TYPE_ALL);
 	}
 	else
 	{
-		str_format(aBuff, sizeof(aBuff), "assets/%s/%s.png", pAssetName, pAssetItem->m_aName);
-		CImageInfo ImgInfo;
-		if(pGraphics->LoadPNG(&ImgInfo, aBuff, IStorage::TYPE_ALL))
+		str_format(aPath, sizeof(aPath), "assets/%s/%s.png", pAssetName, pAssetItem->m_aName);
+		pAssetItem->m_RenderTexture = pGraphics->LoadTexture(aPath, IStorage::TYPE_ALL);
+		if(pAssetItem->m_RenderTexture.IsNullTexture())
 		{
-			pAssetItem->m_RenderTexture = pGraphics->LoadTextureRaw(ImgInfo.m_Width, ImgInfo.m_Height, ImgInfo.m_Format, ImgInfo.m_pData, ImgInfo.m_Format, 0);
-			pGraphics->FreePNG(&ImgInfo);
-		}
-		else
-		{
-			str_format(aBuff, sizeof(aBuff), "assets/%s/%s/%s.png", pAssetName, pAssetItem->m_aName, pAssetName);
-			if(pGraphics->LoadPNG(&ImgInfo, aBuff, IStorage::TYPE_ALL))
-			{
-				pAssetItem->m_RenderTexture = pGraphics->LoadTextureRaw(ImgInfo.m_Width, ImgInfo.m_Height, ImgInfo.m_Format, ImgInfo.m_pData, ImgInfo.m_Format, 0);
-				pGraphics->FreePNG(&ImgInfo);
-			}
+			str_format(aPath, sizeof(aPath), "assets/%s/%s/%s.png", pAssetName, pAssetItem->m_aName, pAssetName);
+			pAssetItem->m_RenderTexture = pGraphics->LoadTexture(aPath, IStorage::TYPE_ALL);
 		}
 	}
 }
@@ -176,7 +144,7 @@ static int AssetScan(const char *pName, int IsDir, int DirType, std::vector<TNam
 
 		TName AssetItem;
 		str_copy(AssetItem.m_aName, pName);
-		LoadAsset(&AssetItem, pAssetName, pGraphics, pUser);
+		LoadAsset(&AssetItem, pAssetName, pGraphics);
 		vAssetList.push_back(AssetItem);
 	}
 	else
@@ -191,7 +159,7 @@ static int AssetScan(const char *pName, int IsDir, int DirType, std::vector<TNam
 
 			TName AssetItem;
 			str_copy(AssetItem.m_aName, aName);
-			LoadAsset(&AssetItem, pAssetName, pGraphics, pUser);
+			LoadAsset(&AssetItem, pAssetName, pGraphics);
 			vAssetList.push_back(AssetItem);
 		}
 	}
@@ -256,7 +224,7 @@ static size_t gs_aCustomListSize[NUMBER_OF_ASSETS_TABS] = {
 	0,
 };
 
-static char s_aFilterString[NUMBER_OF_ASSETS_TABS][50];
+static CLineInputBuffered<64> s_aFilterInputs[NUMBER_OF_ASSETS_TABS];
 
 static int s_CurCustomTab = ASSETS_TAB_ENTITIES;
 
@@ -306,7 +274,7 @@ void CMenus::ClearCustomItems(int CurTab)
 		m_vEntitiesList.clear();
 
 		// reload current entities
-		m_pClient->m_MapImages.ChangeEntitiesPath(g_Config.m_ClAssetsEntites);
+		m_pClient->m_MapImages.ChangeEntitiesPath(g_Config.m_ClAssetsEntities);
 	}
 	else if(CurTab == ASSETS_TAB_GAME)
 	{
@@ -353,7 +321,7 @@ void InitAssetList(std::vector<TName> &vAssetList, const char *pAssetPath, const
 	{
 		TName AssetItem;
 		str_copy(AssetItem.m_aName, "default");
-		LoadAsset(&AssetItem, pAssetName, pGraphics, Caller);
+		LoadAsset(&AssetItem, pAssetName, pGraphics);
 		vAssetList.push_back(AssetItem);
 
 		// load assets
@@ -374,7 +342,7 @@ int InitSearchList(std::vector<const TName *> &vpSearchList, std::vector<TName> 
 		const TName *pAsset = &vAssetList[i];
 
 		// filter quick search
-		if(s_aFilterString[s_CurCustomTab][0] != '\0' && !str_utf8_find_nocase(pAsset->m_aName, s_aFilterString[s_CurCustomTab]))
+		if(!s_aFilterInputs[s_CurCustomTab].IsEmpty() && !str_utf8_find_nocase(pAsset->m_aName, s_aFilterInputs[s_CurCustomTab].GetString()))
 			continue;
 
 		vpSearchList.push_back(pAsset);
@@ -384,30 +352,29 @@ int InitSearchList(std::vector<const TName *> &vpSearchList, std::vector<TName> 
 
 void CMenus::RenderSettingsCustom(CUIRect MainView)
 {
-	CUIRect TabBar, CustomList, QuickSearch, QuickSearchClearButton, DirectoryButton, Page1Tab, Page2Tab, Page3Tab, Page4Tab, Page5Tab, Page6Tab, ReloadButton;
+	CUIRect TabBar, CustomList, QuickSearch, QuickSearchClearButton, DirectoryButton, ReloadButton;
 
-	MainView.HSplitTop(20, &TabBar, &MainView);
-	float TabsW = TabBar.w;
-	TabBar.VSplitLeft(TabsW / NUMBER_OF_ASSETS_TABS, &Page1Tab, &Page2Tab);
-	Page2Tab.VSplitLeft(TabsW / NUMBER_OF_ASSETS_TABS, &Page2Tab, &Page3Tab);
-	Page3Tab.VSplitLeft(TabsW / NUMBER_OF_ASSETS_TABS, &Page3Tab, &Page4Tab);
-	Page4Tab.VSplitLeft(TabsW / NUMBER_OF_ASSETS_TABS, &Page4Tab, &Page5Tab);
-	Page5Tab.VSplitLeft(TabsW / NUMBER_OF_ASSETS_TABS, &Page5Tab, &Page6Tab);
-
+	MainView.HSplitTop(20.0f, &TabBar, &MainView);
+	const float TabWidth = TabBar.w / NUMBER_OF_ASSETS_TABS;
 	static CButtonContainer s_aPageTabs[NUMBER_OF_ASSETS_TABS] = {};
+	const char *apTabNames[NUMBER_OF_ASSETS_TABS] = {
+		Localize("Entities"),
+		Localize("Game"),
+		Localize("Emoticons"),
+		Localize("Particles"),
+		Localize("HUD"),
+		Localize("Extras")};
 
-	if(DoButton_MenuTab((CButtonContainer *)&s_aPageTabs[ASSETS_TAB_ENTITIES], Localize("Entities"), s_CurCustomTab == ASSETS_TAB_ENTITIES, &Page1Tab, IGraphics::CORNER_L, NULL, NULL, NULL, NULL, 4))
-		s_CurCustomTab = ASSETS_TAB_ENTITIES;
-	if(DoButton_MenuTab((CButtonContainer *)&s_aPageTabs[ASSETS_TAB_GAME], Localize("Game"), s_CurCustomTab == ASSETS_TAB_GAME, &Page2Tab, 0, NULL, NULL, NULL, NULL, 4))
-		s_CurCustomTab = ASSETS_TAB_GAME;
-	if(DoButton_MenuTab((CButtonContainer *)&s_aPageTabs[ASSETS_TAB_EMOTICONS], Localize("Emoticons"), s_CurCustomTab == ASSETS_TAB_EMOTICONS, &Page3Tab, 0, NULL, NULL, NULL, NULL, 4))
-		s_CurCustomTab = ASSETS_TAB_EMOTICONS;
-	if(DoButton_MenuTab((CButtonContainer *)&s_aPageTabs[ASSETS_TAB_PARTICLES], Localize("Particles"), s_CurCustomTab == ASSETS_TAB_PARTICLES, &Page4Tab, 0, NULL, NULL, NULL, NULL, 4))
-		s_CurCustomTab = ASSETS_TAB_PARTICLES;
-	if(DoButton_MenuTab((CButtonContainer *)&s_aPageTabs[ASSETS_TAB_HUD], Localize("HUD"), s_CurCustomTab == ASSETS_TAB_HUD, &Page5Tab, 0, NULL, NULL, NULL, NULL, 4))
-		s_CurCustomTab = ASSETS_TAB_HUD;
-	if(DoButton_MenuTab((CButtonContainer *)&s_aPageTabs[ASSETS_TAB_EXTRAS], Localize("Extras"), s_CurCustomTab == ASSETS_TAB_EXTRAS, &Page6Tab, IGraphics::CORNER_R, NULL, NULL, NULL, NULL, 4))
-		s_CurCustomTab = ASSETS_TAB_EXTRAS;
+	for(int Tab = ASSETS_TAB_ENTITIES; Tab < NUMBER_OF_ASSETS_TABS; ++Tab)
+	{
+		CUIRect Button;
+		TabBar.VSplitLeft(TabWidth, &Button, &TabBar);
+		const int Corners = Tab == ASSETS_TAB_ENTITIES ? IGraphics::CORNER_L : Tab == NUMBER_OF_ASSETS_TABS - 1 ? IGraphics::CORNER_R : IGraphics::CORNER_NONE;
+		if(DoButton_MenuTab(&s_aPageTabs[Tab], apTabNames[Tab], s_CurCustomTab == Tab, &Button, Corners, nullptr, nullptr, nullptr, nullptr, 4.0f))
+		{
+			s_CurCustomTab = Tab;
+		}
+	}
 
 	auto LoadStartTime = time_get_nanoseconds();
 	SMenuAssetScanUser User;
@@ -457,7 +424,6 @@ void CMenus::RenderSettingsCustom(CUIRect MainView)
 
 	// skin selector
 	MainView.HSplitTop(MainView.h - 10.0f - ms_ButtonHeight, &CustomList, &MainView);
-	static float s_ScrollValue = 0.0f;
 	if(gs_aInitCustomList[s_CurCustomTab])
 	{
 		int ListSize = 0;
@@ -470,7 +436,7 @@ void CMenus::RenderSettingsCustom(CUIRect MainView)
 				const SCustomEntities *pEntity = &m_vEntitiesList[i];
 
 				// filter quick search
-				if(s_aFilterString[s_CurCustomTab][0] != '\0' && !str_utf8_find_nocase(pEntity->m_aName, s_aFilterString[s_CurCustomTab]))
+				if(!s_aFilterInputs[s_CurCustomTab].IsEmpty() && !str_utf8_find_nocase(pEntity->m_aName, s_aFilterInputs[s_CurCustomTab].GetString()))
 					continue;
 
 				gs_vpSearchEntitiesList.push_back(pEntity);
@@ -533,7 +499,8 @@ void CMenus::RenderSettingsCustom(CUIRect MainView)
 		SearchListSize = gs_vpSearchExtrasList.size();
 	}
 
-	UiDoListboxStart(&gs_aInitCustomList[s_CurCustomTab], &CustomList, TextureHeight + 15.0f + 10.0f + Margin, "", "", SearchListSize, CustomList.w / (Margin + TextureWidth), OldSelected, s_ScrollValue, true);
+	static CListBox s_ListBox;
+	s_ListBox.DoStart(TextureHeight + 15.0f + 10.0f + Margin, SearchListSize, CustomList.w / (Margin + TextureWidth), 1, OldSelected, &CustomList, false);
 	for(size_t i = 0; i < SearchListSize; ++i)
 	{
 		const SCustomItem *pItem = GetCustomItem(s_CurCustomTab, i);
@@ -542,7 +509,7 @@ void CMenus::RenderSettingsCustom(CUIRect MainView)
 
 		if(s_CurCustomTab == ASSETS_TAB_ENTITIES)
 		{
-			if(str_comp(pItem->m_aName, g_Config.m_ClAssetsEntites) == 0)
+			if(str_comp(pItem->m_aName, g_Config.m_ClAssetsEntities) == 0)
 				OldSelected = i;
 		}
 		else if(s_CurCustomTab == ASSETS_TAB_GAME)
@@ -571,37 +538,37 @@ void CMenus::RenderSettingsCustom(CUIRect MainView)
 				OldSelected = i;
 		}
 
-		CListboxItem Item = UiDoListboxNextItem(pItem, OldSelected >= 0 && (size_t)OldSelected == i);
+		const CListboxItem Item = s_ListBox.DoNextItem(pItem, OldSelected >= 0 && (size_t)OldSelected == i);
 		CUIRect ItemRect = Item.m_Rect;
 		ItemRect.Margin(Margin / 2, &ItemRect);
-		if(Item.m_Visible)
+		if(!Item.m_Visible)
+			continue;
+
+		CUIRect TextureRect;
+		ItemRect.HSplitTop(15, &ItemRect, &TextureRect);
+		TextureRect.HSplitTop(10, NULL, &TextureRect);
+		UI()->DoLabel(&ItemRect, pItem->m_aName, ItemRect.h - 2, TEXTALIGN_MC);
+		if(pItem->m_RenderTexture.IsValid())
 		{
-			CUIRect TextureRect;
-			ItemRect.HSplitTop(15, &ItemRect, &TextureRect);
-			TextureRect.HSplitTop(10, NULL, &TextureRect);
-			UI()->DoLabel(&ItemRect, pItem->m_aName, ItemRect.h - 2, TEXTALIGN_CENTER);
-			if(pItem->m_RenderTexture.IsValid())
-			{
-				Graphics()->WrapClamp();
-				Graphics()->TextureSet(pItem->m_RenderTexture);
-				Graphics()->QuadsBegin();
-				Graphics()->SetColor(1, 1, 1, 1);
-				IGraphics::CQuadItem QuadItem(TextureRect.x + (TextureRect.w - TextureWidth) / 2, TextureRect.y + (TextureRect.h - TextureHeight) / 2, TextureWidth, TextureHeight);
-				Graphics()->QuadsDrawTL(&QuadItem, 1);
-				Graphics()->QuadsEnd();
-				Graphics()->WrapNormal();
-			}
+			Graphics()->WrapClamp();
+			Graphics()->TextureSet(pItem->m_RenderTexture);
+			Graphics()->QuadsBegin();
+			Graphics()->SetColor(1, 1, 1, 1);
+			IGraphics::CQuadItem QuadItem(TextureRect.x + (TextureRect.w - TextureWidth) / 2, TextureRect.y + (TextureRect.h - TextureHeight) / 2, TextureWidth, TextureHeight);
+			Graphics()->QuadsDrawTL(&QuadItem, 1);
+			Graphics()->QuadsEnd();
+			Graphics()->WrapNormal();
 		}
 	}
 
-	const int NewSelected = UiDoListboxEnd(&s_ScrollValue, 0);
+	const int NewSelected = s_ListBox.DoEnd();
 	if(OldSelected != NewSelected)
 	{
 		if(GetCustomItem(s_CurCustomTab, NewSelected)->m_aName[0] != '\0')
 		{
 			if(s_CurCustomTab == ASSETS_TAB_ENTITIES)
 			{
-				str_copy(g_Config.m_ClAssetsEntites, GetCustomItem(s_CurCustomTab, NewSelected)->m_aName);
+				str_copy(g_Config.m_ClAssetsEntities, GetCustomItem(s_CurCustomTab, NewSelected)->m_aName);
 				m_pClient->m_MapImages.ChangeEntitiesPath(GetCustomItem(s_CurCustomTab, NewSelected)->m_aName);
 			}
 			else if(s_CurCustomTab == ASSETS_TAB_GAME)
@@ -637,29 +604,23 @@ void CMenus::RenderSettingsCustom(CUIRect MainView)
 		MainView.HSplitBottom(ms_ButtonHeight, &MainView, &QuickSearch);
 		QuickSearch.VSplitLeft(240.0f, &QuickSearch, &DirectoryButton);
 		QuickSearch.HSplitTop(5.0f, 0, &QuickSearch);
-		const char *pSearchLabel = "\xEF\x80\x82";
-		TextRender()->SetCurFont(TextRender()->GetFont(TEXT_FONT_ICON_FONT));
+		TextRender()->SetFontPreset(EFontPreset::ICON_FONT);
 		TextRender()->SetRenderFlags(ETextRenderFlags::TEXT_RENDER_FLAG_ONLY_ADVANCE_WIDTH | ETextRenderFlags::TEXT_RENDER_FLAG_NO_X_BEARING | ETextRenderFlags::TEXT_RENDER_FLAG_NO_Y_BEARING | ETextRenderFlags::TEXT_RENDER_FLAG_NO_PIXEL_ALIGMENT | ETextRenderFlags::TEXT_RENDER_FLAG_NO_OVERSIZE);
 
-		SLabelProperties Props;
-		Props.m_AlignVertically = 0;
-		UI()->DoLabel(&QuickSearch, pSearchLabel, 14.0f, TEXTALIGN_LEFT, Props);
-		float wSearch = TextRender()->TextWidth(0, 14.0f, pSearchLabel, -1, -1.0f);
+		UI()->DoLabel(&QuickSearch, FONT_ICON_MAGNIFYING_GLASS, 14.0f, TEXTALIGN_ML);
+		float wSearch = TextRender()->TextWidth(14.0f, FONT_ICON_MAGNIFYING_GLASS, -1, -1.0f);
 		TextRender()->SetRenderFlags(0);
-		TextRender()->SetCurFont(NULL);
+		TextRender()->SetFontPreset(EFontPreset::DEFAULT_FONT);
 		QuickSearch.VSplitLeft(wSearch, 0, &QuickSearch);
 		QuickSearch.VSplitLeft(5.0f, 0, &QuickSearch);
 		QuickSearch.VSplitLeft(QuickSearch.w - 15.0f, &QuickSearch, &QuickSearchClearButton);
-		static int s_ClearButton = 0;
-		static float s_Offset = 0.0f;
-		SUIExEditBoxProperties EditProps;
 		if(Input()->KeyPress(KEY_F) && Input()->ModifierIsPressed())
 		{
-			UI()->SetActiveItem(&s_aFilterString[s_CurCustomTab]);
-			EditProps.m_SelectText = true;
+			UI()->SetActiveItem(&s_aFilterInputs[s_CurCustomTab]);
+			s_aFilterInputs[s_CurCustomTab].SelectAll();
 		}
-		EditProps.m_pEmptyText = Localize("Search");
-		if(UI()->DoClearableEditBox(&s_aFilterString[s_CurCustomTab], &s_ClearButton, &QuickSearch, s_aFilterString[s_CurCustomTab], sizeof(s_aFilterString[0]), 14.0f, &s_Offset, false, IGraphics::CORNER_ALL, EditProps))
+		s_aFilterInputs[s_CurCustomTab].SetEmptyText(Localize("Search"));
+		if(UI()->DoClearableEditBox(&s_aFilterInputs[s_CurCustomTab], &QuickSearch, 14.0f))
 			gs_aInitCustomList[s_CurCustomTab] = true;
 	}
 
@@ -692,16 +653,17 @@ void CMenus::RenderSettingsCustom(CUIRect MainView)
 			dbg_msg("menus", "couldn't open file '%s'", aBuf);
 		}
 	}
+	GameClient()->m_Tooltips.DoToolTip(&s_AssetsDirID, &DirectoryButton, Localize("Open the directory to add custom assets"));
 
-	TextRender()->SetCurFont(TextRender()->GetFont(TEXT_FONT_ICON_FONT));
+	TextRender()->SetFontPreset(EFontPreset::ICON_FONT);
 	TextRender()->SetRenderFlags(ETextRenderFlags::TEXT_RENDER_FLAG_ONLY_ADVANCE_WIDTH | ETextRenderFlags::TEXT_RENDER_FLAG_NO_X_BEARING | ETextRenderFlags::TEXT_RENDER_FLAG_NO_Y_BEARING | ETextRenderFlags::TEXT_RENDER_FLAG_NO_PIXEL_ALIGMENT | ETextRenderFlags::TEXT_RENDER_FLAG_NO_OVERSIZE);
 	static CButtonContainer s_AssetsReloadBtnID;
-	if(DoButton_Menu(&s_AssetsReloadBtnID, "\xEF\x80\x9E", 0, &ReloadButton, nullptr, IGraphics::CORNER_ALL, 5, 0, vec4(1.0f, 1.0f, 1.0f, 0.75f), vec4(1, 1, 1, 0.5f), 0))
+	if(DoButton_Menu(&s_AssetsReloadBtnID, FONT_ICON_ARROW_ROTATE_RIGHT, 0, &ReloadButton) || Input()->KeyPress(KEY_F5) || (Input()->KeyPress(KEY_R) && Input()->ModifierIsPressed()))
 	{
 		ClearCustomItems(s_CurCustomTab);
 	}
 	TextRender()->SetRenderFlags(0);
-	TextRender()->SetCurFont(NULL);
+	TextRender()->SetFontPreset(EFontPreset::DEFAULT_FONT);
 }
 
 void CMenus::ConchainAssetsEntities(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData)
@@ -710,7 +672,7 @@ void CMenus::ConchainAssetsEntities(IConsole::IResult *pResult, void *pUserData,
 	if(pResult->NumArguments() == 1)
 	{
 		const char *pArg = pResult->GetString(0);
-		if(str_comp(pArg, g_Config.m_ClAssetsEntites) != 0)
+		if(str_comp(pArg, g_Config.m_ClAssetsEntities) != 0)
 		{
 			pThis->m_pClient->m_MapImages.ChangeEntitiesPath(pArg);
 		}

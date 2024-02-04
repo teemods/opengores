@@ -27,9 +27,6 @@
 %s wins!
 == %s voitti!
 
--Page %d-
-== -Sivu %d-
-
 Abort
 == Keskeytä
 
@@ -78,12 +75,6 @@ Clan
 Client
 == Asiakasohjelma
 
-Close
-== Sulje
-
-Connect
-== Yhdistä
-
 Connecting to
 == Yhdistetään
 
@@ -110,9 +101,6 @@ Delete
 
 Delete demo
 == Poista demo
-
-Demo details
-== Demon tiedot
 
 Demofile: %s
 == Demotiedosto: %s
@@ -153,9 +141,6 @@ Favorites
 Feet
 == Jalat
 
-Filter
-== Suotimet
-
 Fire
 == Ammu
 
@@ -167,9 +152,6 @@ Force vote
 
 Free-View
 == Vapaa näkymä
-
-Friends
-== Ystävät
 
 Fullscreen
 == Koko näyttö
@@ -273,9 +255,6 @@ No servers match your filter criteria
 Ok
 == Ok
 
-Open
-== Avaa
-
 Parent Folder
 == Yläkansio
 
@@ -290,10 +269,6 @@ Ping
 
 Pistol
 == Pistooli
-
-[Demo browser]
-Play
-== Toista
 
 Play background music
 == Soita taustamusiikki
@@ -328,9 +303,6 @@ Red team
 Red team wins!
 == Punainen joukkue voitti!
 
-Refresh
-== Päivitä
-
 Remote console
 == Etäkonsoli
 
@@ -340,17 +312,11 @@ Remove
 Remove friend
 == Poista ystävä
 
-Rename
-== Nimeä
-
 Rename demo
 == Uudelleennimeä demo
 
 Reset filter
 == Nollaa suotimet
-
-Sample rate
-== Näytteenottotaajuus
 
 Score
 == Pisteet
@@ -366,12 +332,6 @@ Screenshot
 
 Server address:
 == Palvelimen osoite:
-
-Server details
-== Palvelimen yksityiskohdat
-
-Server filter
-== Palvelinsuotimet
 
 Server info
 == Palvelintiedot
@@ -393,9 +353,6 @@ Show ingame HUD
 
 Show name plates
 == Näytä nimikyltit
-
-Skins
-== Ulkonäkö
 
 Sound
 == Äänet
@@ -441,9 +398,6 @@ The audio device couldn't be initialised.
 
 The server is running a non-standard tuning on a pure game type.
 == Tämä palvelin ajaa ei-standardeja virityksiä standardipelityypillä.
-
-There's an unsaved map in the editor, you might want to save it before you quit the game.
-== Editorissa on tallentamaton kenttä, saatat haluta tallentaa sen ennen kuin lopetat pelin.
 
 Time limit
 == Aikaraja
@@ -526,26 +480,11 @@ FSAA samples
 Sound volume
 == Äänenvoimakkuus
 
-Created:
-== Luotu:
-
 Max Screenshots
 == Kuvankaappausmaksimi
 
-Length:
-== Pituus:
-
 Laser
 == Laser
-
-Netversion:
-== Yhteysversio:
-
-Map:
-== Kenttä:
-
-Info
-== Info
 
 Hue
 == Värisävy
@@ -556,20 +495,8 @@ Record demo
 Your skin
 == Sinun ulkonäkösi
 
-Size:
-== Koko:
-
 Reset to defaults
 == Palaa oletusasetuksiin
-
-Quit anyway?
-== Lopeta siitä huolimatta?
-
-Display Modes
-== Näyttötilat
-
-Version:
-== Versio:
 
 Round
 == Kierros
@@ -580,9 +507,6 @@ Lht.
 UI Color
 == Käyttöliittymäväri
 
-Crc:
-== Crc:
-
 Alpha
 == Alfa
 
@@ -592,14 +516,8 @@ LAN
 Name plates size
 == Nimikylttien koko
 
-Type:
-== Tyyppi:
-
 Successfully saved the replay!
 == Uudelleentoisto tallentui onnistuneesti!
-
-Saving ddnet-settings.cfg failed
-== ddnet-settings.cfg:n tallentaminen epäonnistui
 
 Replay feature is disabled!
 == Uudelleentoisto-ominaisuus on pois käytöstä!
@@ -679,9 +597,6 @@ Your nickname '%s' is already used (%d points). Do you still want to use it?
 Checking for existing player with your name
 == Tarkistetaan, onko nimesi jo käytössä
 
-Country / Region
-== Maa / Alue
-
 Speed
 == Vauhti
 
@@ -757,17 +672,8 @@ Types
 Leak IP
 == Vuoda IP
 
-Select a name
-== Valitse nimi
-
-Please use a different name
-== Ole hyvä ja käytä toista nimeä
-
 Remove chat
 == Poista chatti
-
-Markers:
-== Merkit:
 
 %.2f MiB
 == %.2f MiB
@@ -792,9 +698,6 @@ Fetch Info
 
 Demos directory
 == Demohakemisto
-
-Render
-== Renderöi
 
 Connecting dummy
 == Yhdistetään dummyä
@@ -843,9 +746,6 @@ Refresh Rate
 
 Themes directory
 == Teemahakemisto
-
-Dummy settings
-== Dummyn asetukset
 
 Download skins
 == Lataa ulkonäköjä
@@ -937,9 +837,6 @@ Enable team chat sound
 Enable highlighted chat sound
 == Ota korostetun chatin äänet käyttöön
 
-Threaded sound loading
-== Säikeistetty äänilataus
-
 Game sound volume
 == Pelin äänenvoimakkuus
 
@@ -1006,8 +903,8 @@ Preview
 Save the best demo of each race
 == Tallenna jokaisen kentän paras demo
 
-Default length: %d
-== Oletuspituus: %d
+Default length
+== Oletuspituus
 
 Enable replays
 == Luo uudelleentoistoja
@@ -1044,9 +941,6 @@ Show other players' hook collision lines
 
 Show other players' key presses
 == Näytä muiden pelaajien näppäinpainallukset
-
-Old mouse mode
-== Vanha hiiritila
 
 Background
 == Tausta
@@ -1163,6 +1057,51 @@ Best
 9+ new mentions
 == 9+ uutta mainintaa
 
+[Graphics error]
+Failed during initialization. Try to change gfx_backend to OpenGL or Vulkan in settings_ddnet.cfg in the config directory and try again.
+== 
+
+[Graphics error]
+Out of VRAM. Try removing custom assets (skins, entities, etc.), especially those with high resolution.
+== 
+
+[Graphics error]
+An error during command recording occurred. Try to update your GPU drivers.
+== 
+
+[Graphics error]
+A render command failed. Try to update your GPU drivers.
+== 
+
+[Graphics error]
+Submitting the render commands failed. Try to update your GPU drivers.
+== 
+
+[Graphics error]
+Failed to swap framebuffers. Try to update your GPU drivers.
+== 
+
+[Graphics error]
+Unknown error. Try to change gfx_backend to OpenGL or Vulkan in settings_ddnet.cfg in the config directory and try again.
+== 
+
+[Graphics error]
+Could not initialize the given graphics backend, reverting to the default backend now.
+== 
+
+[Graphics error]
+Could not initialize the given graphics backend, this is probably because you didn't install the driver of the integrated graphics card.
+== 
+
+Could not save downloaded map. Try manually deleting this file: %s
+== 
+
+Error playing demo
+== 
+
+Saving settings to '%s' failed
+== 
+
 The format of texture %s is not RGBA which will cause visual bugs.
 == 
 
@@ -1190,6 +1129,39 @@ Initializing map logic
 Sending initial client info
 == 
 
+Quitting. Please wait…
+== 
+
+Restarting. Please wait…
+== 
+
+Searching
+== 
+
+Enter Username
+== 
+
+Enter Password
+== 
+
+NOT CONNECTED
+== 
+
+Match %d of %d
+== 
+
+No results
+== 
+
+Lines %d - %d (%s)
+== 
+
+Locked
+== 
+
+Following
+== 
+
 Position:
 == 
 
@@ -1199,7 +1171,25 @@ Speed:
 Angle:
 == 
 
+Multi-View
+== 
+
+Team %d
+== 
+
+Some map images could not be loaded. Check the local console for details.
+== 
+
 Uploading map data to GPU
+== 
+
+Some map sounds could not be loaded. Check the local console for details.
+== 
+
+Loading menu themes
+== 
+
+Press a key…
 == 
 
 Trying to determine UDP connectivity...
@@ -1220,10 +1210,40 @@ Getting game info
 Requesting to join the game
 == 
 
-Cancel
+Rename folder
+== 
+
+Render complete
+== 
+
+Are you sure that you want to restart?
+== 
+
+There's an unsaved map in the editor, you might want to save it.
+== 
+
+Continue anyway?
+== 
+
+A demo with this name already exists
+== 
+
+A folder with this name already exists
+== 
+
+Unable to rename the folder
 == 
 
 File '%s' already exists, do you want to overwrite it?
+== 
+
+(paused)
+== 
+
+Videos directory
+== 
+
+Video was saved to '%s'
 == 
 
 Join Tutorial Server
@@ -1235,16 +1255,47 @@ Skip Tutorial
 Loading menu images
 == 
 
-Refreshing...
+Are you sure that you want to disconnect and switch to a different server?
 == 
 
-Are you sure that you want to disconnect and switch to a different server?
+Communities
+== 
+
+Copy info
+== 
+
+No server selected
+== 
+
+Online players (%d)
+== 
+
+Online clanmates (%d)
+== 
+
+[friends (server browser)]
+Offline (%d)
+== 
+
+Click to select server. Double click to join your friend.
+== 
+
+Click to remove this player from your friends list.
+== 
+
+Click to remove this clan from your friends list.
+== 
+
+None
 == 
 
 Are you sure that you want to remove the player '%s' from your friends list?
 == 
 
 Are you sure that you want to remove the clan '%s' from your friends list?
+== 
+
+Add Clan
 == 
 
 Play the current demo
@@ -1256,25 +1307,27 @@ Pause the current demo
 Stop the current demo
 == 
 
+Go back the specified duration
+== 
+
+[Demo player duration]
+%d min.
+== 
+
+[Demo player duration]
+%d sec.
+== 
+
+Change the skip duration
+== 
+
+Go forward the specified duration
+== 
+
 Go back one tick
 == 
 
 Go forward one tick
-== 
-
-Slow down the demo
-== 
-
-Speed up the demo
-== 
-
-Mark the beginning of a cut
-== 
-
-Mark the end of a cut
-== 
-
-Export cut as a separate demo
 == 
 
 Go back one marker
@@ -1283,28 +1336,113 @@ Go back one marker
 Go forward one marker
 == 
 
+Slow down the demo
+== 
+
+Speed up the demo
+== 
+
+Mark the beginning of a cut (right click to reset)
+== 
+
+Mark the end of a cut (right click to reset)
+== 
+
+Export cut as a separate demo
+== 
+
+Close the demo player
+== 
+
 Toggle keyboard shortcuts
+== 
+
+Export demo cut
+== 
+
+Cut interval
+== 
+
+Cut length
+== 
+
+Render cut to video
+== 
+
+Please use a different filename
 == 
 
 Loading demo files
 == 
 
+All combined
+== 
+
+No demo selected
+== 
+
+Folder Link
+== 
+
+Created
+== 
+
+Netversion
+== 
+
+[Demo details]
+map not included
+== 
+
+Open the directory that contains the demo files
+== 
+
+Are you sure that you want to delete the folder '%s'?
+== 
+
 Are you sure that you want to delete the demo '%s'?
+== 
+
+Delete folder
 == 
 
 Unable to delete the demo '%s'
 == 
 
+Unable to delete the folder '%s'. Make sure it's empty first.
+== 
+
 Loading ghost files
+== 
+
+Ghosts directory
+== 
+
+Activate all
+== 
+
+Deactivate all
 == 
 
 Menu opened. Press Esc key again to close menu.
 == 
 
+Save power by lowering refresh rate (higher input latency)
+== 
+
 Settings file
 == 
 
+Open the settings file
+== 
+
 Config directory
+== 
+
+Open the directory that contains the configuration and user files
+== 
+
+Open the directory to add custom themes
 == 
 
 Automatically take statboard screenshot
@@ -1319,25 +1457,28 @@ Max CSVs
 Loading skin files
 == 
 
-Toggle to edit your dummy settings
-== 
-
 Download community skins
 == 
 
 Fat skins (DDFat)
 == 
 
+Create a random skin
+== 
+
 Choose default eyes when joining a server
+== 
+
+Open the directory to add custom skins
+== 
+
+Converse
 == 
 
 Dummy copy
 == 
 
 Hammerfly dummy
-== 
-
-Converse
 == 
 
 Statboard
@@ -1349,10 +1490,10 @@ Show entities
 Enable controller
 == 
 
-Controller %d: %s
+Controller
 == 
 
-Click to cycle through all available controllers.
+Ingame controller mode
 == 
 
 [Ingame controller mode]
@@ -1361,9 +1502,6 @@ Relative
 
 [Ingame controller mode]
 Absolute
-== 
-
-Ingame controller mode
 == 
 
 Ingame controller sens.
@@ -1375,19 +1513,16 @@ UI controller sens.
 Controller jitter tolerance
 == 
 
-No controller found. Plug in a controller and restart the game.
+No controller found. Plug in a controller.
 == 
 
-Device
+Axis
 == 
 
 Status
 == 
 
 Aim bind
-== 
-
-Controller Axis #%d
 == 
 
 Mouse
@@ -1399,13 +1534,13 @@ Ingame mouse sens.
 UI mouse sens.
 == 
 
-Controller
-== 
-
 Reset controls
 == 
 
 Are you sure that you want to reset the controls to their defaults?
+== 
+
+Cancel
 == 
 
 Windowed fullscreen
@@ -1423,7 +1558,7 @@ default
 custom
 == 
 
-Graphics cards
+Graphics card
 == 
 
 auto
@@ -1444,10 +1579,13 @@ Name Plate
 Hook Collisions
 == 
 
-Kill Messages
+Info Messages
 == 
 
 Show health, shields and ammo
+== 
+
+Show local time always
 == 
 
 DDRace HUD
@@ -1480,10 +1618,22 @@ Show freeze bars
 Opacity of freeze bars inside freeze
 == 
 
+Chat font size
+== 
+
+Chat width
+== 
+
 Show hook strength indicator
 == 
 
 Show local player's key presses
+== 
+
+Authed name color in scoreboard
+== 
+
+Same clan color in scoreboard
 == 
 
 Hook collision line
@@ -1508,6 +1658,9 @@ Something hookable
 == 
 
 A Tee
+== 
+
+Show finish messages
 == 
 
 Normal Color
@@ -1549,16 +1702,22 @@ Freeze Laser Inner Color
 Set all to Rifle
 == 
 
+Enable ghost
+== 
+
 When you cross the start line, show a ghost tee replicating the movements of your best time
+== 
+
+Opacity
+== 
+
+Only save improvements
 == 
 
 Overlay entities
 == 
 
 Show text entities
-== 
-
-Opacity
 == 
 
 Adjust the opacity of entities belonging to other teams, such as tees and nameplates
@@ -1573,13 +1732,13 @@ Quads are used for background decoration
 Tries to predict other entities to give a feel of low latency
 == 
 
-Entities Background color
+Regular background color
+== 
+
+Entities background color
 == 
 
 Show tiles layers from BG map
-== 
-
-Regular Background Color
 == 
 
 New random timeout code
@@ -1589,6 +1748,9 @@ Run on join
 == 
 
 Chat command (e.g. showall 1)
+== 
+
+Unregister protocol and file extensions
 == 
 
 Particles
@@ -1601,6 +1763,9 @@ Loading assets
 == 
 
 Assets directory
+== 
+
+Open the directory to add custom assets
 == 
 
 Tutorial
@@ -1618,9 +1783,6 @@ Loading race demo files
 Super
 == 
 
-Team %d
-== 
-
 Auto
 == 
 
@@ -1631,4 +1793,7 @@ Spree
 == 
 
 Grabs
+== 
+
+Moved ingame
 == 

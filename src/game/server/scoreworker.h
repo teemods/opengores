@@ -2,6 +2,7 @@
 #define GAME_SERVER_SCOREWORKER_H
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -45,10 +46,8 @@ struct CScorePlayerResult : ISqlResult
 		char m_aBroadcast[1024];
 		struct
 		{
-			float m_Time;
+			std::optional<float> m_Time;
 			float m_aTimeCp[NUM_CHECKPOINTS];
-			int m_Score;
-			int m_HasFinishScore;
 			int m_Birthday; // 0 indicates no birthday
 
 			// OpenGores
@@ -103,20 +102,22 @@ struct CScorePlayerResult : ISqlResult
 
 			char m_PowerStatusMessage[512];
 		} m_Info;
+
 		struct
 		{
 			char m_aReason[VOTE_REASON_LENGTH];
 			char m_aServer[32 + 1];
 			char m_aMap[MAX_MAP_LENGTH + 1];
 		} m_MapVote;
-	} m_Data; // PLAYER_INFO
+
+	} m_Data = {}; // PLAYER_INFO
 
 	void SetVariant(Variant v);
 };
 
-struct CScoreInitResult : ISqlResult
+struct CScoreLoadBestTimeResult : ISqlResult
 {
-	CScoreInitResult() :
+	CScoreLoadBestTimeResult() :
 		m_CurrentRecord(0)
 	{
 	}
@@ -126,9 +127,9 @@ struct CScoreInitResult : ISqlResult
 	char m_CurrentRecordHolder[16];
 };
 
-struct CSqlInitData : ISqlData
+struct CSqlLoadBestTimeData : ISqlData
 {
-	CSqlInitData(std::shared_ptr<CScoreInitResult> pResult) :
+	CSqlLoadBestTimeData(std::shared_ptr<CScoreLoadBestTimeResult> pResult) :
 		ISqlData(std::move(pResult))
 	{
 	}
@@ -204,9 +205,8 @@ struct CSqlScoreData : ISqlData
 
 struct CScoreSaveResult : ISqlResult
 {
-	CScoreSaveResult(int PlayerID, IGameController *pController) :
+	CScoreSaveResult(int PlayerID) :
 		m_Status(SAVE_FAILED),
-		m_SavedTeam(CSaveTeam(pController)),
 		m_RequestingPlayer(PlayerID)
 	{
 		m_aMessage[0] = '\0';
@@ -290,6 +290,8 @@ public:
 		m_BestTime = 0;
 		for(float &BestTimeCp : m_aBestTimeCp)
 			BestTimeCp = 0;
+
+		m_RecordStopTick = -1;
 	}
 
 	void Set(float Time, const float aTimeCp[NUM_CHECKPOINTS])
@@ -301,6 +303,9 @@ public:
 
 	float m_BestTime;
 	float m_aBestTimeCp[NUM_CHECKPOINTS];
+
+	int m_RecordStopTick;
+	float m_RecordFinishTime;
 };
 
 struct CTeamrank
@@ -329,7 +334,7 @@ struct CTeamrank
 
 struct CScoreWorker
 {
-	static bool Init(IDbConnection *pSqlServer, const ISqlData *pGameData, char *pError, int ErrorSize);
+	static bool LoadBestTime(IDbConnection *pSqlServer, const ISqlData *pGameData, char *pError, int ErrorSize);
 
 	static bool RandomMap(IDbConnection *pSqlServer, const ISqlData *pGameData, char *pError, int ErrorSize);
 	static bool RandomUnfinishedMap(IDbConnection *pSqlServer, const ISqlData *pGameData, char *pError, int ErrorSize);

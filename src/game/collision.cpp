@@ -160,7 +160,7 @@ enum
 
 static int GetMoveRestrictionsRaw(int Direction, int Tile, int Flags)
 {
-	Flags = Flags & (TILEFLAG_FLIP_HORIZONTAL | TILEFLAG_FLIP_VERTICAL | TILEFLAG_ROTATE);
+	Flags = Flags & (TILEFLAG_XFLIP | TILEFLAG_YFLIP | TILEFLAG_ROTATE);
 	switch(Tile)
 	{
 	case TILE_STOP:
@@ -171,10 +171,10 @@ static int GetMoveRestrictionsRaw(int Direction, int Tile, int Flags)
 		case ROTATION_180: return CANTMOVE_UP;
 		case ROTATION_270: return CANTMOVE_RIGHT;
 
-		case TILEFLAG_FLIP_VERTICAL ^ ROTATION_0: return CANTMOVE_UP;
-		case TILEFLAG_FLIP_VERTICAL ^ ROTATION_90: return CANTMOVE_RIGHT;
-		case TILEFLAG_FLIP_VERTICAL ^ ROTATION_180: return CANTMOVE_DOWN;
-		case TILEFLAG_FLIP_VERTICAL ^ ROTATION_270: return CANTMOVE_LEFT;
+		case TILEFLAG_YFLIP ^ ROTATION_0: return CANTMOVE_UP;
+		case TILEFLAG_YFLIP ^ ROTATION_90: return CANTMOVE_RIGHT;
+		case TILEFLAG_YFLIP ^ ROTATION_180: return CANTMOVE_DOWN;
+		case TILEFLAG_YFLIP ^ ROTATION_270: return CANTMOVE_LEFT;
 		}
 		break;
 	case TILE_STOPS:
@@ -182,13 +182,13 @@ static int GetMoveRestrictionsRaw(int Direction, int Tile, int Flags)
 		{
 		case ROTATION_0:
 		case ROTATION_180:
-		case TILEFLAG_FLIP_VERTICAL ^ ROTATION_0:
-		case TILEFLAG_FLIP_VERTICAL ^ ROTATION_180:
+		case TILEFLAG_YFLIP ^ ROTATION_0:
+		case TILEFLAG_YFLIP ^ ROTATION_180:
 			return CANTMOVE_DOWN | CANTMOVE_UP;
 		case ROTATION_90:
 		case ROTATION_270:
-		case TILEFLAG_FLIP_VERTICAL ^ ROTATION_90:
-		case TILEFLAG_FLIP_VERTICAL ^ ROTATION_270:
+		case TILEFLAG_YFLIP ^ ROTATION_90:
+		case TILEFLAG_YFLIP ^ ROTATION_270:
 			return CANTMOVE_LEFT | CANTMOVE_RIGHT;
 		}
 		break;
@@ -225,7 +225,7 @@ static int GetMoveRestrictions(int Direction, int Tile, int Flags)
 	return Result & GetMoveRestrictionsMask(Direction);
 }
 
-int CCollision::GetMoveRestrictions(CALLBACK_SWITCHACTIVE pfnSwitchActive, void *pUser, vec2 Pos, float Distance, int OverrideCenterTileIndex)
+int CCollision::GetMoveRestrictions(CALLBACK_SWITCHACTIVE pfnSwitchActive, void *pUser, vec2 Pos, float Distance, int OverrideCenterTileIndex) const
 {
 	static const vec2 DIRECTIONS[NUM_MR_DIRS] =
 		{
@@ -336,11 +336,14 @@ int CCollision::IntersectLineTeleHook(vec2 Pos0, vec2 Pos1, vec2 *pOutCollision,
 		int iy = round_to_int(Pos.y);
 
 		int Index = GetPureMapIndex(Pos);
-		if(g_Config.m_SvOldTeleportHook)
-			*pTeleNr = IsTeleport(Index);
-		else
-			*pTeleNr = IsTeleportHook(Index);
-		if(*pTeleNr)
+		if(pTeleNr)
+		{
+			if(g_Config.m_SvOldTeleportHook)
+				*pTeleNr = IsTeleport(Index);
+			else
+				*pTeleNr = IsTeleportHook(Index);
+		}
+		if(pTeleNr && *pTeleNr)
 		{
 			if(pOutCollision)
 				*pOutCollision = Pos;
@@ -391,11 +394,14 @@ int CCollision::IntersectLineTeleWeapon(vec2 Pos0, vec2 Pos1, vec2 *pOutCollisio
 		int iy = round_to_int(Pos.y);
 
 		int Index = GetPureMapIndex(Pos);
-		if(g_Config.m_SvOldTeleportWeapons)
-			*pTeleNr = IsTeleport(Index);
-		else
-			*pTeleNr = IsTeleportWeapon(Index);
-		if(*pTeleNr)
+		if(pTeleNr)
+		{
+			if(g_Config.m_SvOldTeleportWeapons)
+				*pTeleNr = IsTeleport(Index);
+			else
+				*pTeleNr = IsTeleportWeapon(Index);
+		}
+		if(pTeleNr && *pTeleNr)
 		{
 			if(pOutCollision)
 				*pOutCollision = Pos;
@@ -475,7 +481,7 @@ bool CCollision::TestBox(vec2 Pos, vec2 Size) const
 	return false;
 }
 
-void CCollision::MoveBox(vec2 *pInoutPos, vec2 *pInoutVel, vec2 Size, float Elasticity) const
+void CCollision::MoveBox(vec2 *pInoutPos, vec2 *pInoutVel, vec2 Size, vec2 Elasticity, bool *pGrounded) const
 {
 	// do the move
 	vec2 Pos = *pInoutPos;
@@ -487,6 +493,9 @@ void CCollision::MoveBox(vec2 *pInoutPos, vec2 *pInoutVel, vec2 Size, float Elas
 	if(Distance > 0.00001f)
 	{
 		float Fraction = 1.0f / (float)(Max + 1);
+		float ElasticityX = clamp(Elasticity.x, -1.0f, 1.0f);
+		float ElasticityY = clamp(Elasticity.y, -1.0f, 1.0f);
+
 		for(int i = 0; i <= Max; i++)
 		{
 			// Early break as optimization to stop checking for collisions for
@@ -512,15 +521,17 @@ void CCollision::MoveBox(vec2 *pInoutPos, vec2 *pInoutVel, vec2 Size, float Elas
 
 				if(TestBox(vec2(Pos.x, NewPos.y), Size))
 				{
+					if(pGrounded && ElasticityY > 0 && Vel.y > 0)
+						*pGrounded = true;
 					NewPos.y = Pos.y;
-					Vel.y *= -Elasticity;
+					Vel.y *= -ElasticityY;
 					Hits++;
 				}
 
 				if(TestBox(vec2(NewPos.x, Pos.y), Size))
 				{
 					NewPos.x = Pos.x;
-					Vel.x *= -Elasticity;
+					Vel.x *= -ElasticityX;
 					Hits++;
 				}
 
@@ -528,10 +539,12 @@ void CCollision::MoveBox(vec2 *pInoutPos, vec2 *pInoutVel, vec2 Size, float Elas
 				// this is a real _corner case_!
 				if(Hits == 0)
 				{
+					if(pGrounded && ElasticityY > 0 && Vel.y > 0)
+						*pGrounded = true;
 					NewPos.y = Pos.y;
-					Vel.y *= -Elasticity;
+					Vel.y *= -ElasticityY;
 					NewPos.x = Pos.x;
-					Vel.x *= -Elasticity;
+					Vel.x *= -ElasticityX;
 				}
 			}
 
@@ -634,30 +647,18 @@ int CCollision::IsEvilTeleport(int Index) const
 	return 0;
 }
 
-int CCollision::IsCheckTeleport(int Index) const
+bool CCollision::IsCheckTeleport(int Index) const
 {
-	if(Index < 0)
-		return 0;
-	if(!m_pTele)
-		return 0;
-
-	if(m_pTele[Index].m_Type == TILE_TELECHECKIN)
-		return m_pTele[Index].m_Number;
-
-	return 0;
+	if(Index < 0 || !m_pTele)
+		return false;
+	return m_pTele[Index].m_Type == TILE_TELECHECKIN;
 }
 
-int CCollision::IsCheckEvilTeleport(int Index) const
+bool CCollision::IsCheckEvilTeleport(int Index) const
 {
-	if(Index < 0)
-		return 0;
-	if(!m_pTele)
-		return 0;
-
-	if(m_pTele[Index].m_Type == TILE_TELECHECKINEVIL)
-		return m_pTele[Index].m_Number;
-
-	return 0;
+	if(Index < 0 || !m_pTele)
+		return false;
+	return m_pTele[Index].m_Type == TILE_TELECHECKINEVIL;
 }
 
 int CCollision::IsTeleCheckpoint(int Index) const
@@ -724,7 +725,7 @@ void CCollision::GetSpeedup(int Index, vec2 *pDir, int *pForce, int *pMaxSpeed) 
 		return;
 	float Angle = m_pSpeedup[Index].m_Angle * (pi / 180.0f);
 	*pForce = m_pSpeedup[Index].m_Force;
-	*pDir = vec2(cos(Angle), sin(Angle));
+	*pDir = direction(Angle);
 	if(pMaxSpeed)
 		*pMaxSpeed = m_pSpeedup[Index].m_MaxSpeed;
 }
@@ -892,9 +893,9 @@ int CCollision::GetMapIndex(vec2 Pos) const
 		return -1;
 }
 
-std::list<int> CCollision::GetMapIndices(vec2 PrevPos, vec2 Pos, unsigned MaxIndices) const
+std::vector<int> CCollision::GetMapIndices(vec2 PrevPos, vec2 Pos, unsigned MaxIndices) const
 {
-	std::list<int> Indices;
+	std::vector<int> vIndices;
 	float d = distance(PrevPos, Pos);
 	int End(d + 1);
 	if(!d)
@@ -905,11 +906,11 @@ std::list<int> CCollision::GetMapIndices(vec2 PrevPos, vec2 Pos, unsigned MaxInd
 
 		if(TileExists(Index))
 		{
-			Indices.push_back(Index);
-			return Indices;
+			vIndices.push_back(Index);
+			return vIndices;
 		}
 		else
-			return Indices;
+			return vIndices;
 	}
 	else
 	{
@@ -923,14 +924,14 @@ std::list<int> CCollision::GetMapIndices(vec2 PrevPos, vec2 Pos, unsigned MaxInd
 			int Index = Ny * m_Width + Nx;
 			if(TileExists(Index) && LastIndex != Index)
 			{
-				if(MaxIndices && Indices.size() > MaxIndices)
-					return Indices;
-				Indices.push_back(Index);
+				if(MaxIndices && vIndices.size() > MaxIndices)
+					return vIndices;
+				vIndices.push_back(Index);
 				LastIndex = Index;
 			}
 		}
 
-		return Indices;
+		return vIndices;
 	}
 }
 
@@ -993,7 +994,7 @@ int CCollision::GetIndex(vec2 PrevPos, vec2 Pos) const
 		}
 	}
 
-	for(int i = 0, id = (int)ceilf(Distance); i < id; i++)
+	for(int i = 0, id = std::ceil(Distance); i < id; i++)
 	{
 		float a = (float)i / Distance;
 		vec2 Tmp = mix(PrevPos, Pos, a);
@@ -1030,52 +1031,27 @@ int CCollision::GetFTile(int x, int y) const
 
 int CCollision::Entity(int x, int y, int Layer) const
 {
-	if((0 > x || x >= m_Width) || (0 > y || y >= m_Height))
-	{
-		char aBuf[12];
-		switch(Layer)
-		{
-		case LAYER_GAME:
-			str_format(aBuf, sizeof(aBuf), "Game");
-			break;
-		case LAYER_FRONT:
-			str_format(aBuf, sizeof(aBuf), "Front");
-			break;
-		case LAYER_SWITCH:
-			str_format(aBuf, sizeof(aBuf), "Switch");
-			break;
-		case LAYER_TELE:
-			str_format(aBuf, sizeof(aBuf), "Tele");
-			break;
-		case LAYER_SPEEDUP:
-			str_format(aBuf, sizeof(aBuf), "Speedup");
-			break;
-		case LAYER_TUNE:
-			str_format(aBuf, sizeof(aBuf), "Tune");
-			break;
-		default:
-			str_format(aBuf, sizeof(aBuf), "Unknown");
-		}
-		dbg_msg("collision", "something is VERY wrong with the %s layer please report this at https://github.com/ddnet/ddnet, you will need to post the map as well and any steps that u think may have led to this", aBuf);
+	if(x < 0 || x >= m_Width || y < 0 || y >= m_Height)
 		return 0;
-	}
+
+	const int Index = y * m_Width + x;
 	switch(Layer)
 	{
 	case LAYER_GAME:
-		return m_pTiles[y * m_Width + x].m_Index - ENTITY_OFFSET;
+		return m_pTiles[Index].m_Index - ENTITY_OFFSET;
 	case LAYER_FRONT:
-		return m_pFront[y * m_Width + x].m_Index - ENTITY_OFFSET;
+		return m_pFront[Index].m_Index - ENTITY_OFFSET;
 	case LAYER_SWITCH:
-		return m_pSwitch[y * m_Width + x].m_Type - ENTITY_OFFSET;
+		return m_pSwitch[Index].m_Type - ENTITY_OFFSET;
 	case LAYER_TELE:
-		return m_pTele[y * m_Width + x].m_Type - ENTITY_OFFSET;
+		return m_pTele[Index].m_Type - ENTITY_OFFSET;
 	case LAYER_SPEEDUP:
-		return m_pSpeedup[y * m_Width + x].m_Type - ENTITY_OFFSET;
+		return m_pSpeedup[Index].m_Type - ENTITY_OFFSET;
 	case LAYER_TUNE:
-		return m_pTune[y * m_Width + x].m_Type - ENTITY_OFFSET;
+		return m_pTune[Index].m_Type - ENTITY_OFFSET;
 	default:
-		return 0;
-		break;
+		dbg_assert(false, "Layer invalid");
+		dbg_break();
 	}
 }
 
@@ -1126,7 +1102,7 @@ void ThroughOffset(vec2 Pos0, vec2 Pos1, int *pOffsetX, int *pOffsetY)
 {
 	float x = Pos0.x - Pos1.x;
 	float y = Pos0.y - Pos1.y;
-	if(fabs(x) > fabs(y))
+	if(absolute(x) > absolute(y))
 	{
 		if(x < 0)
 		{
@@ -1159,7 +1135,7 @@ int CCollision::IntersectNoLaser(vec2 Pos0, vec2 Pos1, vec2 *pOutCollision, vec2
 	float d = distance(Pos0, Pos1);
 	vec2 Last = Pos0;
 
-	for(int i = 0, id = (int)ceilf(d); i < id; i++)
+	for(int i = 0, id = std::ceil(d); i < id; i++)
 	{
 		float a = (int)i / d;
 		vec2 Pos = mix(Pos0, Pos1, a);
@@ -1190,7 +1166,7 @@ int CCollision::IntersectNoLaserNW(vec2 Pos0, vec2 Pos1, vec2 *pOutCollision, ve
 	float d = distance(Pos0, Pos1);
 	vec2 Last = Pos0;
 
-	for(int i = 0, id = (int)ceilf(d); i < id; i++)
+	for(int i = 0, id = std::ceil(d); i < id; i++)
 	{
 		float a = (float)i / d;
 		vec2 Pos = mix(Pos0, Pos1, a);
@@ -1219,7 +1195,7 @@ int CCollision::IntersectAir(vec2 Pos0, vec2 Pos1, vec2 *pOutCollision, vec2 *pO
 	float d = distance(Pos0, Pos1);
 	vec2 Last = Pos0;
 
-	for(int i = 0, id = (int)ceilf(d); i < id; i++)
+	for(int i = 0, id = std::ceil(d); i < id; i++)
 	{
 		float a = (float)i / d;
 		vec2 Pos = mix(Pos0, Pos1, a);

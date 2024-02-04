@@ -15,6 +15,8 @@ CLight::CLight(CGameWorld *pGameWorld, vec2 Pos, float Rotation, int Length,
 	int Layer, int Number) :
 	CEntity(pGameWorld, CGameWorld::ENTTYPE_LASER)
 {
+	m_To = vec2(0.0f, 0.0f);
+	m_Core = vec2(0.0f, 0.0f);
 	m_Layer = Layer;
 	m_Number = Number;
 	m_Tick = (Server()->TickSpeed() * 0.15f);
@@ -28,11 +30,10 @@ CLight::CLight(CGameWorld *pGameWorld, vec2 Pos, float Rotation, int Length,
 
 bool CLight::HitCharacter()
 {
-	std::list<CCharacter *> HitCharacters =
-		GameServer()->m_World.IntersectedCharacters(m_Pos, m_To, 0.0f, 0);
-	if(HitCharacters.empty())
+	std::vector<CCharacter *> vpHitCharacters = GameServer()->m_World.IntersectedCharacters(m_Pos, m_To, 0.0f, 0);
+	if(vpHitCharacters.empty())
 		return false;
-	for(auto *pChar : HitCharacters)
+	for(auto *pChar : vpHitCharacters)
 	{
 		if(m_Layer == LAYER_SWITCH && m_Number > 0 && !Switchers()[m_Number].m_aStatus[pChar->Team()])
 			continue;
@@ -71,7 +72,7 @@ void CLight::Move()
 void CLight::Step()
 {
 	Move();
-	vec2 dir(sin(m_Rotation), cos(m_Rotation));
+	vec2 dir(std::sin(m_Rotation), std::cos(m_Rotation));
 	vec2 to2 = m_Pos + normalize(dir) * m_CurveLength;
 	GameServer()->Collision()->IntersectNoLaser(m_Pos, to2, &m_To, 0);
 }
@@ -107,69 +108,40 @@ void CLight::Snap(int SnappingClient)
 
 	int SnappingClientVersion = GameServer()->GetClientVersion(SnappingClient);
 
-	CNetObj_EntityEx *pEntData = 0;
-	if(SnappingClientVersion >= VERSION_DDNET_SWITCH && (m_Layer == LAYER_SWITCH || length(m_Core) > 0))
-		pEntData = static_cast<CNetObj_EntityEx *>(Server()->SnapNewItem(NETOBJTYPE_ENTITYEX, GetID(), sizeof(CNetObj_EntityEx)));
-
 	CCharacter *pChr = GameServer()->GetPlayerChar(SnappingClient);
 
 	if(SnappingClient != SERVER_DEMO_CLIENT && (GameServer()->m_apPlayers[SnappingClient]->GetTeam() == TEAM_SPECTATORS || GameServer()->m_apPlayers[SnappingClient]->IsPaused()) && GameServer()->m_apPlayers[SnappingClient]->m_SpectatorID != SPEC_FREEVIEW)
 		pChr = GameServer()->GetPlayerChar(GameServer()->m_apPlayers[SnappingClient]->m_SpectatorID);
 
-	if(pEntData)
+	vec2 From = m_Pos;
+	int StartTick = -1;
+
+	if(pChr && pChr->Team() == TEAM_SUPER)
 	{
-		pEntData->m_SwitchNumber = m_Number;
-		pEntData->m_Layer = m_Layer;
-		pEntData->m_EntityClass = ENTITYCLASS_LIGHT;
+		From = m_Pos;
 	}
-	else
+	else if(pChr && m_Layer == LAYER_SWITCH && Switchers()[m_Number].m_aStatus[pChr->Team()])
+	{
+		From = m_To;
+	}
+	else if(m_Layer != LAYER_SWITCH)
+	{
+		From = m_To;
+	}
+
+	if(SnappingClientVersion < VERSION_DDNET_ENTITY_NETOBJS)
 	{
 		int Tick = (Server()->Tick() % Server()->TickSpeed()) % 6;
 		if(pChr && pChr->IsAlive() && m_Layer == LAYER_SWITCH && m_Number > 0 && !Switchers()[m_Number].m_aStatus[pChr->Team()] && Tick)
 			return;
-	}
 
-	CNetObj_Laser *pObj = static_cast<CNetObj_Laser *>(Server()->SnapNewItem(
-		NETOBJTYPE_LASER, GetID(), sizeof(CNetObj_Laser)));
-
-	if(!pObj)
-		return;
-
-	pObj->m_X = (int)m_Pos.x;
-	pObj->m_Y = (int)m_Pos.y;
-
-	if(pChr && pChr->Team() == TEAM_SUPER)
-	{
-		pObj->m_FromX = (int)m_Pos.x;
-		pObj->m_FromY = (int)m_Pos.y;
-	}
-	else if(pChr && m_Layer == LAYER_SWITCH && Switchers()[m_Number].m_aStatus[pChr->Team()])
-	{
-		pObj->m_FromX = (int)m_To.x;
-		pObj->m_FromY = (int)m_To.y;
-	}
-	else if(m_Layer != LAYER_SWITCH)
-	{
-		pObj->m_FromX = (int)m_To.x;
-		pObj->m_FromY = (int)m_To.y;
-	}
-	else
-	{
-		pObj->m_FromX = (int)m_Pos.x;
-		pObj->m_FromY = (int)m_Pos.y;
-	}
-
-	if(pEntData)
-	{
-		pObj->m_StartTick = 0;
-	}
-	else
-	{
-		int StartTick = m_EvalTick;
+		StartTick = m_EvalTick;
 		if(StartTick < Server()->Tick() - 4)
 			StartTick = Server()->Tick() - 4;
 		else if(StartTick > Server()->Tick())
 			StartTick = Server()->Tick();
-		pObj->m_StartTick = StartTick;
 	}
+
+	GameServer()->SnapLaserObject(CSnapContext(SnappingClientVersion), GetID(),
+		m_Pos, From, StartTick, -1, LASERTYPE_FREEZE, 0, m_Number);
 }

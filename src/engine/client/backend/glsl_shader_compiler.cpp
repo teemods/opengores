@@ -19,7 +19,7 @@ CGLSLCompiler::CGLSLCompiler(int OpenGLVersionMajor, int OpenGLVersionMinor, int
 
 void CGLSLCompiler::AddDefine(const std::string &DefineName, const std::string &DefineValue)
 {
-	m_vDefines.emplace_back(SGLSLCompilerDefine(DefineName, DefineValue));
+	m_vDefines.emplace_back(DefineName, DefineValue);
 }
 
 void CGLSLCompiler::AddDefine(const char *pDefineName, const char *pDefineValue)
@@ -84,6 +84,8 @@ void CGLSLCompiler::ParseLine(std::string &Line, const char *pReadLine, EGLSLSha
 					// search for 'in' or 'out'
 					while(*pBuff && ((*pBuff != 'i' || *(pBuff + 1) != 'n') && (*pBuff != 'o' || (*(pBuff + 1) && *(pBuff + 1) != 'u') || *(pBuff + 2) != 't')))
 					{
+						// append anything that is inbetween noperspective & in/out vars
+						Line.push_back(*pBuff);
 						++pBuff;
 					}
 

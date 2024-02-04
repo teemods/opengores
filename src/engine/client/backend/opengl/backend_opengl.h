@@ -80,13 +80,13 @@ protected:
 	virtual bool IsNewApi() { return false; }
 	void DestroyTexture(int Slot);
 
-	bool GetPresentedImageData(uint32_t &Width, uint32_t &Height, uint32_t &Format, std::vector<uint8_t> &vDstData) override;
+	bool GetPresentedImageData(uint32_t &Width, uint32_t &Height, CImageInfo::EImageFormat &Format, std::vector<uint8_t> &vDstData) override;
 
 	static int TexFormatToOpenGLFormat(int TexFormat);
-	static size_t GLFormatToImageColorChannelCount(int GLFormat);
+	static size_t GLFormatToPixelSize(int GLFormat);
 
 	void TextureUpdate(int Slot, int X, int Y, int Width, int Height, int GLFormat, void *pTexData);
-	void TextureCreate(int Slot, int Width, int Height, int PixelSize, int GLFormat, int GLStoreFormat, int Flags, void *pTexData);
+	void TextureCreate(int Slot, int Width, int Height, int GLFormat, int GLStoreFormat, int Flags, void *pTexData);
 
 	virtual bool Cmd_Init(const SCommand_Init *pCommand);
 	virtual void Cmd_Shutdown(const SCommand_Shutdown *pCommand) {}
@@ -99,10 +99,10 @@ protected:
 	virtual void Cmd_Clear(const CCommandBuffer::SCommand_Clear *pCommand);
 	virtual void Cmd_Render(const CCommandBuffer::SCommand_Render *pCommand);
 	virtual void Cmd_RenderTex3D(const CCommandBuffer::SCommand_RenderTex3D *pCommand) { dbg_assert(false, "Call of unsupported Cmd_RenderTex3D"); }
+	virtual void Cmd_ReadPixel(const CCommandBuffer::SCommand_TrySwapAndReadPixel *pCommand);
 	virtual void Cmd_Screenshot(const CCommandBuffer::SCommand_TrySwapAndScreenshot *pCommand);
 
 	virtual void Cmd_Update_Viewport(const CCommandBuffer::SCommand_Update_Viewport *pCommand);
-	virtual void Cmd_Finish(const CCommandBuffer::SCommand_Finish *pCommand);
 
 	virtual void Cmd_CreateBufferObject(const CCommandBuffer::SCommand_CreateBufferObject *pCommand) { dbg_assert(false, "Call of unsupported Cmd_CreateBufferObject"); }
 	virtual void Cmd_RecreateBufferObject(const CCommandBuffer::SCommand_RecreateBufferObject *pCommand) { dbg_assert(false, "Call of unsupported Cmd_RecreateBufferObject"); }
@@ -117,7 +117,6 @@ protected:
 
 	virtual void Cmd_RenderTileLayer(const CCommandBuffer::SCommand_RenderTileLayer *pCommand) { dbg_assert(false, "Call of unsupported Cmd_RenderTileLayer"); }
 	virtual void Cmd_RenderBorderTile(const CCommandBuffer::SCommand_RenderBorderTile *pCommand) { dbg_assert(false, "Call of unsupported Cmd_RenderBorderTile"); }
-	virtual void Cmd_RenderBorderTileLine(const CCommandBuffer::SCommand_RenderBorderTileLine *pCommand) { dbg_assert(false, "Call of unsupported Cmd_RenderBorderTileLine"); }
 	virtual void Cmd_RenderQuadLayer(const CCommandBuffer::SCommand_RenderQuadLayer *pCommand) { dbg_assert(false, "Call of unsupported Cmd_RenderQuadLayer"); }
 	virtual void Cmd_RenderText(const CCommandBuffer::SCommand_RenderText *pCommand) { dbg_assert(false, "Call of unsupported Cmd_RenderText"); }
 	virtual void Cmd_RenderQuadContainer(const CCommandBuffer::SCommand_RenderQuadContainer *pCommand) { dbg_assert(false, "Call of unsupported Cmd_RenderQuadContainer"); }
@@ -159,11 +158,8 @@ class CCommandProcessorFragment_OpenGL2 : public CCommandProcessorFragment_OpenG
 	std::vector<SBufferObject> m_vBufferObjectIndices;
 
 #ifndef BACKEND_GL_MODERN_API
-	bool DoAnalyzeStep(size_t StepN, size_t CheckCount, size_t VerticesCount, uint8_t aFakeTexture[], size_t SingleImageSize);
+	bool DoAnalyzeStep(size_t CheckCount, size_t VerticesCount, uint8_t aFakeTexture[], size_t SingleImageSize);
 	bool IsTileMapAnalysisSucceeded();
-
-	void RenderBorderTileEmulation(SBufferContainer &BufferContainer, const CCommandBuffer::SState &State, const ColorRGBA &Color, const char *pBuffOffset, unsigned int DrawNum, const vec2 &Offset, const vec2 &Dir, int JumpIndex);
-	void RenderBorderTileLineEmulation(SBufferContainer &BufferContainer, const CCommandBuffer::SState &State, const ColorRGBA &Color, const char *pBuffOffset, unsigned int IndexDrawNum, unsigned int DrawNum, const vec2 &Offset, const vec2 &Dir);
 #endif
 
 	void UseProgram(CGLSLTWProgram *pProgram);
@@ -190,11 +186,12 @@ protected:
 
 	void Cmd_RenderTileLayer(const CCommandBuffer::SCommand_RenderTileLayer *pCommand) override;
 	void Cmd_RenderBorderTile(const CCommandBuffer::SCommand_RenderBorderTile *pCommand) override;
-	void Cmd_RenderBorderTileLine(const CCommandBuffer::SCommand_RenderBorderTileLine *pCommand) override;
 #endif
 
 	CGLSLTileProgram *m_pTileProgram;
 	CGLSLTileProgram *m_pTileProgramTextured;
+	CGLSLTileProgram *m_pBorderTileProgram;
+	CGLSLTileProgram *m_pBorderTileProgramTextured;
 	CGLSLPrimitiveProgram *m_pPrimitive3DProgram;
 	CGLSLPrimitiveProgram *m_pPrimitive3DProgramTextured;
 };

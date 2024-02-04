@@ -20,8 +20,8 @@ CProjectile::CProjectile(
 	int Span,
 	bool Freeze,
 	bool Explosive,
-	float Force,
 	int SoundImpact,
+	vec2 InitDir,
 	int Layer,
 	int Number) :
 	CEntity(pGameWorld, CGameWorld::ENTTYPE_PROJECTILE)
@@ -31,8 +31,7 @@ CProjectile::CProjectile(
 	m_Direction = Dir;
 	m_LifeSpan = Span;
 	m_Owner = Owner;
-	m_Force = Force;
-	// m_Damage = Damage;
+	//m_Damage = Damage;
 	m_SoundImpact = SoundImpact;
 	m_StartTick = Server()->Tick();
 	m_Explosive = Explosive;
@@ -41,6 +40,7 @@ CProjectile::CProjectile(
 	m_Number = Number;
 	m_Freeze = Freeze;
 
+	m_InitDir = InitDir;
 	m_TuneZone = GameServer()->Collision()->IsTune(GameServer()->Collision()->GetMapIndex(m_Pos));
 
 	CCharacter *pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
@@ -110,13 +110,13 @@ vec2 CProjectile::GetPos(float Time)
 	case WEAPON_GRENADE:
 		if(!m_TuneZone)
 		{
-			Curvature = GameServer()->Tuning()->m_GrenadeCurvature;
-			Speed = GameServer()->Tuning()->m_GrenadeSpeed;
+			Curvature = Tuning()->m_GrenadeCurvature;
+			Speed = Tuning()->m_GrenadeSpeed;
 		}
 		else
 		{
-			Curvature = GameServer()->TuningList()[m_TuneZone].m_GrenadeCurvature;
-			Speed = GameServer()->TuningList()[m_TuneZone].m_GrenadeSpeed;
+			Curvature = TuningList()[m_TuneZone].m_GrenadeCurvature;
+			Speed = TuningList()[m_TuneZone].m_GrenadeSpeed;
 		}
 
 		break;
@@ -124,13 +124,13 @@ vec2 CProjectile::GetPos(float Time)
 	case WEAPON_SHOTGUN:
 		if(!m_TuneZone)
 		{
-			Curvature = GameServer()->Tuning()->m_ShotgunCurvature;
-			Speed = GameServer()->Tuning()->m_ShotgunSpeed;
+			Curvature = Tuning()->m_ShotgunCurvature;
+			Speed = Tuning()->m_ShotgunSpeed;
 		}
 		else
 		{
-			Curvature = GameServer()->TuningList()[m_TuneZone].m_ShotgunCurvature;
-			Speed = GameServer()->TuningList()[m_TuneZone].m_ShotgunSpeed;
+			Curvature = TuningList()[m_TuneZone].m_ShotgunCurvature;
+			Speed = TuningList()[m_TuneZone].m_ShotgunSpeed;
 		}
 
 		break;
@@ -138,13 +138,13 @@ vec2 CProjectile::GetPos(float Time)
 	case WEAPON_GUN:
 		if(!m_TuneZone)
 		{
-			Curvature = GameServer()->Tuning()->m_GunCurvature;
-			Speed = GameServer()->Tuning()->m_GunSpeed;
+			Curvature = Tuning()->m_GunCurvature;
+			Speed = Tuning()->m_GunSpeed;
 		}
 		else
 		{
-			Curvature = GameServer()->TuningList()[m_TuneZone].m_GunCurvature;
-			Speed = GameServer()->TuningList()[m_TuneZone].m_GunSpeed;
+			Curvature = TuningList()[m_TuneZone].m_GunCurvature;
+			Speed = TuningList()[m_TuneZone].m_GunSpeed;
 		}
 		break;
 	}
@@ -174,7 +174,7 @@ void CProjectile::Tick()
 	if(m_LifeSpan > -1)
 		m_LifeSpan--;
 
-	int64_t TeamMask = -1LL;
+	CClientMask TeamMask = CClientMask().set();
 	bool IsWeaponCollide = false;
 	if(
 		pOwnerChar &&
@@ -207,9 +207,9 @@ void CProjectile::Tick()
 			for(int i = 0; i < Number; i++)
 			{
 				GameServer()->CreateExplosion(ColPos, m_Owner, m_Type, m_Owner == -1, (!pTargetChr ? -1 : pTargetChr->Team()),
-					(m_Owner != -1) ? TeamMask : -1LL);
+					(m_Owner != -1) ? TeamMask : CClientMask().set());
 				GameServer()->CreateSound(ColPos, m_SoundImpact,
-					(m_Owner != -1) ? TeamMask : -1LL);
+					(m_Owner != -1) ? TeamMask : CClientMask().set());
 			}
 		}
 		else if(m_Freeze)
@@ -273,15 +273,15 @@ void CProjectile::Tick()
 				m_Direction.x = -m_Direction.x;
 			else if(m_Bouncing == 2)
 				m_Direction.y = -m_Direction.y;
-			if(fabs(m_Direction.x) < 1e-6f)
+			if(absolute(m_Direction.x) < 1e-6f)
 				m_Direction.x = 0;
-			if(fabs(m_Direction.y) < 1e-6f)
+			if(absolute(m_Direction.y) < 1e-6f)
 				m_Direction.y = 0;
 			m_Pos += m_Direction;
 		}
 		else if(m_Type == WEAPON_GUN)
 		{
-			GameServer()->CreateDamageInd(CurPos, -atan2(m_Direction.x, m_Direction.y), 10, (m_Owner != -1) ? TeamMask : -1LL);
+			GameServer()->CreateDamageInd(CurPos, -std::atan2(m_Direction.x, m_Direction.y), 10, (m_Owner != -1) ? TeamMask : CClientMask().set());
 			m_MarkedForDestroy = true;
 			return;
 		}
@@ -301,16 +301,16 @@ void CProjectile::Tick()
 			if(m_Owner >= 0)
 				pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
 
-			TeamMask = -1LL;
+			TeamMask = CClientMask().set();
 			if(pOwnerChar && pOwnerChar->IsAlive())
 			{
 				TeamMask = pOwnerChar->TeamMask();
 			}
 
 			GameServer()->CreateExplosion(ColPos, m_Owner, m_Type, m_Owner == -1, (!pOwnerChar ? -1 : pOwnerChar->Team()),
-				(m_Owner != -1) ? TeamMask : -1LL);
+				(m_Owner != -1) ? TeamMask : CClientMask().set());
 			GameServer()->CreateSound(ColPos, m_SoundImpact,
-				(m_Owner != -1) ? TeamMask : -1LL);
+				(m_Owner != -1) ? TeamMask : CClientMask().set());
 		}
 		m_MarkedForDestroy = true;
 		return;
@@ -322,11 +322,10 @@ void CProjectile::Tick()
 		z = GameServer()->Collision()->IsTeleport(x);
 	else
 		z = GameServer()->Collision()->IsTeleportWeapon(x);
-	CGameControllerDDRace *pControllerDDRace = (CGameControllerDDRace *)GameServer()->m_pController;
-	if(z && !pControllerDDRace->m_TeleOuts[z - 1].empty())
+	if(z && !GameServer()->m_pController->m_TeleOuts[z - 1].empty())
 	{
-		int TeleOut = GameServer()->m_World.m_Core.RandomOr0(pControllerDDRace->m_TeleOuts[z - 1].size());
-		m_Pos = pControllerDDRace->m_TeleOuts[z - 1][TeleOut];
+		int TeleOut = GameServer()->m_World.m_Core.RandomOr0(GameServer()->m_pController->m_TeleOuts[z - 1].size());
+		m_Pos = GameServer()->m_pController->m_TeleOuts[z - 1][TeleOut];
 		m_StartTick = Server()->Tick();
 	}
 }
@@ -353,19 +352,8 @@ void CProjectile::Snap(int SnappingClient)
 	if(NetworkClipped(SnappingClient, GetPos(Ct)))
 		return;
 
-	if(m_LifeSpan == -2)
-	{
-		CNetObj_EntityEx *pEntData = static_cast<CNetObj_EntityEx *>(Server()->SnapNewItem(NETOBJTYPE_ENTITYEX, GetID(), sizeof(CNetObj_EntityEx)));
-		if(!pEntData)
-			return;
-
-		pEntData->m_SwitchNumber = m_Number;
-		pEntData->m_Layer = m_Layer;
-		pEntData->m_EntityClass = ENTITYCLASS_PROJECTILE;
-	}
-
 	int SnappingClientVersion = GameServer()->GetClientVersion(SnappingClient);
-	if(SnappingClientVersion < VERSION_DDNET_SWITCH)
+	if(SnappingClientVersion < VERSION_DDNET_ENTITY_NETOBJS)
 	{
 		CCharacter *pSnapChar = GameServer()->GetPlayerChar(SnappingClient);
 		int Tick = (Server()->Tick() % Server()->TickSpeed()) % ((m_Explosive) ? 6 : 20);
@@ -374,7 +362,7 @@ void CProjectile::Snap(int SnappingClient)
 	}
 
 	CCharacter *pOwnerChar = 0;
-	int64_t TeamMask = -1LL;
+	CClientMask TeamMask = CClientMask().set();
 
 	if(m_Owner >= 0)
 		pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
@@ -382,23 +370,33 @@ void CProjectile::Snap(int SnappingClient)
 	if(pOwnerChar && pOwnerChar->IsAlive())
 		TeamMask = pOwnerChar->TeamMask();
 
-	if(SnappingClient != SERVER_DEMO_CLIENT && m_Owner != -1 && !CmaskIsSet(TeamMask, SnappingClient))
+	if(SnappingClient != SERVER_DEMO_CLIENT && m_Owner != -1 && !TeamMask.test(SnappingClient))
 		return;
 
-	CNetObj_DDNetProjectile DDNetProjectile;
-	if(SnappingClientVersion >= VERSION_DDNET_ANTIPING_PROJECTILE && FillExtraInfo(&DDNetProjectile))
+	CNetObj_DDRaceProjectile DDRaceProjectile;
+
+	if(SnappingClientVersion >= VERSION_DDNET_ENTITY_NETOBJS)
 	{
-		int Type = SnappingClientVersion < VERSION_DDNET_MSG_LEGACY ? (int)NETOBJTYPE_PROJECTILE : NETOBJTYPE_DDNETPROJECTILE;
-		void *pProj = Server()->SnapNewItem(Type, GetID(), sizeof(DDNetProjectile));
+		CNetObj_DDNetProjectile *pDDNetProjectile = static_cast<CNetObj_DDNetProjectile *>(Server()->SnapNewItem(NETOBJTYPE_DDNETPROJECTILE, GetID(), sizeof(CNetObj_DDNetProjectile)));
+		if(!pDDNetProjectile)
+		{
+			return;
+		}
+		FillExtraInfo(pDDNetProjectile);
+	}
+	else if(SnappingClientVersion >= VERSION_DDNET_ANTIPING_PROJECTILE && FillExtraInfoLegacy(&DDRaceProjectile))
+	{
+		int Type = SnappingClientVersion < VERSION_DDNET_MSG_LEGACY ? (int)NETOBJTYPE_PROJECTILE : NETOBJTYPE_DDRACEPROJECTILE;
+		void *pProj = Server()->SnapNewItem(Type, GetID(), sizeof(DDRaceProjectile));
 		if(!pProj)
 		{
 			return;
 		}
-		mem_copy(pProj, &DDNetProjectile, sizeof(DDNetProjectile));
+		mem_copy(pProj, &DDRaceProjectile, sizeof(DDRaceProjectile));
 	}
 	else
 	{
-		CNetObj_Projectile *pProj = static_cast<CNetObj_Projectile *>(Server()->SnapNewItem(NETOBJTYPE_PROJECTILE, GetID(), sizeof(CNetObj_Projectile)));
+		CNetObj_Projectile *pProj = Server()->SnapNewItem<CNetObj_Projectile>(GetID());
 		if(!pProj)
 		{
 			return;
@@ -420,29 +418,29 @@ void CProjectile::SetBouncing(int Value)
 	m_Bouncing = Value;
 }
 
-bool CProjectile::FillExtraInfo(CNetObj_DDNetProjectile *pProj)
+bool CProjectile::FillExtraInfoLegacy(CNetObj_DDRaceProjectile *pProj)
 {
 	const int MaxPos = 0x7fffffff / 100;
-	if(abs((int)m_Pos.y) + 1 >= MaxPos || abs((int)m_Pos.x) + 1 >= MaxPos)
+	if(absolute((int)m_Pos.y) + 1 >= MaxPos || absolute((int)m_Pos.x) + 1 >= MaxPos)
 	{
 		// If the modified data would be too large to fit in an integer, send normal data instead
 		return false;
 	}
-	// Send additional/modified info, by modifying the fields of the netobj
-	float Angle = -atan2f(m_Direction.x, m_Direction.y);
+	//Send additional/modified info, by modifying the fields of the netobj
+	float Angle = -std::atan2(m_Direction.x, m_Direction.y);
 
 	int Data = 0;
-	Data |= (abs(m_Owner) & 255) << 0;
+	Data |= (absolute(m_Owner) & 255) << 0;
 	if(m_Owner < 0)
-		Data |= PROJECTILEFLAG_NO_OWNER;
-	// This bit tells the client to use the extra info
-	Data |= PROJECTILEFLAG_IS_DDNET;
-	// PROJECTILEFLAG_BOUNCE_HORIZONTAL, PROJECTILEFLAG_BOUNCE_VERTICAL
+		Data |= LEGACYPROJECTILEFLAG_NO_OWNER;
+	//This bit tells the client to use the extra info
+	Data |= LEGACYPROJECTILEFLAG_IS_DDNET;
+	// LEGACYPROJECTILEFLAG_BOUNCE_HORIZONTAL, LEGACYPROJECTILEFLAG_BOUNCE_VERTICAL
 	Data |= (m_Bouncing & 3) << 10;
 	if(m_Explosive)
-		Data |= PROJECTILEFLAG_EXPLOSIVE;
+		Data |= LEGACYPROJECTILEFLAG_EXPLOSIVE;
 	if(m_Freeze)
-		Data |= PROJECTILEFLAG_FREEZE;
+		Data |= LEGACYPROJECTILEFLAG_FREEZE;
 
 	pProj->m_X = (int)(m_Pos.x * 100.0f);
 	pProj->m_Y = (int)(m_Pos.y * 100.0f);
@@ -451,4 +449,46 @@ bool CProjectile::FillExtraInfo(CNetObj_DDNetProjectile *pProj)
 	pProj->m_StartTick = m_StartTick;
 	pProj->m_Type = m_Type;
 	return true;
+}
+
+void CProjectile::FillExtraInfo(CNetObj_DDNetProjectile *pProj)
+{
+	int Flags = 0;
+	if(m_Bouncing & 1)
+	{
+		Flags |= PROJECTILEFLAG_BOUNCE_HORIZONTAL;
+	}
+	if(m_Bouncing & 2)
+	{
+		Flags |= PROJECTILEFLAG_BOUNCE_VERTICAL;
+	}
+	if(m_Explosive)
+	{
+		Flags |= PROJECTILEFLAG_EXPLOSIVE;
+	}
+	if(m_Freeze)
+	{
+		Flags |= PROJECTILEFLAG_FREEZE;
+	}
+
+	if(m_Owner < 0)
+	{
+		pProj->m_VelX = round_to_int(m_Direction.x * 1e6f);
+		pProj->m_VelY = round_to_int(m_Direction.y * 1e6f);
+	}
+	else
+	{
+		pProj->m_VelX = round_to_int(m_InitDir.x);
+		pProj->m_VelY = round_to_int(m_InitDir.y);
+		Flags |= PROJECTILEFLAG_NORMALIZE_VEL;
+	}
+
+	pProj->m_X = round_to_int(m_Pos.x * 100.0f);
+	pProj->m_Y = round_to_int(m_Pos.y * 100.0f);
+	pProj->m_Type = m_Type;
+	pProj->m_StartTick = m_StartTick;
+	pProj->m_Owner = m_Owner;
+	pProj->m_Flags = Flags;
+	pProj->m_SwitchNumber = m_Number;
+	pProj->m_TuneZone = m_TuneZone;
 }

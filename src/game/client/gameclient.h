@@ -34,8 +34,8 @@
 #include "components/freezebars.h"
 #include "components/ghost.h"
 #include "components/hud.h"
+#include "components/infomessages.h"
 #include "components/items.h"
-#include "components/killmessages.h"
 #include "components/mapimages.h"
 #include "components/maplayers.h"
 #include "components/mapsounds.h"
@@ -96,6 +96,7 @@ public:
 	bool m_HudDDRace;
 
 	bool m_NoWeakHookAndBounce;
+	bool m_NoSkinChangeForFrozen;
 };
 
 class CSnapEntities
@@ -110,7 +111,7 @@ class CGameClient : public IGameClient
 {
 public:
 	// all components
-	CKillMessages m_KillMessages;
+	CInfoMessages m_InfoMessages;
 	CCamera m_Camera;
 	CChat m_Chat;
 	CMotd m_Motd;
@@ -140,9 +141,9 @@ public:
 	CItems m_Items;
 	CMapImages m_MapImages;
 
-	CMapLayers m_MapLayersBackGround = CMapLayers{CMapLayers::TYPE_BACKGROUND};
-	CMapLayers m_MapLayersForeGround = CMapLayers{CMapLayers::TYPE_FOREGROUND};
-	CBackground m_BackGround;
+	CMapLayers m_MapLayersBackground = CMapLayers{CMapLayers::TYPE_BACKGROUND};
+	CMapLayers m_MapLayersForeground = CMapLayers{CMapLayers::TYPE_FOREGROUND};
+	CBackground m_Background;
 	CMenuBackground m_MenuBackground;
 
 	CMapSounds m_MapSounds;
@@ -163,6 +164,7 @@ private:
 	class ITextRender *m_pTextRender;
 	class IClient *m_pClient;
 	class ISound *m_pSound;
+	class IConfigManager *m_pConfigManager;
 	class CConfig *m_pConfig;
 	class IConsole *m_pConsole;
 	class IStorage *m_pStorage;
@@ -175,6 +177,7 @@ private:
 #if defined(CONF_AUTOUPDATE)
 	class IUpdater *m_pUpdater;
 #endif
+	class IHttp *m_pHttp;
 
 	CLayers m_Layers;
 	CCollision m_Collision;
@@ -182,6 +185,9 @@ private:
 
 	void ProcessEvents();
 	void UpdatePositions();
+
+	int m_EditorMovementDelay = 5;
+	void UpdateEditorIngameMoved();
 
 	int m_PredictedTick;
 	int m_aLastNewPredictedTick[NUM_DUMMIES];
@@ -198,14 +204,25 @@ private:
 	static void ConTeam(IConsole::IResult *pResult, void *pUserData);
 	static void ConKill(IConsole::IResult *pResult, void *pUserData);
 
+	static void ConchainLanguageUpdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
 	static void ConchainSpecialInfoupdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
 	static void ConchainSpecialDummyInfoupdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
+	static void ConchainRefreshSkins(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
 	static void ConchainSpecialDummy(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
 	static void ConchainClTextEntitiesSize(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
 
 	static void ConTuneZone(IConsole::IResult *pResult, void *pUserData);
 
 	static void ConchainMenuMap(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
+
+	// only used in OnPredict
+	vec2 m_aLastPos[MAX_CLIENTS] = {{0, 0}};
+	bool m_aLastActive[MAX_CLIENTS] = {false};
+
+	// only used in OnNewSnapshot
+	bool m_GameOver = false;
+	bool m_GamePaused = false;
+	int m_PrevLocalID = -1;
 
 public:
 	IKernel *Kernel() { return IInterface::Kernel(); }
@@ -216,6 +233,7 @@ public:
 	class ISound *Sound() const { return m_pSound; }
 	class IInput *Input() const { return m_pInput; }
 	class IStorage *Storage() const { return m_pStorage; }
+	class IConfigManager *ConfigManager() const { return m_pConfigManager; }
 	class CConfig *Config() const { return m_pConfig; }
 	class IConsole *Console() { return m_pConsole; }
 	class ITextRender *TextRender() const { return m_pTextRender; }
@@ -235,6 +253,10 @@ public:
 		return m_pUpdater;
 	}
 #endif
+	class IHttp *Http()
+	{
+		return m_pHttp;
+	}
 
 	int NetobjNumCorrections()
 	{
@@ -470,12 +492,17 @@ public:
 	void OnRconLine(const char *pLine) override;
 	virtual void OnGameOver();
 	virtual void OnStartGame();
+	virtual void OnStartRound();
 	virtual void OnFlagGrab(int TeamID);
+	void OnWindowResize() override;
 
-	void OnWindowResize();
-	static void OnWindowResizeCB(void *pUser);
-
+	bool m_LanguageChanged = false;
 	void OnLanguageChange();
+	void HandleLanguageChanged();
+
+	void RefreshSkins();
+
+	void RenderShutdownMessage();
 
 	const char *GetItemName(int Type) const override;
 	const char *Version() const override;
@@ -488,7 +515,7 @@ public:
 	void SendSwitchTeam(int Team);
 	void SendInfo(bool Start);
 	void SendDummyInfo(bool Start) override;
-	void SendKill(int ClientID);
+	void SendKill(int ClientID) const;
 
 	// DDRace
 
@@ -502,7 +529,7 @@ public:
 
 	int IntersectCharacter(vec2 HookPos, vec2 NewPos, vec2 &NewPos2, int ownID);
 
-	int GetLastRaceTick() override;
+	int GetLastRaceTick() const override;
 
 	bool IsTeamPlay() { return m_Snap.m_pGameInfoObj && m_Snap.m_pGameInfoObj->m_GameFlags & GAMEFLAG_TEAMS; }
 
@@ -510,9 +537,10 @@ public:
 	bool AntiPingGrenade() { return g_Config.m_ClAntiPing && g_Config.m_ClAntiPingGrenade && !m_Snap.m_SpecInfo.m_Active && Client()->State() != IClient::STATE_DEMOPLAYBACK; }
 	bool AntiPingWeapons() { return g_Config.m_ClAntiPing && g_Config.m_ClAntiPingWeapons && !m_Snap.m_SpecInfo.m_Active && Client()->State() != IClient::STATE_DEMOPLAYBACK; }
 	bool AntiPingGunfire() { return AntiPingGrenade() && AntiPingWeapons() && g_Config.m_ClAntiPingGunfire; }
-	bool Predict() { return g_Config.m_ClPredict && !(m_Snap.m_pGameInfoObj && m_Snap.m_pGameInfoObj->m_GameStateFlags & GAMESTATEFLAG_GAMEOVER) && !m_Snap.m_SpecInfo.m_Active && Client()->State() != IClient::STATE_DEMOPLAYBACK && m_Snap.m_pLocalCharacter; }
+	bool Predict() const;
 	bool PredictDummy() { return g_Config.m_ClPredictDummy && Client()->DummyConnected() && m_Snap.m_LocalClientID >= 0 && m_PredictedDummyID >= 0 && !m_aClients[m_PredictedDummyID].m_Paused; }
-	CTuningParams GetTunes(int i) { return m_aTuningList[i]; }
+	const CTuningParams *GetTuning(int i) { return &m_aTuningList[i]; }
+	ColorRGBA GetDDTeamColor(int DDTeam, float Lightness = 0.5f) const;
 
 	CGameWorld m_GameWorld;
 	CGameWorld m_PredictedWorld;
@@ -523,11 +551,11 @@ public:
 
 	void DummyResetInput() override;
 	void Echo(const char *pString) override;
-	bool IsOtherTeam(int ClientID);
-	int SwitchStateTeam();
-	bool IsLocalCharSuper();
-	bool CanDisplayWarning() override;
-	bool IsDisplayingWarning() override;
+	bool IsOtherTeam(int ClientID) const;
+	int SwitchStateTeam() const;
+	bool IsLocalCharSuper() const;
+	bool CanDisplayWarning() const override;
+	bool IsDisplayingWarning() const override;
 	CNetObjHandler *GetNetObjHandler() override;
 
 	void LoadGameSkin(const char *pPath, bool AsDir = false);
@@ -535,8 +563,6 @@ public:
 	void LoadParticlesSkin(const char *pPath, bool AsDir = false);
 	void LoadHudSkin(const char *pPath, bool AsDir = false);
 	void LoadExtrasSkin(const char *pPath, bool AsDir = false);
-
-	void RefindSkins();
 
 	struct SClientGameSkin
 	{
@@ -698,6 +724,16 @@ public:
 
 	const std::vector<CSnapEntities> &SnapEntities() { return m_vSnapEntities; }
 
+	int m_MultiViewTeam;
+	int m_MultiViewPersonalZoom;
+	bool m_MultiViewShowHud;
+	bool m_MultiViewActivated;
+	bool m_aMultiViewId[MAX_CLIENTS];
+
+	void ResetMultiView();
+	int FindFirstMultiViewId();
+	void CleanMultiViewId(int ClientID);
+
 private:
 	std::vector<CSnapEntities> m_vSnapEntities;
 	void SnapCollectEntities();
@@ -707,7 +743,10 @@ private:
 
 	void UpdatePrediction();
 	void UpdateRenderedCharacters();
+
+	int m_aLastUpdateTick[MAX_CLIENTS] = {0};
 	void DetectStrongHook();
+
 	vec2 GetSmoothPos(int ClientID);
 
 	int m_PredictedDummyID;
@@ -726,6 +765,29 @@ private:
 	float m_LastZoom;
 	float m_LastScreenAspect;
 	bool m_LastDummyConnected;
+
+	void HandleMultiView();
+	bool IsMultiViewIdSet();
+	void CleanMultiViewIds();
+	bool InitMultiView(int Team);
+	float CalculateMultiViewMultiplier(vec2 TargetPos);
+	float CalculateMultiViewZoom(vec2 MinPos, vec2 MaxPos, float Vel);
+	float MapValue(float MaxValue, float MinValue, float MaxRange, float MinRange, float Value);
+
+	struct SMultiView
+	{
+		bool m_Solo;
+		bool m_IsInit;
+		bool m_Teleported;
+		bool m_aVanish[MAX_CLIENTS];
+		vec2 m_OldPos;
+		int m_OldPersonalZoom;
+		float m_SecondChance;
+		float m_OldCameraDistance;
+		float m_aLastFreeze[MAX_CLIENTS];
+	};
+
+	SMultiView m_MultiView;
 };
 
 ColorRGBA CalculateNameColor(ColorHSLA TextColorHSL);

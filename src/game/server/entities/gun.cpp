@@ -16,6 +16,7 @@
 CGun::CGun(CGameWorld *pGameWorld, vec2 Pos, bool Freeze, bool Explosive, int Layer, int Number) :
 	CEntity(pGameWorld, CGameWorld::ENTTYPE_LASER)
 {
+	m_Core = vec2(0.0f, 0.0f);
 	m_Pos = Pos;
 	m_Freeze = Freeze;
 	m_Explosive = Explosive;
@@ -149,25 +150,12 @@ void CGun::Snap(int SnappingClient)
 
 	int SnappingClientVersion = GameServer()->GetClientVersion(SnappingClient);
 
-	CNetObj_EntityEx *pEntData = 0;
-	if(SnappingClientVersion >= VERSION_DDNET_SWITCH)
-	{
-		pEntData = static_cast<CNetObj_EntityEx *>(Server()->SnapNewItem(NETOBJTYPE_ENTITYEX, GetID(),
-			sizeof(CNetObj_EntityEx)));
-		if(pEntData)
-		{
-			pEntData->m_SwitchNumber = m_Number;
-			pEntData->m_Layer = m_Layer;
+	int Subtype = (m_Explosive ? 1 : 0) | (m_Freeze ? 2 : 0);
 
-			if(m_Explosive && !m_Freeze)
-				pEntData->m_EntityClass = ENTITYCLASS_GUN_NORMAL;
-			else if(m_Explosive && m_Freeze)
-				pEntData->m_EntityClass = ENTITYCLASS_GUN_EXPLOSIVE;
-			else if(!m_Explosive && m_Freeze)
-				pEntData->m_EntityClass = ENTITYCLASS_GUN_FREEZE;
-			else
-				pEntData->m_EntityClass = ENTITYCLASS_GUN_UNFREEZE;
-		}
+	int StartTick;
+	if(SnappingClientVersion >= VERSION_DDNET_ENTITY_NETOBJS)
+	{
+		StartTick = -1;
 	}
 	else
 	{
@@ -184,21 +172,10 @@ void CGun::Snap(int SnappingClient)
 		if(pChar && m_Layer == LAYER_SWITCH && m_Number > 0 &&
 			!Switchers()[m_Number].m_aStatus[pChar->Team()] && (!Tick))
 			return;
+
+		StartTick = m_EvalTick;
 	}
 
-	CNetObj_Laser *pObj = static_cast<CNetObj_Laser *>(Server()->SnapNewItem(
-		NETOBJTYPE_LASER, GetID(), sizeof(CNetObj_Laser)));
-
-	if(!pObj)
-		return;
-
-	pObj->m_X = (int)m_Pos.x;
-	pObj->m_Y = (int)m_Pos.y;
-	pObj->m_FromX = (int)m_Pos.x;
-	pObj->m_FromY = (int)m_Pos.y;
-
-	if(pEntData)
-		pObj->m_StartTick = 0;
-	else
-		pObj->m_StartTick = m_EvalTick;
+	GameServer()->SnapLaserObject(CSnapContext(SnappingClientVersion), GetID(),
+		m_Pos, m_Pos, StartTick, -1, LASERTYPE_GUN, Subtype, m_Number);
 }

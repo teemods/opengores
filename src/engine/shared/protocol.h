@@ -3,7 +3,7 @@
 #ifndef ENGINE_SHARED_PROTOCOL_H
 #define ENGINE_SHARED_PROTOCOL_H
 
-#include <base/system.h>
+#include <bitset>
 
 /*
 	Connection diagram - How the initialization works.
@@ -47,8 +47,8 @@ enum
 	NETMSG_RCON_AUTH_STATUS, // result of the authentication
 	NETMSG_RCON_LINE, // line that should be printed to the remote console
 
-	NETMSG_AUTH_CHALLANGE, //
-	NETMSG_AUTH_RESULT, //
+	NETMSG_UNUSED1,
+	NETMSG_UNUSED2,
 
 	// sent by client
 	NETMSG_READY, //
@@ -58,13 +58,13 @@ enum
 	NETMSG_RCON_AUTH, //
 	NETMSG_REQUEST_MAP_DATA, //
 
-	NETMSG_AUTH_START, //
-	NETMSG_AUTH_RESPONSE, //
+	NETMSG_UNUSED3,
+	NETMSG_UNUSED4,
 
 	// sent by both
 	NETMSG_PING,
 	NETMSG_PING_REPLY,
-	NETMSG_ERROR,
+	NETMSG_UNUSED5,
 
 	// sent by server (todo: move it up)
 	NETMSG_RCON_CMD_ADD,
@@ -87,6 +87,8 @@ enum
 	MAX_CLIENTS = 64,
 	VANILLA_MAX_CLIENTS = 16,
 	MAX_CHECKPOINTS = 25,
+	MIN_TICK = 0,
+	MAX_TICK = 0x6FFFFFFF,
 
 	MAX_INPUT_SIZE = 128,
 	MAX_SNAPSHOT_PACKSIZE = 900,
@@ -121,6 +123,10 @@ enum
 	VERSION_DDNET_WEAPON_SHIELDS = 16010,
 	VERSION_DDNET_NEW_HUD = 16020,
 	VERSION_DDNET_MULTI_LASER = 16040,
+	VERSION_DDNET_ENTITY_NETOBJS = 16200,
+	VERSION_DDNET_REDIRECT = 17020,
 };
+
+typedef std::bitset<MAX_CLIENTS> CClientMask;
 
 #endif

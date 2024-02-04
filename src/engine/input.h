@@ -4,17 +4,18 @@
 #define ENGINE_INPUT_H
 
 #include "kernel.h"
+#include <base/system.h>
 
 const int g_MaxKeys = 512;
 extern const char g_aaKeyStrings[g_MaxKeys][20];
 
 class IInput : public IInterface
 {
-	MACRO_INTERFACE("input", 0)
+	MACRO_INTERFACE("input")
 public:
 	enum
 	{
-		INPUT_TEXT_SIZE = 128
+		INPUT_TEXT_SIZE = 32 * UTF8_BYTE_LENGTH + 1,
 	};
 
 	class CEvent
@@ -33,16 +34,17 @@ protected:
 	};
 
 	// quick access to events
-	int m_NumEvents;
-	IInput::CEvent m_aInputEvents[INPUT_BUFFER_SIZE];
+	size_t m_NumEvents;
+	CEvent m_aInputEvents[INPUT_BUFFER_SIZE];
+	int64_t m_LastUpdate;
+	float m_UpdateTime;
 
 public:
 	enum
 	{
-		FLAG_PRESS = 1,
-		FLAG_RELEASE = 2,
-		FLAG_REPEAT = 4,
-		FLAG_TEXT = 8,
+		FLAG_PRESS = 1 << 0,
+		FLAG_RELEASE = 1 << 1,
+		FLAG_TEXT = 1 << 2,
 	};
 	enum ECursorType
 	{
@@ -50,21 +52,27 @@ public:
 		CURSOR_MOUSE,
 		CURSOR_JOYSTICK,
 	};
+	enum
+	{
+		MAX_COMPOSITION_ARRAY_SIZE = 32, // SDL2 limitation
+
+		COMP_LENGTH_INACTIVE = -1,
+	};
 
 	// events
-	int NumEvents() const { return m_NumEvents; }
-	virtual bool IsEventValid(CEvent *pEvent) const = 0;
-	CEvent GetEvent(int Index) const
+	size_t NumEvents() const { return m_NumEvents; }
+	virtual bool IsEventValid(const CEvent &Event) const = 0;
+	const CEvent &GetEvent(size_t Index) const
 	{
-		if(Index < 0 || Index >= m_NumEvents)
-		{
-			IInput::CEvent e = {0, 0};
-			return e;
-		}
+		dbg_assert(Index < m_NumEvents, "Index invalid");
 		return m_aInputEvents[Index];
 	}
-	CEvent *GetEventsRaw() { return m_aInputEvents; }
-	int *GetEventCountRaw() { return &m_NumEvents; }
+
+	/**
+	 * @return Rolling average of the time in seconds between
+	 * calls of the Update function.
+	 */
+	float GetUpdateTime() const { return m_UpdateTime; }
 
 	// keys
 	virtual bool ModifierIsPressed() const = 0;
@@ -91,8 +99,9 @@ public:
 		virtual bool Absolute(float *pX, float *pY) = 0;
 	};
 	virtual size_t NumJoysticks() const = 0;
+	virtual IJoystick *GetJoystick(size_t Index) = 0;
 	virtual IJoystick *GetActiveJoystick() = 0;
-	virtual void SelectNextJoystick() = 0;
+	virtual void SetActiveJoystick(size_t Index) = 0;
 
 	// mouse
 	virtual void NativeMousePos(int *pX, int *pY) const = 0;
@@ -107,12 +116,18 @@ public:
 	virtual void SetClipboardText(const char *pText) = 0;
 
 	// text editing
-	virtual bool GetIMEState() = 0;
-	virtual void SetIMEState(bool Activate) = 0;
-	virtual int GetIMEEditingTextLength() const = 0;
-	virtual const char *GetIMEEditingText() = 0;
-	virtual int GetEditingCursor() = 0;
-	virtual void SetEditingPosition(float X, float Y) = 0;
+	virtual void StartTextInput() = 0;
+	virtual void StopTextInput() = 0;
+	virtual const char *GetComposition() const = 0;
+	virtual bool HasComposition() const = 0;
+	virtual int GetCompositionCursor() const = 0;
+	virtual int GetCompositionLength() const = 0;
+	virtual const char *GetCandidate(int Index) const = 0;
+	virtual int GetCandidateCount() const = 0;
+	virtual int GetCandidateSelectedIndex() const = 0;
+	virtual void SetCompositionWindowPosition(float X, float Y, float H) = 0;
+
+	virtual bool GetDropFile(char *aBuf, int Len) = 0;
 
 	ECursorType CursorRelative(float *pX, float *pY)
 	{
@@ -127,12 +142,11 @@ public:
 
 class IEngineInput : public IInput
 {
-	MACRO_INTERFACE("engineinput", 0)
+	MACRO_INTERFACE("engineinput")
 public:
 	virtual void Init() = 0;
 	virtual void Shutdown() override = 0;
 	virtual int Update() = 0;
-	virtual int VideoRestartNeeded() = 0;
 };
 
 extern IEngineInput *CreateEngineInput();

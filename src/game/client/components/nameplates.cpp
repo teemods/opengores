@@ -49,7 +49,7 @@ void CNamePlates::RenderNameplatePos(vec2 Position, const CNetObj_PlayerInfo *pP
 	if(IVideo::Current())
 		ShowDirection = g_Config.m_ClVideoShowDirection;
 #endif
-	if((pPlayerInfo->m_Local && ShowDirection == 2) || (!pPlayerInfo->m_Local && ShowDirection >= 1))
+	if((ShowDirection && ShowDirection != 3 && !pPlayerInfo->m_Local) || (ShowDirection >= 2 && pPlayerInfo->m_Local) || (ShowDirection == 3 && Client()->DummyConnected() && Client()->State() != IClient::STATE_DEMOPLAYBACK && ClientID == m_pClient->m_aLocalIDs[!g_Config.m_ClDummy]))
 	{
 		Graphics()->SetColor(1.0f, 1.0f, 1.0f, 1.0f);
 		Graphics()->QuadsSetRotation(0);
@@ -58,18 +58,34 @@ void CNamePlates::RenderNameplatePos(vec2 Position, const CNetObj_PlayerInfo *pP
 		YOffset -= ShowDirectionImgSize;
 		vec2 ShowDirectionPos = vec2(Position.x - 11.0f, YOffset);
 
-		if(m_pClient->m_Snap.m_aCharacters[pPlayerInfo->m_ClientID].m_Cur.m_Direction == -1)
+		bool DirLeft = m_pClient->m_Snap.m_aCharacters[pPlayerInfo->m_ClientID].m_Cur.m_Direction == -1;
+		bool DirRight = m_pClient->m_Snap.m_aCharacters[pPlayerInfo->m_ClientID].m_Cur.m_Direction == 1;
+		bool Jump = m_pClient->m_Snap.m_aCharacters[pPlayerInfo->m_ClientID].m_Cur.m_Jumped & 1;
+
+		if(pPlayerInfo->m_Local && Client()->State() != IClient::STATE_DEMOPLAYBACK)
+		{
+			DirLeft = m_pClient->m_Controls.m_aInputData[g_Config.m_ClDummy].m_Direction == -1;
+			DirRight = m_pClient->m_Controls.m_aInputData[g_Config.m_ClDummy].m_Direction == 1;
+			Jump = m_pClient->m_Controls.m_aInputData[g_Config.m_ClDummy].m_Jump == 1;
+		}
+		if(Client()->DummyConnected() && Client()->State() != IClient::STATE_DEMOPLAYBACK && pPlayerInfo->m_ClientID == m_pClient->m_aLocalIDs[!g_Config.m_ClDummy])
+		{
+			DirLeft = m_pClient->m_Controls.m_aInputData[!g_Config.m_ClDummy].m_Direction == -1;
+			DirRight = m_pClient->m_Controls.m_aInputData[!g_Config.m_ClDummy].m_Direction == 1;
+			Jump = m_pClient->m_Controls.m_aInputData[!g_Config.m_ClDummy].m_Jump == 1;
+		}
+		if(DirLeft)
 		{
 			Graphics()->TextureSet(g_pData->m_aImages[IMAGE_ARROW].m_Id);
 			Graphics()->QuadsSetRotation(pi);
 			Graphics()->RenderQuadContainerAsSprite(m_DirectionQuadContainerIndex, 0, ShowDirectionPos.x - 30.f, ShowDirectionPos.y);
 		}
-		else if(m_pClient->m_Snap.m_aCharacters[pPlayerInfo->m_ClientID].m_Cur.m_Direction == 1)
+		else if(DirRight)
 		{
 			Graphics()->TextureSet(g_pData->m_aImages[IMAGE_ARROW].m_Id);
 			Graphics()->RenderQuadContainerAsSprite(m_DirectionQuadContainerIndex, 0, ShowDirectionPos.x + 30.f, ShowDirectionPos.y);
 		}
-		if(m_pClient->m_Snap.m_aCharacters[pPlayerInfo->m_ClientID].m_Cur.m_Jumped & 1)
+		if(Jump)
 		{
 			Graphics()->TextureSet(g_pData->m_aImages[IMAGE_ARROW].m_Id);
 			Graphics()->QuadsSetRotation(pi * 3 / 2);
@@ -84,15 +100,13 @@ void CNamePlates::RenderNameplatePos(vec2 Position, const CNetObj_PlayerInfo *pP
 	{
 		float a = 1;
 		if(g_Config.m_ClNameplatesAlways == 0)
-			a = clamp(1 - powf(distance(m_pClient->m_Controls.m_aTargetPos[g_Config.m_ClDummy], Position) / 200.0f, 16.0f), 0.0f, 1.0f);
+			a = clamp(1 - std::pow(distance(m_pClient->m_Controls.m_aTargetPos[g_Config.m_ClDummy], Position) / 200.0f, 16.0f), 0.0f, 1.0f);
 
 		const char *pName = m_pClient->m_aClients[pPlayerInfo->m_ClientID].m_aName;
 		if(str_comp(pName, m_aNamePlates[ClientID].m_aName) != 0 || FontSize != m_aNamePlates[ClientID].m_NameTextFontSize)
 		{
 			mem_copy(m_aNamePlates[ClientID].m_aName, pName, sizeof(m_aNamePlates[ClientID].m_aName));
 			m_aNamePlates[ClientID].m_NameTextFontSize = FontSize;
-
-			TextRender()->DeleteTextContainer(m_aNamePlates[ClientID].m_NameTextContainerIndex);
 
 			CTextCursor Cursor;
 			TextRender()->SetCursor(&Cursor, 0, 0, FontSize, TEXTFLAG_RENDER);
@@ -103,9 +117,9 @@ void CNamePlates::RenderNameplatePos(vec2 Position, const CNetObj_PlayerInfo *pP
 			Graphics()->GetScreen(&ScreenX0, &ScreenY0, &ScreenX1, &ScreenY1);
 			RenderTools()->MapScreenToInterface(m_pClient->m_Camera.m_Center.x, m_pClient->m_Camera.m_Center.y);
 
-			m_aNamePlates[ClientID].m_NameTextWidth = TextRender()->TextWidth(0, FontSize, pName, -1, -1.0f);
+			m_aNamePlates[ClientID].m_NameTextWidth = TextRender()->TextWidth(FontSize, pName, -1, -1.0f);
 
-			TextRender()->CreateTextContainer(m_aNamePlates[ClientID].m_NameTextContainerIndex, &Cursor, pName);
+			TextRender()->RecreateTextContainer(m_aNamePlates[ClientID].m_NameTextContainerIndex, &Cursor, pName);
 			Graphics()->MapScreen(ScreenX0, ScreenY0, ScreenX1, ScreenY1);
 		}
 
@@ -117,8 +131,6 @@ void CNamePlates::RenderNameplatePos(vec2 Position, const CNetObj_PlayerInfo *pP
 				mem_copy(m_aNamePlates[ClientID].m_aClanName, pClan, sizeof(m_aNamePlates[ClientID].m_aClanName));
 				m_aNamePlates[ClientID].m_ClanNameTextFontSize = FontSizeClan;
 
-				TextRender()->DeleteTextContainer(m_aNamePlates[ClientID].m_ClanNameTextContainerIndex);
-
 				CTextCursor Cursor;
 				TextRender()->SetCursor(&Cursor, 0, 0, FontSizeClan, TEXTFLAG_RENDER);
 				Cursor.m_LineWidth = -1;
@@ -128,16 +140,16 @@ void CNamePlates::RenderNameplatePos(vec2 Position, const CNetObj_PlayerInfo *pP
 				Graphics()->GetScreen(&ScreenX0, &ScreenY0, &ScreenX1, &ScreenY1);
 				RenderTools()->MapScreenToInterface(m_pClient->m_Camera.m_Center.x, m_pClient->m_Camera.m_Center.y);
 
-				m_aNamePlates[ClientID].m_ClanNameTextWidth = TextRender()->TextWidth(0, FontSizeClan, pClan, -1, -1.0f);
+				m_aNamePlates[ClientID].m_ClanNameTextWidth = TextRender()->TextWidth(FontSizeClan, pClan, -1, -1.0f);
 
-				TextRender()->CreateTextContainer(m_aNamePlates[ClientID].m_ClanNameTextContainerIndex, &Cursor, pClan);
+				TextRender()->RecreateTextContainer(m_aNamePlates[ClientID].m_ClanNameTextContainerIndex, &Cursor, pClan);
 				Graphics()->MapScreen(ScreenX0, ScreenY0, ScreenX1, ScreenY1);
 			}
 		}
 
 		float tw = m_aNamePlates[ClientID].m_NameTextWidth;
 		if(g_Config.m_ClNameplatesTeamcolors && m_pClient->m_Teams.Team(ClientID))
-			rgb = color_cast<ColorRGBA>(ColorHSLA(m_pClient->m_Teams.Team(ClientID) / 64.0f, 1.0f, 0.75f));
+			rgb = m_pClient->GetDDTeamColor(m_pClient->m_Teams.Team(ClientID), 0.75f);
 
 		ColorRGBA TColor;
 		ColorRGBA TOutlineColor;
@@ -163,7 +175,7 @@ void CNamePlates::RenderNameplatePos(vec2 Position, const CNetObj_PlayerInfo *pP
 		TOutlineColor.a *= Alpha;
 		TColor.a *= Alpha;
 
-		if(m_aNamePlates[ClientID].m_NameTextContainerIndex != -1)
+		if(m_aNamePlates[ClientID].m_NameTextContainerIndex.Valid())
 		{
 			YOffset -= FontSize;
 			TextRender()->RenderTextContainer(m_aNamePlates[ClientID].m_NameTextContainerIndex, TColor, TOutlineColor, Position.x - tw / 2.0f, YOffset);
@@ -172,7 +184,7 @@ void CNamePlates::RenderNameplatePos(vec2 Position, const CNetObj_PlayerInfo *pP
 		if(g_Config.m_ClNameplatesClan)
 		{
 			YOffset -= FontSizeClan;
-			if(m_aNamePlates[ClientID].m_ClanNameTextContainerIndex != -1)
+			if(m_aNamePlates[ClientID].m_ClanNameTextContainerIndex.Valid())
 				TextRender()->RenderTextContainer(m_aNamePlates[ClientID].m_ClanNameTextContainerIndex, TColor, TOutlineColor, Position.x - m_aNamePlates[ClientID].m_ClanNameTextWidth / 2.0f, YOffset);
 		}
 
@@ -180,19 +192,29 @@ void CNamePlates::RenderNameplatePos(vec2 Position, const CNetObj_PlayerInfo *pP
 		{
 			YOffset -= FontSize;
 			char aFriendMark[] = "♥";
-			TextRender()->TextColor(ColorRGBA(1.0f, 0.0f, 0.0f));
-			float XOffSet = TextRender()->TextWidth(0, FontSize, aFriendMark, -1, -1.0f) / 2.0f;
-			TextRender()->Text(0, Position.x - XOffSet, YOffset, FontSize, aFriendMark, -1.0f);
+
+			ColorRGBA Color;
+
+			if(OtherTeam && !ForceAlpha)
+				Color = ColorRGBA(1.0f, 0.0f, 0.0f, g_Config.m_ClShowOthersAlpha / 100.0f);
+			else
+				Color = ColorRGBA(1.0f, 0.0f, 0.0f, a);
+
+			Color.a *= Alpha;
+
+			TextRender()->TextColor(Color);
+			float XOffSet = TextRender()->TextWidth(FontSize, aFriendMark, -1, -1.0f) / 2.0f;
+			TextRender()->Text(Position.x - XOffSet, YOffset, FontSize, aFriendMark, -1.0f);
 		}
 
 		if(g_Config.m_Debug || g_Config.m_ClNameplatesIDs) // render client id when in debug as well
 		{
 			YOffset -= FontSize;
 			char aBuf[128];
-			str_format(aBuf, sizeof(aBuf), "%d", pPlayerInfo->m_ClientID);
-			float XOffset = TextRender()->TextWidth(0, FontSize, aBuf, -1, -1.0f) / 2.0f;
+			str_from_int(pPlayerInfo->m_ClientID, aBuf);
+			float XOffset = TextRender()->TextWidth(FontSize, aBuf, -1, -1.0f) / 2.0f;
 			TextRender()->TextColor(rgb);
-			TextRender()->Text(0, Position.x - XOffset, YOffset, FontSize, aBuf, -1.0f);
+			TextRender()->Text(Position.x - XOffset, YOffset, FontSize, aBuf, -1.0f);
 		}
 	}
 
@@ -225,6 +247,17 @@ void CNamePlates::RenderNameplatePos(vec2 Position, const CNetObj_PlayerInfo *pP
 						StrongWeakStatusColor = color_cast<ColorRGBA>(ColorHSLA(41131));
 						StrongWeakSpriteID = SPRITE_HOOK_WEAK;
 					}
+
+					float ClampedAlpha = 1;
+					if(g_Config.m_ClNameplatesAlways == 0)
+						ClampedAlpha = clamp(1 - std::pow(distance(m_pClient->m_Controls.m_aTargetPos[g_Config.m_ClDummy], Position) / 200.0f, 16.0f), 0.0f, 1.0f);
+
+					if(OtherTeam && !ForceAlpha)
+						StrongWeakStatusColor.a = g_Config.m_ClShowOthersAlpha / 100.0f;
+					else
+						StrongWeakStatusColor.a = ClampedAlpha;
+
+					StrongWeakStatusColor.a *= Alpha;
 					Graphics()->SetColor(StrongWeakStatusColor);
 					RenderTools()->SelectSprite(StrongWeakSpriteID);
 					RenderTools()->GetSpriteScale(StrongWeakSpriteID, ScaleX, ScaleY);
@@ -238,9 +271,9 @@ void CNamePlates::RenderNameplatePos(vec2 Position, const CNetObj_PlayerInfo *pP
 				{
 					YOffset -= FontSize;
 					char aBuf[12];
-					str_format(aBuf, sizeof(aBuf), "%d", pCharacter->GetStrongWeakID());
-					float XOffset = TextRender()->TextWidth(0, FontSize, aBuf, -1, -1.0f) / 2.0f;
-					TextRender()->Text(0, Position.x - XOffset, YOffset, FontSize, aBuf, -1.0f);
+					str_from_int(pCharacter->GetStrongWeakID(), aBuf);
+					float XOffset = TextRender()->TextWidth(FontSize, aBuf, -1, -1.0f) / 2.0f;
+					TextRender()->Text(Position.x - XOffset, YOffset, FontSize, aBuf, -1.0f);
 				}
 			}
 		}

@@ -17,13 +17,13 @@ CDataFileReader g_DataReader;
 CDataFileWriter g_DataWriter;
 
 // global new image data (set by ReplaceImageItem)
-int g_aNewDataSize[64];
-void *g_apNewData[64];
+int g_aNewDataSize[MAX_MAPIMAGES];
+void *g_apNewData[MAX_MAPIMAGES];
 
 int g_Index = 0;
 int g_NextDataItemID = -1;
 
-int g_aImageIDs[64];
+int g_aImageIDs[MAX_MAPIMAGES];
 
 int LoadPNG(CImageInfo *pImg, const char *pFilename)
 {
@@ -31,7 +31,13 @@ int LoadPNG(CImageInfo *pImg, const char *pFilename)
 	if(File)
 	{
 		io_seek(File, 0, IOSEEK_END);
-		unsigned int FileSize = io_tell(File);
+		long int FileSize = io_tell(File);
+		if(FileSize <= 0)
+		{
+			io_close(File);
+			dbg_msg("map_convert_07", "failed to get file size (%ld). filename='%s'", FileSize, pFilename);
+			return false;
+		}
 		io_seek(File, 0, IOSEEK_START);
 		TImageByteBuffer ByteBuffer;
 		SImageByteBuffer ImageByteBuffer(&ByteBuffer);
@@ -80,7 +86,7 @@ bool CheckImageDimensions(void *pLayerItem, int LayerType, const char *pFilename
 		return true;
 
 	int Type;
-	void *pItem = g_DataReader.GetItem(g_aImageIDs[pTMap->m_Image], &Type, nullptr);
+	void *pItem = g_DataReader.GetItem(g_aImageIDs[pTMap->m_Image], &Type);
 	if(Type != MAPITEMTYPE_IMAGE)
 		return true;
 
@@ -91,29 +97,37 @@ bool CheckImageDimensions(void *pLayerItem, int LayerType, const char *pFilename
 
 	char aTileLayerName[12];
 	IntsToStr(pTMap->m_aName, sizeof(pTMap->m_aName) / sizeof(int), aTileLayerName);
-	char *pName = (char *)g_DataReader.GetData(pImgItem->m_ImageName);
-	dbg_msg("map_convert_07", "%s: Tile layer \"%s\" uses image \"%s\" with width %d, height %d, which is not divisible by 16. This is not supported in Teeworlds 0.7. Please scale the image and replace it manually.", pFilename, aTileLayerName, pName, pImgItem->m_Width, pImgItem->m_Height);
+
+	const char *pName = g_DataReader.GetDataString(pImgItem->m_ImageName);
+	dbg_msg("map_convert_07", "%s: Tile layer \"%s\" uses image \"%s\" with width %d, height %d, which is not divisible by 16. This is not supported in Teeworlds 0.7. Please scale the image and replace it manually.", pFilename, aTileLayerName, pName == nullptr ? "(error)" : pName, pImgItem->m_Width, pImgItem->m_Height);
 	return false;
 }
 
-void *ReplaceImageItem(void *pItem, int Type, CMapItemImage *pNewImgItem)
+void *ReplaceImageItem(int Index, CMapItemImage *pImgItem, CMapItemImage *pNewImgItem)
 {
-	if(Type != MAPITEMTYPE_IMAGE)
-		return pItem;
-
-	CMapItemImage *pImgItem = (CMapItemImage *)pItem;
-
 	if(!pImgItem->m_External)
-		return pItem;
+		return pImgItem;
 
-	char *pName = (char *)g_DataReader.GetData(pImgItem->m_ImageName);
+	const char *pName = g_DataReader.GetDataString(pImgItem->m_ImageName);
+	if(pName == nullptr || pName[0] == '\0')
+	{
+		dbg_msg("map_convert_07", "failed to load name of image %d", Index);
+		return pImgItem;
+	}
+
 	dbg_msg("map_convert_07", "embedding image '%s'", pName);
 
 	CImageInfo ImgInfo;
-	char aStr[64];
+	char aStr[IO_MAX_PATH_LENGTH];
 	str_format(aStr, sizeof(aStr), "data/mapres/%s.png", pName);
 	if(!LoadPNG(&ImgInfo, aStr))
-		return pItem; // keep as external if we don't have a mapres to replace
+		return pImgItem; // keep as external if we don't have a mapres to replace
+
+	if(ImgInfo.m_Format != CImageInfo::FORMAT_RGBA)
+	{
+		dbg_msg("map_convert_07", "image '%s' is not in RGBA format", aStr);
+		return pImgItem;
+	}
 
 	*pNewImgItem = *pImgItem;
 
@@ -123,7 +137,7 @@ void *ReplaceImageItem(void *pItem, int Type, CMapItemImage *pNewImgItem)
 	pNewImgItem->m_ImageData = g_NextDataItemID++;
 
 	g_apNewData[g_Index] = ImgInfo.m_pData;
-	g_aNewDataSize[g_Index] = ImgInfo.m_Width * ImgInfo.m_Height * 4;
+	g_aNewDataSize[g_Index] = (size_t)ImgInfo.m_Width * ImgInfo.m_Height * ImgInfo.PixelSize();
 	g_Index++;
 
 	return (void *)pNewImgItem;
@@ -187,40 +201,51 @@ int main(int argc, const char **argv)
 
 	g_NextDataItemID = g_DataReader.NumData();
 
-	int i = 0;
+	size_t i = 0;
 	for(int Index = 0; Index < g_DataReader.NumItems(); Index++)
 	{
 		int Type;
-		g_DataReader.GetItem(Index, &Type, nullptr);
+		g_DataReader.GetItem(Index, &Type);
 		if(Type == MAPITEMTYPE_IMAGE)
-			g_aImageIDs[i++] = Index;
+		{
+			if(i >= MAX_MAPIMAGES)
+			{
+				dbg_msg("map_convert_07", "map uses more images than the client maximum of %" PRIzu ". filename='%s'", MAX_MAPIMAGES, pSourceFileName);
+				break;
+			}
+			g_aImageIDs[i] = Index;
+			i++;
+		}
 	}
 
 	bool Success = true;
-
-	if(i > 64)
-		dbg_msg("map_convert_07", "%s: Uses more textures than the client maximum of 64.", pSourceFileName);
 
 	// add all items
 	for(int Index = 0; Index < g_DataReader.NumItems(); Index++)
 	{
 		int Type, ID;
-		void *pItem = g_DataReader.GetItem(Index, &Type, &ID);
-		int Size = g_DataReader.GetItemSize(Index);
+		CUuid Uuid;
+		void *pItem = g_DataReader.GetItem(Index, &Type, &ID, &Uuid);
 
-		// filter ITEMTYPE_EX items, they will be automatically added again
+		// Filter ITEMTYPE_EX items, they will be automatically added again.
 		if(Type == ITEMTYPE_EX)
 		{
 			continue;
 		}
 
+		int Size = g_DataReader.GetItemSize(Index);
 		Success &= CheckImageDimensions(pItem, Type, pSourceFileName);
 
 		CMapItemImage NewImageItem;
-		pItem = ReplaceImageItem(pItem, Type, &NewImageItem);
-		if(!pItem)
-			return -1;
-		g_DataWriter.AddItem(Type, ID, Size, pItem);
+		if(Type == MAPITEMTYPE_IMAGE)
+		{
+			pItem = ReplaceImageItem(Index, (CMapItemImage *)pItem, &NewImageItem);
+			if(!pItem)
+				return -1;
+			Size = sizeof(CMapItemImage);
+			NewImageItem.m_Version = CMapItemImage::CURRENT_VERSION;
+		}
+		g_DataWriter.AddItem(Type, ID, Size, pItem, &Uuid);
 	}
 
 	// add all data

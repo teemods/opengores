@@ -1,6 +1,6 @@
-#include "updater.h"
-#include <base/lock_scope.h>
 #include <base/system.h>
+
+#include "updater.h"
 #include <engine/client.h>
 #include <engine/engine.h>
 #include <engine/external/json-parser/json.h>
@@ -8,9 +8,10 @@
 #include <engine/shared/json.h>
 #include <engine/storage.h>
 
+#include <game/version.h>
+
 #include <cstdlib> // system
 
-using std::map;
 using std::string;
 
 class CUpdaterFetchTask : public CHttpRequest
@@ -22,7 +23,7 @@ class CUpdaterFetchTask : public CHttpRequest
 	void OnProgress() override;
 
 protected:
-	int OnCompletion(int State) override;
+	void OnCompletion(EHttpState State) override;
 
 public:
 	CUpdaterFetchTask(CUpdater *pUpdater, const char *pFile, const char *pDestPath);
@@ -54,14 +55,11 @@ CUpdaterFetchTask::CUpdaterFetchTask(CUpdater *pUpdater, const char *pFile, cons
 void CUpdaterFetchTask::OnProgress()
 {
 	CLockScope ls(m_pUpdater->m_Lock);
-	str_copy(m_pUpdater->m_aStatus, Dest());
 	m_pUpdater->m_Percent = Progress();
 }
 
-int CUpdaterFetchTask::OnCompletion(int State)
+void CUpdaterFetchTask::OnCompletion(EHttpState State)
 {
-	State = CHttpRequest::OnCompletion(State);
-
 	const char *pFileName = 0;
 	for(const char *pPath = Dest(); *pPath; pPath++)
 		if(*pPath == '/')
@@ -69,45 +67,35 @@ int CUpdaterFetchTask::OnCompletion(int State)
 	pFileName = pFileName ? pFileName : Dest();
 	if(!str_comp(pFileName, "update.json"))
 	{
-		if(State == HTTP_DONE)
+		if(State == EHttpState::DONE)
 			m_pUpdater->SetCurrentState(IUpdater::GOT_MANIFEST);
-		else if(State == HTTP_ERROR)
+		else if(State == EHttpState::ERROR)
 			m_pUpdater->SetCurrentState(IUpdater::FAIL);
 	}
-	else if(!str_comp(pFileName, m_pUpdater->m_aLastFile))
-	{
-		if(State == HTTP_DONE)
-			m_pUpdater->SetCurrentState(IUpdater::MOVE_FILES);
-		else if(State == HTTP_ERROR)
-			m_pUpdater->SetCurrentState(IUpdater::FAIL);
-	}
-
-	return State;
 }
 
 CUpdater::CUpdater()
 {
-	m_pClient = NULL;
-	m_pStorage = NULL;
-	m_pEngine = NULL;
+	m_pClient = nullptr;
+	m_pStorage = nullptr;
+	m_pEngine = nullptr;
+	m_pHttp = nullptr;
 	m_State = CLEAN;
 	m_Percent = 0;
-	m_Lock = lock_create();
+	m_pCurrentTask = nullptr;
+
+	m_ClientUpdate = m_ServerUpdate = m_ClientFetched = m_ServerFetched = false;
 
 	IStorage::FormatTmpPath(m_aClientExecTmp, sizeof(m_aClientExecTmp), CLIENT_EXEC);
 	IStorage::FormatTmpPath(m_aServerExecTmp, sizeof(m_aServerExecTmp), SERVER_EXEC);
 }
 
-void CUpdater::Init()
+void CUpdater::Init(CHttp *pHttp)
 {
 	m_pClient = Kernel()->RequestInterface<IClient>();
 	m_pStorage = Kernel()->RequestInterface<IStorage>();
 	m_pEngine = Kernel()->RequestInterface<IEngine>();
-}
-
-CUpdater::~CUpdater()
-{
-	lock_destroy(m_Lock);
+	m_pHttp = pHttp;
 }
 
 void CUpdater::SetCurrentState(int NewState)
@@ -136,7 +124,10 @@ int CUpdater::GetCurrentPercent()
 
 void CUpdater::FetchFile(const char *pFile, const char *pDestPath)
 {
-	m_pEngine->AddJob(std::make_shared<CUpdaterFetchTask>(this, pFile, pDestPath));
+	CLockScope ls(m_Lock);
+	m_pCurrentTask = std::make_shared<CUpdaterFetchTask>(this, pFile, pDestPath);
+	str_copy(m_aStatus, m_pCurrentTask->Dest());
+	m_pHttp->Run(m_pCurrentTask);
 }
 
 bool CUpdater::MoveFile(const char *pFile)
@@ -173,10 +164,14 @@ bool CUpdater::MoveFile(const char *pFile)
 
 void CUpdater::Update()
 {
-	switch(m_State)
+	auto State = GetCurrentState();
+	switch(State)
 	{
 	case IUpdater::GOT_MANIFEST:
 		PerformUpdate();
+		break;
+	case IUpdater::DOWNLOADING:
+		RunningUpdate();
 		break;
 	case IUpdater::MOVE_FILES:
 		CommitUpdate();
@@ -188,7 +183,7 @@ void CUpdater::Update()
 
 void CUpdater::AddFileJob(const char *pFile, bool Job)
 {
-	m_FileJobs[string(pFile)] = Job;
+	m_FileJobs.emplace_front(std::make_pair(pFile, Job));
 }
 
 bool CUpdater::ReplaceClient()
@@ -203,9 +198,9 @@ bool CUpdater::ReplaceClient()
 	str_format(aPath, sizeof(aPath), "update/%s", m_aClientExecTmp);
 	Success &= m_pStorage->RenameBinaryFile(aPath, PLAT_CLIENT_EXEC);
 #if !defined(CONF_FAMILY_WINDOWS)
-	m_pStorage->GetBinaryPath(PLAT_CLIENT_EXEC, aPath, sizeof aPath);
+	m_pStorage->GetBinaryPath(PLAT_CLIENT_EXEC, aPath, sizeof(aPath));
 	char aBuf[512];
-	str_format(aBuf, sizeof aBuf, "chmod +x %s", aPath);
+	str_format(aBuf, sizeof(aBuf), "chmod +x %s", aPath);
 	if(system(aBuf))
 	{
 		dbg_msg("updater", "ERROR: failed to set client executable bit");
@@ -227,9 +222,9 @@ bool CUpdater::ReplaceServer()
 	str_format(aPath, sizeof(aPath), "update/%s", m_aServerExecTmp);
 	Success &= m_pStorage->RenameBinaryFile(aPath, PLAT_SERVER_EXEC);
 #if !defined(CONF_FAMILY_WINDOWS)
-	m_pStorage->GetBinaryPath(PLAT_SERVER_EXEC, aPath, sizeof aPath);
+	m_pStorage->GetBinaryPath(PLAT_SERVER_EXEC, aPath, sizeof(aPath));
 	char aBuf[512];
-	str_format(aBuf, sizeof aBuf, "chmod +x %s", aPath);
+	str_format(aBuf, sizeof(aBuf), "chmod +x %s", aPath);
 	if(system(aBuf))
 	{
 		dbg_msg("updater", "ERROR: failed to set server executable bit");
@@ -244,7 +239,7 @@ void CUpdater::ParseUpdate()
 	char aPath[IO_MAX_PATH_LENGTH];
 	void *pBuf;
 	unsigned Length;
-	if(!m_pStorage->ReadFile(m_pStorage->GetBinaryPath("update/update.json", aPath, sizeof aPath), IStorage::TYPE_ABSOLUTE, &pBuf, &Length))
+	if(!m_pStorage->ReadFile(m_pStorage->GetBinaryPath("update/update.json", aPath, sizeof(aPath)), IStorage::TYPE_ABSOLUTE, &pBuf, &Length))
 		return;
 
 	json_value *pVersions = json_parse((json_char *)pBuf, Length);
@@ -277,37 +272,44 @@ void CUpdater::ParseUpdate()
 				break;
 		}
 	}
+	json_value_free(pVersions);
 }
 
 void CUpdater::InitiateUpdate()
 {
-	m_State = GETTING_MANIFEST;
+	SetCurrentState(IUpdater::GETTING_MANIFEST);
 	FetchFile("update.json");
 }
 
 void CUpdater::PerformUpdate()
 {
-	m_State = PARSING_UPDATE;
+	SetCurrentState(IUpdater::PARSING_UPDATE);
 	dbg_msg("updater", "parsing update.json");
 	ParseUpdate();
-	m_State = DOWNLOADING;
+	m_CurrentJob = m_FileJobs.begin();
+	SetCurrentState(IUpdater::DOWNLOADING);
+}
 
-	const char *pLastFile;
-	pLastFile = "";
-	for(map<string, bool>::reverse_iterator it = m_FileJobs.rbegin(); it != m_FileJobs.rend(); ++it)
+void CUpdater::RunningUpdate()
+{
+	if(m_pCurrentTask)
 	{
-		if(it->second)
+		if(!m_pCurrentTask->Done())
 		{
-			pLastFile = it->first.c_str();
-			break;
+			return;
+		}
+		else if(m_pCurrentTask->State() == EHttpState::ERROR || m_pCurrentTask->State() == EHttpState::ABORTED)
+		{
+			SetCurrentState(IUpdater::FAIL);
 		}
 	}
 
-	for(auto &FileJob : m_FileJobs)
+	if(m_CurrentJob != m_FileJobs.end())
 	{
-		if(FileJob.second)
+		auto &Job = *m_CurrentJob;
+		if(Job.second)
 		{
-			const char *pFile = FileJob.first.c_str();
+			const char *pFile = Job.first.c_str();
 			size_t len = str_length(pFile);
 			if(!str_comp_nocase(pFile + len - 4, ".dll"))
 			{
@@ -315,7 +317,7 @@ void CUpdater::PerformUpdate()
 				char aBuf[512];
 				str_copy(aBuf, pFile, sizeof(aBuf)); // SDL
 				str_copy(aBuf + len - 4, "-" PLAT_NAME, sizeof(aBuf) - len + 4); // -win32
-				str_append(aBuf, pFile + len - 4, sizeof(aBuf)); // .dll
+				str_append(aBuf, pFile + len - 4); // .dll
 				FetchFile(aBuf, pFile);
 #endif
 				// Ignore DLL downloads on other platforms
@@ -326,7 +328,7 @@ void CUpdater::PerformUpdate()
 				char aBuf[512];
 				str_copy(aBuf, pFile, sizeof(aBuf)); // libsteam_api
 				str_copy(aBuf + len - 3, "-" PLAT_NAME, sizeof(aBuf) - len + 3); // -linux-x86_64
-				str_append(aBuf, pFile + len - 3, sizeof(aBuf)); // .so
+				str_append(aBuf, pFile + len - 3); // .so
 				FetchFile(aBuf, pFile);
 #endif
 				// Ignore DLL downloads on other platforms, on Linux we statically link anyway
@@ -335,24 +337,32 @@ void CUpdater::PerformUpdate()
 			{
 				FetchFile(pFile);
 			}
-			pLastFile = pFile;
 		}
 		else
-			m_pStorage->RemoveBinaryFile(FileJob.first.c_str());
-	}
+		{
+			m_pStorage->RemoveBinaryFile(Job.first.c_str());
+		}
 
-	if(m_ServerUpdate)
-	{
-		FetchFile(PLAT_SERVER_DOWN, m_aServerExecTmp);
-		pLastFile = m_aServerExecTmp;
+		m_CurrentJob++;
 	}
-	if(m_ClientUpdate)
+	else
 	{
-		FetchFile(PLAT_CLIENT_DOWN, m_aClientExecTmp);
-		pLastFile = m_aClientExecTmp;
-	}
+		if(m_ServerUpdate && !m_ServerFetched)
+		{
+			FetchFile(PLAT_SERVER_DOWN, m_aServerExecTmp);
+			m_ServerFetched = true;
+			return;
+		}
 
-	str_copy(m_aLastFile, pLastFile);
+		if(m_ClientUpdate && !m_ClientFetched)
+		{
+			FetchFile(PLAT_CLIENT_DOWN, m_aClientExecTmp);
+			m_ClientFetched = true;
+			return;
+		}
+
+		SetCurrentState(IUpdater::MOVE_FILES);
+	}
 }
 
 void CUpdater::CommitUpdate()
@@ -368,9 +378,9 @@ void CUpdater::CommitUpdate()
 	if(m_ServerUpdate)
 		Success &= ReplaceServer();
 	if(!Success)
-		m_State = FAIL;
+		SetCurrentState(IUpdater::FAIL);
 	else if(m_pClient->State() == IClient::STATE_ONLINE || m_pClient->EditorHasUnsavedData())
-		m_State = NEED_RESTART;
+		SetCurrentState(IUpdater::NEED_RESTART);
 	else
 	{
 		m_pClient->Restart();

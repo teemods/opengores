@@ -1,13 +1,14 @@
 #ifndef ENGINE_GFX_IMAGE_LOADER_H
 #define ENGINE_GFX_IMAGE_LOADER_H
 
-#include <stddef.h>
-#include <stdint.h>
+#include <cstddef>
+#include <cstdint>
 #include <vector>
 
 enum EImageFormat
 {
 	IMAGE_FORMAT_R = 0,
+	IMAGE_FORMAT_RA,
 	IMAGE_FORMAT_RGB,
 	IMAGE_FORMAT_RGBA,
 };

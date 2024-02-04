@@ -4,6 +4,7 @@
 
 #include <engine/console.h>
 #include <engine/shared/compression.h>
+#include <engine/shared/config.h>
 #include <engine/shared/network.h>
 #include <engine/storage.h>
 
@@ -83,7 +84,7 @@ void CGhostRecorder::WriteData(int Type, const void *pData, int Size)
 	mem_copy(Data.m_aData, pData, Size);
 
 	if(m_LastItem.m_Type == Data.m_Type)
-		DiffItem((int *)m_LastItem.m_aData, (int *)Data.m_aData, (int *)m_pBufferPos, Size / 4);
+		DiffItem((int *)m_LastItem.m_aData, (int *)Data.m_aData, (int *)m_pBufferPos, Size / sizeof(int32_t));
 	else
 	{
 		FlushChunk();
@@ -144,12 +145,12 @@ int CGhostRecorder::Stop(int Ticks, int Time)
 	// write down num shots and time
 	io_seek(m_File, gs_NumTicksOffset, IOSEEK_START);
 
-	unsigned char aNumTicks[4];
-	int_to_bytes_be(aNumTicks, Ticks);
+	unsigned char aNumTicks[sizeof(int32_t)];
+	uint_to_bytes_be(aNumTicks, Ticks);
 	io_write(m_File, aNumTicks, sizeof(aNumTicks));
 
-	unsigned char aTime[4];
-	int_to_bytes_be(aTime, Time);
+	unsigned char aTime[sizeof(int32_t)];
+	uint_to_bytes_be(aTime, Time);
 	io_write(m_File, aTime, sizeof(aTime));
 
 	io_close(m_File);
@@ -220,9 +221,10 @@ int CGhostLoader::Load(const char *pFilename, const char *pMap, SHA256_DIGEST Ma
 		m_File = 0;
 		return -1;
 	}
+
 	if(m_Header.m_Version >= 6)
 	{
-		if(m_Header.m_MapSha256 != MapSha256)
+		if(m_Header.m_MapSha256 != MapSha256 && g_Config.m_ClRaceGhostStrictMap)
 		{
 			char aGhostSha256[SHA256_MAXSTRSIZE];
 			sha256_str(m_Header.m_MapSha256, aGhostSha256, sizeof(aGhostSha256));
@@ -240,7 +242,7 @@ int CGhostLoader::Load(const char *pFilename, const char *pMap, SHA256_DIGEST Ma
 	{
 		io_skip(m_File, -(int)sizeof(SHA256_DIGEST));
 		unsigned GhostMapCrc = bytes_be_to_uint(m_Header.m_aZeroes);
-		if(str_comp(m_Header.m_aMap, pMap) != 0 || GhostMapCrc != MapCrc)
+		if(GhostMapCrc != MapCrc && g_Config.m_ClRaceGhostStrictMap)
 		{
 			char aBuf[256];
 			str_format(aBuf, sizeof(aBuf), "ghost map '%s' crc mismatch, wanted=%08x ghost=%08x", pMap, MapCrc, GhostMapCrc);
@@ -341,7 +343,7 @@ bool CGhostLoader::ReadData(int Type, void *pData, int Size)
 	CGhostItem Data(Type);
 
 	if(m_LastItem.m_Type == Data.m_Type)
-		UndiffItem((int *)m_LastItem.m_aData, (int *)m_pBufferPos, (int *)Data.m_aData, Size / 4);
+		UndiffItem((int *)m_LastItem.m_aData, (int *)m_pBufferPos, (int *)Data.m_aData, Size / sizeof(int32_t));
 	else
 		mem_copy(Data.m_aData, m_pBufferPos, Size);
 
@@ -380,14 +382,15 @@ bool CGhostLoader::GetGhostInfo(const char *pFilename, CGhostInfo *pGhostInfo, c
 	{
 		return false;
 	}
-	if(Header.m_Version >= 6)
+
+	if(Header.m_Version >= 6 && g_Config.m_ClRaceGhostStrictMap)
 	{
 		if(Header.m_MapSha256 != MapSha256)
 		{
 			return false;
 		}
 	}
-	else
+	else if(g_Config.m_ClRaceGhostStrictMap)
 	{
 		unsigned GhostMapCrc = bytes_be_to_uint(Header.m_aZeroes);
 		if(GhostMapCrc != MapCrc)

@@ -27,9 +27,6 @@
 %s wins!
 == %s nyert!
 
--Page %d-
-== -oldal %d-
-
 Abort
 == Mégse
 
@@ -78,12 +75,6 @@ Clan
 Client
 == Kliens
 
-Close
-== Bezárás
-
-Connect
-== Csatlakozás
-
 Connecting to
 == Csatlakozás...
 
@@ -110,9 +101,6 @@ Delete
 
 Delete demo
 == Demó törlése
-
-Demo details
-== Információk a demóról
 
 Demos
 == Demók
@@ -150,9 +138,6 @@ Favorites
 Feet
 == Láb
 
-Filter
-== Szűrő
-
 Fire
 == Tűz
 
@@ -164,9 +149,6 @@ Force vote
 
 Free-View
 == Szabad nézet
-
-Friends
-== Barátok
 
 Fullscreen
 == Teljesképernyő
@@ -270,9 +252,6 @@ No servers match your filter criteria
 Ok
 == Oké
 
-Open
-== Megnyit
-
 Parent Folder
 == Főmappa
 
@@ -287,10 +266,6 @@ Ping
 
 Pistol
 == Pisztoly
-
-[Demo browser]
-Play
-== Lejátszás
 
 Player
 == Játékos
@@ -319,9 +294,6 @@ Red team
 Red team wins!
 == A piros csapat nyert!
 
-Refresh
-== Újratöltés
-
 Remote console
 == Távoli konzol
 
@@ -331,17 +303,11 @@ Remove
 Remove friend
 == Barát eltávolítása
 
-Rename
-== Átnevezés
-
 Rename demo
 == Demó átnevezése
 
 Reset filter
 == Szűrő visszaállítása
-
-Sample rate
-== Mintavételi frekvencia
 
 Score
 == Pontszám
@@ -357,12 +323,6 @@ Screenshot
 
 Server address:
 == Szerver címe:
-
-Server details
-== Szerver részletei
-
-Server filter
-== Szerver szűrő
 
 Server info
 == Szerver infó
@@ -384,9 +344,6 @@ Show ingame HUD
 
 Show name plates
 == Név táblák mutatása
-
-Skins
-== Karakterek
 
 Sound
 == Hang
@@ -423,9 +380,6 @@ The audio device couldn't be initialised.
 
 The server is running a non-standard tuning on a pure game type.
 == A szerver egy nem szabványos hangolást futtat a tiszta játék típuson.
-
-There's an unsaved map in the editor, you might want to save it before you quit the game.
-== Van egy mentett térkép a szerkesztőben, talán elakarod menteni, mielőtt kilépnél a játékból.
 
 Time limit
 == Időhatár
@@ -505,26 +459,11 @@ FSAA samples
 Sound volume
 == Hangerő
 
-Created:
-== Készült:
-
 Max Screenshots
 == Maximum Fotók
 
-Length:
-== Hossza:
-
 Laser
 == Lézer
-
-Netversion:
-== Netes verzió:
-
-Map:
-== Pálya:
-
-Info
-== Infó
 
 Miscellaneous
 == Egyéb
@@ -535,20 +474,8 @@ Record demo
 Your skin
 == Te Karaktered
 
-Size:
-== Méret:
-
 Reset to defaults
 == Visszaállítás alapértelmezettre
-
-Quit anyway?
-== Mindenképpen kilép?
-
-Display Modes
-== Kijelző módok
-
-Version:
-== Verzió:
 
 Round
 == Menet
@@ -562,9 +489,6 @@ UI Color
 Hue
 == Színárnyalat
 
-Crc:
-== Crc:
-
 Alpha
 == Alpha
 
@@ -573,12 +497,6 @@ LAN
 
 Name plates size
 == Névtáblák mérete
-
-Type:
-== Típus:
-
-Dummy settings
-== Másolat beállításai
 
 AntiPing
 == Antiping
@@ -631,9 +549,6 @@ Spectate next
 Show names in chat in team colors
 == Csapatszínben jelennek meg a játékosok a chatben
 
-Select a name
-== Válassz nevet
-
 Enable team chat sound
 == Csapat chat hang engedélyezése
 
@@ -649,9 +564,6 @@ Enable game sounds
 DDNet Client needs to be restarted to complete update!
 == Újra kell indítani a DDNet Klienst a frissítés befejezéséhez!
 
-Please use a different name
-== Kérlek, válassz másik nevet
-
 Show others
 == Játékosok mutatása
 
@@ -663,9 +575,6 @@ Restart
 
 Game paused
 == Játék megállítva
-
-Old mouse mode
-== Régi egér mód
 
 Browser
 == Böngésző
@@ -862,9 +771,6 @@ Deactivate
 Welcome to DDNet
 == Üdvözlet a DDNet-en
 
-Threaded sound loading
-== Csavarmenetes hang betöltése
-
 Activate
 == Aktiválás
 
@@ -946,9 +852,6 @@ Zoom in
 Show text entities
 == Textúrázott entitások
 
-Render
-== Render
-
 Show all
 == Mutasson mindent
 
@@ -982,8 +885,8 @@ Toggle dyncam
 %d new mentions
 == %d új értesítés
 
-Default length: %d
-== Átlagos hossz: %d
+Default length
+== Átlagos hossz
 
 Show HUD
 == HUD mutatása
@@ -993,9 +896,6 @@ Size
 
 Server best:
 == Szerver legjobb:
-
-Markers:
-== Jelölések
 
 1 new mention
 == 1 új értesítés
@@ -1036,9 +936,6 @@ Length
 Are you sure that you want to disconnect your dummy?
 == Biztos vagy benne, hogy a másolatod lecsatlakozzon?
 
-Saving ddnet-settings.cfg failed
-== Nem sikerült elmenteni a ddnet-settings.cfg fájlt
-
 Warning
 == Figyelmeztetés
 
@@ -1056,9 +953,6 @@ Your nickname '%s' is already used (%d points). Do you still want to use it?
 
 Checking for existing player with your name
 == Keresés létező játékos után a neveddel
-
-Country / Region
-== Ország / Régió
 
 Speed
 == Sebesség
@@ -1202,12 +1096,6 @@ Preview
 Background
 == Háttér
 
-Entities Background color
-== Entitás háttérkép színe
-
-Regular Background Color
-== Alap háttérkép színe
-
 Are you sure that you want to disconnect and switch to a different server?
 == Biztos, hogy kilépsz és váltasz egy másik szerverre?
 
@@ -1231,12 +1119,6 @@ SA
 
 CHN
 == KíNA
-
-Refreshing...
-== Frissítés...
-
-Kill Messages
-== Halálüzenetek
 
 Show local player's key presses
 == Saját mozgásod nyilakkal mutatása
@@ -1274,9 +1156,6 @@ Run on join
 Chat command (e.g. showall 1)
 == Chat parancs (például: "showall 1")
 
-Toggle to edit your dummy settings
-== Átváltát a másolatod beállításaira.
-
 Choose default eyes when joining a server
 == Alapértelmezett szemek kiválasztása, amikor egy szerverre csatlakozol.
 
@@ -1291,9 +1170,6 @@ default
 
 custom
 == egyedi
-
-Graphics cards
-== Videókártyák
 
 auto
 == automatikus
@@ -1352,12 +1228,6 @@ Download community skins
 Enable controller
 == Kontroller használata
 
-Controller %d: %s
-== Kontroller %d: %s
-
-Click to cycle through all available controllers.
-== Kattints, hogy váltogass az elérhető kontrollerek között.
-
 [Ingame controller mode]
 Relative
 == Relatív
@@ -1378,17 +1248,8 @@ UI controller sens.
 Controller jitter tolerance
 == Kontroller jitter tolerancia
 
-No controller found. Plug in a controller and restart the game.
-== Nem találtunk kontrollert. Csatlakoztass egy kontrollert, majd indítsd újra a klienst.
-
-Device
-== Eszköz
-
 Status
 == Állapot
-
-Controller Axis #%d
-== Kontroller Tengely #%d
 
 Mouse
 == Egér
@@ -1534,101 +1395,405 @@ Loading race demo files
 Loading sound files
 == Hang fájlok betöltése
 
+[Graphics error]
+Failed during initialization. Try to change gfx_backend to OpenGL or Vulkan in settings_ddnet.cfg in the config directory and try again.
+== Probléma derült fel inicializálás közben. Változtasson a "gfx_backend" parancson "OpenGL"-re vagy "Vulkan"-ra a "settings_ddnet.cfg" fájlon és próbálja meg újra.
+
+[Graphics error]
+Out of VRAM. Try removing custom assets (skins, entities, etc.), especially those with high resolution.
+== Probléma derült fel Virtuális Memóriával. Nincs elég Virtuális Memória Textúrák vagy képek betöltésére (Karakterek, Entitások, stb.), főként a nagy minőségű képekre vonatkozva.
+
+[Graphics error]
+An error during command recording occurred. Try to update your GPU drivers.
+== Probléma derült fel felvétel közben. Próbálja felújítani a Videókártyája driver-ét.
+
+[Graphics error]
+A render command failed. Try to update your GPU drivers.
+== Probléma derült fel renderelés parancsa közben. Próbálja felújítani a Videókártyája driver-ét.
+
+[Graphics error]
+Submitting the render commands failed. Try to update your GPU drivers.
+== Probléma derült fel renderelési parancs végrehajtása közben. Próbálja felújítani a Videókártyája driver-ét.
+
+[Graphics error]
+Failed to swap framebuffers. Try to update your GPU drivers.
+== Probléma derült fel a framebuffer-nél. Nem sikerült framebuffer-t cserélni. Próbálja felújítani a Videókártyája driver-ét.
+
+[Graphics error]
+Unknown error. Try to change gfx_backend to OpenGL or Vulkan in settings_ddnet.cfg in the config directory and try again.
+== Ismeretlen probléma derült fel. Változtasson a "gfx_backend" parancson "OpenGL"-re vagy "Vulkan"-ra a "settings_ddnet.cfg" fájlon és próbálja meg újra.
+
+[Graphics error]
+Could not initialize the given graphics backend, reverting to the default backend now.
+== Nem sikerült inicializálni a megadott Grafikai Renderer-re (OpenGL vagy Vulkan Renderer), az eredeti Grafikai Renderer-re lesz visszaállítva a Kliens.
+
+[Graphics error]
+Could not initialize the given graphics backend, this is probably because you didn't install the driver of the integrated graphics card.
+== Nem sikerült inicializálni a megadott Grafikai Renderer-re (OpenGL vagy Vulkan Renderer), lehetőleg a Integrált Videókártyája driver-e nincs telepítve, vagy nem észlelhető driver rajta.
+
+Could not save downloaded map. Try manually deleting this file: %s
+== Nem sikerült elmenteni a letöltött pályát. Próbálja meg manuális módon kitörölni a fáljt: %s.
+
 Why are you slowmo replaying to read this?
-== 
+== Miért lassított módon rögzítesz, hogy elolvasd ezt?
 
 Cancel
-== 
+== Vissza
 
 File '%s' already exists, do you want to overwrite it?
-== 
+== A Fájl '%s' már létezik, szeretné felülírni a jelenlegi Fáljt?
+
+Copy info
+== Infó Másolása
 
 Are you sure that you want to remove the player '%s' from your friends list?
-== 
+== Biztos, hogy ki szeretnéd törölni '%s' Játékost a barátlistádból?
 
 Are you sure that you want to remove the clan '%s' from your friends list?
-== 
+== Biztos, hogy ki szeretnéd törölni '%s' Klánt a barátlistádból?
 
 Play the current demo
-== 
+== Jelenlegi Demó Lejátszása
 
 Pause the current demo
-== 
+== Jelenlegi Demó Szüneteltetése
 
 Stop the current demo
-== 
+== Jelenlegi Demó Megállítása
 
 Go back one tick
-== 
+== Előre menni egy képet
 
 Go forward one tick
-== 
+== Vissza menni egy képet
 
 Slow down the demo
-== 
+== Demó Lelassítása
 
 Speed up the demo
-== 
-
-Mark the beginning of a cut
-== 
-
-Mark the end of a cut
-== 
+== Demó Felgyorsítása
 
 Export cut as a separate demo
-== 
+== Exportáld a vágást, mint külön Demó
 
 Go back one marker
-== 
+== Előre menni egy jelőlésre
 
 Go forward one marker
-== 
+== Vissza menni egy jelőlésre
 
 Toggle keyboard shortcuts
-== 
+== Billentyűs parancsok váltása
+
+Open the directory that contains the demo files
+== Megnyitni a Demó Fáljlok helyét
 
 Are you sure that you want to delete the demo '%s'?
-== 
+== Biztos, hogy kiszeretnéd törölni a Demót: '%s'?
 
 Unable to delete the demo '%s'
-== 
+== Nem sikerült kitörölni a Demót: '%s'
 
 Menu opened. Press Esc key again to close menu.
-== 
+== Menű megnyitva. Az "Esc" gomb megnyomásával kilép a menüből.
+
+Save power by lowering refresh rate (higher input latency)
+== Takarékoskodjon energiát azzal, hogy lejjebb veszi a frissítési értéket (magasabb késleltetés tapasztalható)
+
+Open the settings file
+== Beállítások Fáljlának megnyitása
+
+Open the directory that contains the configuration and user files
+== Megnyitni a Konfigurációs és Felhasználói Fáljok helyét
+
+Open the directory to add custom themes
+== Megnyitni az egyedi témák helyét
+
+Create a random skin
+== Random Karakter csinálása
+
+Open the directory to add custom skins
+== Megnyitni az egyedi Karakterek helyét
+
+No controller found. Plug in a controller.
+== Nem található Kontroller. Csatlakoztasson egyet, vagy nézze meg, hogy észlelhető.
 
 Reset controls
-== 
+== Irányítások Visszaállítása
 
 Are you sure that you want to reset the controls to their defaults?
-== 
+== Biztos, hogy szeretnéd visszaállítani az irányítást az eredeti értékeire?
 
 Weapons
-== 
+== Fegyverek
 
 Rifle Laser Outline Color
-== 
+== Lézer Külső Színe
 
 Rifle Laser Inner Color
-== 
+== Lézer Belső Színe
 
 Shotgun Laser Outline Color
-== 
+== Sörétes puska Külső Színe
 
 Shotgun Laser Inner Color
-== 
+== Sörétes puska Belső Színe
 
 Door Laser Outline Color
-== 
+== Lézer ajtó Külső Színe
 
 Door Laser Inner Color
-== 
+== Lézer ajtó Belső Színe
 
 Freeze Laser Outline Color
-== 
+== Fagyasztó Lézer Külső Színe
 
 Freeze Laser Inner Color
-== 
+== Fagyasztó Lézer Belső Színe
 
 Set all to Rifle
+== Minden színt a Lézerhez igazodva
+
+Unregister protocol and file extensions
+== Törölje a protokoll és a fájlkiterjesztések regisztrációját
+
+Open the directory to add custom assets
+== Megnyitni az egyedi Képek helyét
+
+Error playing demo
+== 
+
+Saving settings to '%s' failed
+== 
+
+Quitting. Please wait…
+== 
+
+Restarting. Please wait…
+== 
+
+Searching
+== 
+
+Enter Username
+== 
+
+Enter Password
+== 
+
+NOT CONNECTED
+== 
+
+Match %d of %d
+== 
+
+No results
+== 
+
+Lines %d - %d (%s)
+== 
+
+Locked
+== 
+
+Following
+== 
+
+Multi-View
+== 
+
+Some map images could not be loaded. Check the local console for details.
+== 
+
+Some map sounds could not be loaded. Check the local console for details.
+== 
+
+Loading menu themes
+== 
+
+Press a key…
+== 
+
+Rename folder
+== 
+
+Render complete
+== 
+
+Are you sure that you want to restart?
+== 
+
+There's an unsaved map in the editor, you might want to save it.
+== 
+
+Continue anyway?
+== 
+
+A demo with this name already exists
+== 
+
+A folder with this name already exists
+== 
+
+Unable to rename the folder
+== 
+
+(paused)
+== 
+
+Videos directory
+== 
+
+Video was saved to '%s'
+== 
+
+Communities
+== 
+
+No server selected
+== 
+
+Online players (%d)
+== 
+
+Online clanmates (%d)
+== 
+
+[friends (server browser)]
+Offline (%d)
+== 
+
+Click to select server. Double click to join your friend.
+== 
+
+Click to remove this player from your friends list.
+== 
+
+Click to remove this clan from your friends list.
+== 
+
+None
+== 
+
+Add Clan
+== 
+
+Go back the specified duration
+== 
+
+[Demo player duration]
+%d min.
+== 
+
+[Demo player duration]
+%d sec.
+== 
+
+Change the skip duration
+== 
+
+Go forward the specified duration
+== 
+
+Mark the beginning of a cut (right click to reset)
+== 
+
+Mark the end of a cut (right click to reset)
+== 
+
+Close the demo player
+== 
+
+Export demo cut
+== 
+
+Cut interval
+== 
+
+Cut length
+== 
+
+Render cut to video
+== 
+
+Please use a different filename
+== 
+
+All combined
+== 
+
+No demo selected
+== 
+
+Folder Link
+== 
+
+Created
+== 
+
+Netversion
+== 
+
+[Demo details]
+map not included
+== 
+
+Are you sure that you want to delete the folder '%s'?
+== 
+
+Delete folder
+== 
+
+Unable to delete the folder '%s'. Make sure it's empty first.
+== 
+
+Ghosts directory
+== 
+
+Activate all
+== 
+
+Deactivate all
+== 
+
+Axis
+== 
+
+Graphics card
+== 
+
+Info Messages
+== 
+
+Show local time always
+== 
+
+Chat font size
+== 
+
+Chat width
+== 
+
+Authed name color in scoreboard
+== 
+
+Same clan color in scoreboard
+== 
+
+Show finish messages
+== 
+
+Enable ghost
+== 
+
+Only save improvements
+== 
+
+Regular background color
+== 
+
+Entities background color
+== 
+
+Moved ingame
 == 

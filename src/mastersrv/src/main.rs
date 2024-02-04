@@ -718,8 +718,7 @@ fn handle_register(
                 let info = i.as_object().ok_or("register info must be an object")?;
 
                 // Normalize the JSON to strip any spaces etc.
-                let raw_info = json::to_string(&info).unwrap();
-                Ok(json::value::RawValue::from_string(raw_info).unwrap())
+                Ok(json::value::to_raw_value(&info).unwrap())
             })
             .transpose()?;
 
@@ -824,8 +823,9 @@ fn register_from_headers(
         challenge_token: parse_opt(headers, "Challenge-Token")?,
         info_serial: parse(headers, "Info-Serial")?,
         info: if !info.is_empty() {
-            if headers.typed_get() != Some(headers::ContentType::json()) {
-                return Err(RegisterError::unsupported_media_type());
+            match headers.typed_get::<headers::ContentType>().map(mime::Mime::from) {
+                Some(mime) if mime.essence_str() == mime::APPLICATION_JSON => {}
+                _ => return Err(RegisterError::unsupported_media_type()),
             }
             Some(json::from_slice(info).map_err(|e| {
                 RegisterError::new(format!("Request body deserialize error: {}", e))

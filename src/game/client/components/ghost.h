@@ -57,7 +57,7 @@ class CGhost : public CComponent
 private:
 	enum
 	{
-		MAX_ACTIVE_GHOSTS = 8,
+		MAX_ACTIVE_GHOSTS = 256,
 	};
 
 	class CGhostPath
@@ -155,11 +155,12 @@ public:
 	virtual void OnRender() override;
 	virtual void OnConsoleInit() override;
 	virtual void OnReset() override;
+	virtual void OnRefreshSkins() override;
 	virtual void OnMessage(int MsgType, void *pRawMsg) override;
 	virtual void OnMapLoad() override;
 	virtual void OnShutdown() override;
+	virtual void OnNewSnapshot() override;
 
-	void OnNewSnapshot();
 	void OnNewPredictedSnapshot();
 
 	int FreeSlots() const;
@@ -174,9 +175,7 @@ public:
 	class IGhostLoader *GhostLoader() const { return m_pGhostLoader; }
 	class IGhostRecorder *GhostRecorder() const { return m_pGhostRecorder; }
 
-	int GetLastRaceTick();
-
-	void RefindSkin();
+	int GetLastRaceTick() const;
 };
 
 #endif

@@ -5,8 +5,11 @@
 #include <engine/shared/linereader.h>
 #include <engine/storage.h>
 
+#include <game/editor/mapitems/layer_tiles.h>
+#include <game/mapitems.h>
+
 #include "auto_map.h"
-#include "editor.h"
+#include "editor_actions.h"
 
 // Based on triple32inc from https://github.com/skeeto/hash-prospector/tree/79a6074062a84907df6e45b756134b74e2956760
 static uint32_t HashUInt32(uint32_t Num)
@@ -39,17 +42,21 @@ static int HashLocation(uint32_t Seed, uint32_t Run, uint32_t Rule, uint32_t X, 
 
 CAutoMapper::CAutoMapper(CEditor *pEditor)
 {
-	m_pEditor = pEditor;
-	m_FileLoaded = false;
+	Init(pEditor);
 }
 
 void CAutoMapper::Load(const char *pTileName)
 {
-	char aPath[256];
-	str_format(aPath, sizeof(aPath), "editor/%s.rules", pTileName);
-	IOHANDLE RulesFile = m_pEditor->Storage()->OpenFile(aPath, IOFLAG_READ | IOFLAG_SKIP_BOM, IStorage::TYPE_ALL);
+	char aPath[IO_MAX_PATH_LENGTH];
+	str_format(aPath, sizeof(aPath), "editor/automap/%s.rules", pTileName);
+	IOHANDLE RulesFile = Storage()->OpenFile(aPath, IOFLAG_READ | IOFLAG_SKIP_BOM, IStorage::TYPE_ALL);
 	if(!RulesFile)
+	{
+		char aBuf[IO_MAX_PATH_LENGTH + 32];
+		str_format(aBuf, sizeof(aBuf), "failed to load %s", aPath);
+		Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "editor/automap", aBuf);
 		return;
+	}
 
 	CLineReader LineReader;
 	LineReader.Init(RulesFile);
@@ -57,8 +64,6 @@ void CAutoMapper::Load(const char *pTileName)
 	CConfiguration *pCurrentConf = nullptr;
 	CRun *pCurrentRun = nullptr;
 	CIndexRule *pCurrentIndex = nullptr;
-
-	char aBuf[256];
 
 	// read each line
 	while(char *pLine = LineReader.Get())
@@ -79,7 +84,7 @@ void CAutoMapper::Load(const char *pTileName)
 				m_vConfigs.push_back(NewConf);
 				int ConfigurationID = m_vConfigs.size() - 1;
 				pCurrentConf = &m_vConfigs[ConfigurationID];
-				str_copy(pCurrentConf->m_aName, pLine, str_length(pLine));
+				str_copy(pCurrentConf->m_aName, pLine, minimum<int>(sizeof(pCurrentConf->m_aName), str_length(pLine)));
 
 				// add start run
 				CRun NewRun;
@@ -118,9 +123,9 @@ void CAutoMapper::Load(const char *pTileName)
 				if(str_length(aOrientation1) > 0)
 				{
 					if(!str_comp(aOrientation1, "XFLIP"))
-						NewIndexRule.m_Flag |= TILEFLAG_FLIP_HORIZONTAL;
+						NewIndexRule.m_Flag |= TILEFLAG_XFLIP;
 					else if(!str_comp(aOrientation1, "YFLIP"))
-						NewIndexRule.m_Flag |= TILEFLAG_FLIP_VERTICAL;
+						NewIndexRule.m_Flag |= TILEFLAG_YFLIP;
 					else if(!str_comp(aOrientation1, "ROTATE"))
 						NewIndexRule.m_Flag |= TILEFLAG_ROTATE;
 				}
@@ -128,9 +133,9 @@ void CAutoMapper::Load(const char *pTileName)
 				if(str_length(aOrientation2) > 0)
 				{
 					if(!str_comp(aOrientation2, "XFLIP"))
-						NewIndexRule.m_Flag |= TILEFLAG_FLIP_HORIZONTAL;
+						NewIndexRule.m_Flag |= TILEFLAG_XFLIP;
 					else if(!str_comp(aOrientation2, "YFLIP"))
-						NewIndexRule.m_Flag |= TILEFLAG_FLIP_VERTICAL;
+						NewIndexRule.m_Flag |= TILEFLAG_YFLIP;
 					else if(!str_comp(aOrientation2, "ROTATE"))
 						NewIndexRule.m_Flag |= TILEFLAG_ROTATE;
 				}
@@ -138,9 +143,9 @@ void CAutoMapper::Load(const char *pTileName)
 				if(str_length(aOrientation3) > 0)
 				{
 					if(!str_comp(aOrientation3, "XFLIP"))
-						NewIndexRule.m_Flag |= TILEFLAG_FLIP_HORIZONTAL;
+						NewIndexRule.m_Flag |= TILEFLAG_XFLIP;
 					else if(!str_comp(aOrientation3, "YFLIP"))
-						NewIndexRule.m_Flag |= TILEFLAG_FLIP_VERTICAL;
+						NewIndexRule.m_Flag |= TILEFLAG_YFLIP;
 					else if(!str_comp(aOrientation3, "ROTATE"))
 						NewIndexRule.m_Flag |= TILEFLAG_ROTATE;
 				}
@@ -205,9 +210,9 @@ void CAutoMapper::Load(const char *pTileName)
 						{
 							NewIndexInfo.m_TestFlag = true;
 							if(!str_comp(aOrientation1, "XFLIP"))
-								NewIndexInfo.m_Flag = TILEFLAG_FLIP_HORIZONTAL;
+								NewIndexInfo.m_Flag = TILEFLAG_XFLIP;
 							else if(!str_comp(aOrientation1, "YFLIP"))
-								NewIndexInfo.m_Flag = TILEFLAG_FLIP_VERTICAL;
+								NewIndexInfo.m_Flag = TILEFLAG_YFLIP;
 							else if(!str_comp(aOrientation1, "ROTATE"))
 								NewIndexInfo.m_Flag = TILEFLAG_ROTATE;
 							else if(!str_comp(aOrientation1, "NONE"))
@@ -230,9 +235,9 @@ void CAutoMapper::Load(const char *pTileName)
 						else if(str_length(aOrientation2) > 0 && NewIndexInfo.m_Flag != 0)
 						{
 							if(!str_comp(aOrientation2, "XFLIP"))
-								NewIndexInfo.m_Flag |= TILEFLAG_FLIP_HORIZONTAL;
+								NewIndexInfo.m_Flag |= TILEFLAG_XFLIP;
 							else if(!str_comp(aOrientation2, "YFLIP"))
-								NewIndexInfo.m_Flag |= TILEFLAG_FLIP_VERTICAL;
+								NewIndexInfo.m_Flag |= TILEFLAG_YFLIP;
 							else if(!str_comp(aOrientation2, "ROTATE"))
 								NewIndexInfo.m_Flag |= TILEFLAG_ROTATE;
 						}
@@ -251,9 +256,9 @@ void CAutoMapper::Load(const char *pTileName)
 						else if(str_length(aOrientation3) > 0 && NewIndexInfo.m_Flag != 0)
 						{
 							if(!str_comp(aOrientation3, "XFLIP"))
-								NewIndexInfo.m_Flag |= TILEFLAG_FLIP_HORIZONTAL;
+								NewIndexInfo.m_Flag |= TILEFLAG_XFLIP;
 							else if(!str_comp(aOrientation3, "YFLIP"))
-								NewIndexInfo.m_Flag |= TILEFLAG_FLIP_VERTICAL;
+								NewIndexInfo.m_Flag |= TILEFLAG_YFLIP;
 							else if(!str_comp(aOrientation3, "ROTATE"))
 								NewIndexInfo.m_Flag |= TILEFLAG_ROTATE;
 						}
@@ -362,8 +367,9 @@ void CAutoMapper::Load(const char *pTileName)
 
 	io_close(RulesFile);
 
+	char aBuf[IO_MAX_PATH_LENGTH + 16];
 	str_format(aBuf, sizeof(aBuf), "loaded %s", aPath);
-	m_pEditor->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "editor", aBuf);
+	Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "editor/automap", aBuf);
 
 	m_FileLoaded = true;
 }
@@ -399,7 +405,7 @@ void CAutoMapper::ProceedLocalized(CLayerTiles *pLayer, int ConfigID, int Seed, 
 	int UpdateToX = clamp(X + Width + 3 * pConf->m_EndX, 0, pLayer->m_Width);
 	int UpdateToY = clamp(Y + Height + 3 * pConf->m_EndY, 0, pLayer->m_Height);
 
-	CLayerTiles *pUpdateLayer = new CLayerTiles(UpdateToX - UpdateFromX, UpdateToY - UpdateFromY);
+	CLayerTiles *pUpdateLayer = new CLayerTiles(Editor(), UpdateToX - UpdateFromX, UpdateToY - UpdateFromY);
 
 	for(int y = UpdateFromY; y < UpdateToY; y++)
 	{
@@ -420,8 +426,10 @@ void CAutoMapper::ProceedLocalized(CLayerTiles *pLayer, int ConfigID, int Seed, 
 		{
 			CTile *pIn = &pUpdateLayer->m_pTiles[(y - UpdateFromY) * pUpdateLayer->m_Width + x - UpdateFromX];
 			CTile *pOut = &pLayer->m_pTiles[y * pLayer->m_Width + x];
+			CTile Previous = *pOut;
 			pOut->m_Index = pIn->m_Index;
 			pOut->m_Flags = pIn->m_Flags;
+			pLayer->RecordStateChange(x, y, Previous, *pOut);
 		}
 	}
 
@@ -437,6 +445,7 @@ void CAutoMapper::Proceed(CLayerTiles *pLayer, int ConfigID, int Seed, int SeedO
 		Seed = rand();
 
 	CConfiguration *pConf = &m_vConfigs[ConfigID];
+	pLayer->ClearHistory();
 
 	// for every run: copy tiles, automap, overwrite tiles
 	for(size_t h = 0; h < pConf->m_vRuns.size(); ++h)
@@ -447,7 +456,7 @@ void CAutoMapper::Proceed(CLayerTiles *pLayer, int ConfigID, int Seed, int SeedO
 		CLayerTiles *pReadLayer;
 		if(pRun->m_AutomapCopy)
 		{
-			pReadLayer = new CLayerTiles(pLayer->m_Width, pLayer->m_Height);
+			pReadLayer = new CLayerTiles(Editor(), pLayer->m_Width, pLayer->m_Height);
 
 			for(int y = 0; y < pLayer->m_Height; y++)
 			{
@@ -471,7 +480,7 @@ void CAutoMapper::Proceed(CLayerTiles *pLayer, int ConfigID, int Seed, int SeedO
 			for(int x = 0; x < pLayer->m_Width; x++)
 			{
 				CTile *pTile = &(pLayer->m_pTiles[y * pLayer->m_Width + x]);
-				m_pEditor->m_Map.m_Modified = true;
+				Editor()->m_Map.OnModify();
 
 				for(size_t i = 0; i < pRun->m_vIndexRules.size(); ++i)
 				{
@@ -493,7 +502,7 @@ void CAutoMapper::Proceed(CLayerTiles *pLayer, int ConfigID, int Seed, int SeedO
 						{
 							int CheckTile = CheckY * pLayer->m_Width + CheckX;
 							CheckIndex = pReadLayer->m_pTiles[CheckTile].m_Index;
-							CheckFlags = pReadLayer->m_pTiles[CheckTile].m_Flags & (TILEFLAG_ROTATE | TILEFLAG_FLIP_HORIZONTAL | TILEFLAG_FLIP_VERTICAL);
+							CheckFlags = pReadLayer->m_pTiles[CheckTile].m_Flags & (TILEFLAG_ROTATE | TILEFLAG_XFLIP | TILEFLAG_YFLIP);
 						}
 						else
 						{
@@ -529,8 +538,10 @@ void CAutoMapper::Proceed(CLayerTiles *pLayer, int ConfigID, int Seed, int SeedO
 					if(RespectRules &&
 						(pIndexRule->m_RandomProbability >= 1.0f || HashLocation(Seed, h, i, x + SeedOffsetX, y + SeedOffsetY) < HASH_MAX * pIndexRule->m_RandomProbability))
 					{
+						CTile Previous = *pTile;
 						pTile->m_Index = pIndexRule->m_ID;
 						pTile->m_Flags = pIndexRule->m_Flag;
+						pLayer->RecordStateChange(x, y, Previous, *pTile);
 					}
 				}
 			}

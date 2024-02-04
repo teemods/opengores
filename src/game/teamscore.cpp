@@ -1,5 +1,6 @@
 /* (c) Shereef Marzouk. See "licence DDRace.txt" and the readme.txt in the root of the distribution for more information. */
 #include "teamscore.h"
+#include <base/system.h>
 #include <engine/shared/config.h>
 
 CTeamsCore::CTeamsCore()
@@ -51,4 +52,17 @@ void CTeamsCore::Reset()
 			m_aTeam[i] = TEAM_FLOCK;
 		m_aIsSolo[i] = false;
 	}
+}
+
+void CTeamsCore::SetSolo(int ClientID, bool Value)
+{
+	dbg_assert(ClientID >= 0 && ClientID < MAX_CLIENTS, "Invalid client id");
+	m_aIsSolo[ClientID] = Value;
+}
+
+bool CTeamsCore::GetSolo(int ClientID) const
+{
+	if(ClientID < 0 || ClientID >= MAX_CLIENTS)
+		return false;
+	return m_aIsSolo[ClientID];
 }

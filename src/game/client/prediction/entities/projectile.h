@@ -22,7 +22,6 @@ public:
 		int Span,
 		bool Freeze,
 		bool Explosive,
-		float Force,
 		int SoundImpact,
 		int Layer = 0,
 		int Number = 0);
@@ -38,7 +37,7 @@ public:
 	const vec2 &GetDirection() { return m_Direction; }
 	const int &GetOwner() { return m_Owner; }
 	const int &GetStartTick() { return m_StartTick; }
-	CProjectile(CGameWorld *pGameWorld, int ID, CProjectileData *pProj, const CNetObj_EntityEx *pEntEx = 0);
+	CProjectile(CGameWorld *pGameWorld, int ID, const CProjectileData *pProj);
 
 private:
 	vec2 m_Direction;

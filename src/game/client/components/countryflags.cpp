@@ -75,8 +75,7 @@ void CCountryFlags::LoadCountryflagsIndexfile()
 		CCountryFlag CountryFlag;
 		CountryFlag.m_CountryCode = CountryCode;
 		str_copy(CountryFlag.m_aCountryCodeString, aOrigin);
-		CountryFlag.m_Texture = Graphics()->LoadTextureRaw(Info.m_Width, Info.m_Height, Info.m_Format, Info.m_pData, Info.m_Format, 0, aOrigin);
-		Graphics()->FreePNG(&Info);
+		CountryFlag.m_Texture = Graphics()->LoadTextureRawMove(Info.m_Width, Info.m_Height, Info.m_Format, Info.m_pData, 0, aOrigin);
 
 		if(g_Config.m_Debug)
 		{
@@ -143,13 +142,17 @@ const CCountryFlags::CCountryFlag *CCountryFlags::GetByIndex(size_t Index) const
 	return &m_vCountryFlags[Index % m_vCountryFlags.size()];
 }
 
-void CCountryFlags::Render(int CountryCode, const ColorRGBA *pColor, float x, float y, float w, float h)
+void CCountryFlags::Render(const CCountryFlag *pFlag, ColorRGBA Color, float x, float y, float w, float h)
 {
-	const CCountryFlag *pFlag = GetByCountryCode(CountryCode);
 	if(pFlag->m_Texture.IsValid())
 	{
 		Graphics()->TextureSet(pFlag->m_Texture);
-		Graphics()->SetColor(*pColor);
+		Graphics()->SetColor(Color);
 		Graphics()->RenderQuadContainerEx(m_FlagsQuadContainerIndex, 0, -1, x, y, w, h);
 	}
+}
+
+void CCountryFlags::Render(int CountryCode, ColorRGBA Color, float x, float y, float w, float h)
+{
+	Render(GetByCountryCode(CountryCode), Color, x, y, w, h);
 }
