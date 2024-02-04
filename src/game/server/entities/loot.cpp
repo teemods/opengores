@@ -211,7 +211,8 @@ void CLoot::Snap(int SnappingClient)
 	if(pOwnerChar && pOwnerChar->IsAlive())
 		TeamMask = pOwnerChar->Teams()->TeamMask(m_ResponsibleTeam);
 
-	if(!CmaskIsSet(TeamMask, SnappingClient))
+	CPlayer *pSnapPlayer = GameServer()->m_apPlayers[SnappingClient];
+	if(!TeamMask.test(pSnapPlayer->GetTeam()))
 		return;
 
 	if(m_DotsEffect)

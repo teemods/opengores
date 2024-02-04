@@ -1226,7 +1226,7 @@ bool CPlayer::CarrySomeone()
 		if(Player->GetPlayer()->GetCID() != GetCID() && distance(Player->m_Pos, GetCharacter()->m_Pos) < 60)
 		{
 			CClientMask TeamMask = GetCharacter()->Teams()->TeamMask(GetCharacter()->Team(), -1, GetCID());
-			if(!CmaskIsSet(TeamMask, Player->GetPlayer()->GetCID()))
+			if(!TeamMask.test(Player->GetPlayer()->GetTeam()))
 			{
 				continue;
 			}
@@ -1389,7 +1389,7 @@ bool CPlayer::TickCarrying()
 
 		// Check if the carried player is in a different team mask
 		CClientMask TeamMask = GetCharacter()->Teams()->TeamMask(GetCharacter()->Team());
-		if(!CmaskIsSet(TeamMask, m_PowersData.m_CarryCharacter->GetPlayer()->GetCID()))
+		if(!TeamMask.test(m_PowersData.m_CarryCharacter->GetPlayer()->GetTeam()))
 		{
 			return CancelCarrying();
 		}
@@ -1405,8 +1405,8 @@ bool CPlayer::TickCarrying()
 		//     }
 		// }
 
-		m_PowersData.m_CarryCharacter->Core()->m_Pos = m_PowersData.m_CarryCharacter->m_Pos = FinalPos; // teeware code
-		m_PowersData.m_CarryCharacter->Core()->m_Vel = vec2(0, 0); // no speed
+		m_PowersData.m_CarryCharacter->SetPosition(FinalPos);
+		m_PowersData.m_CarryCharacter->ResetVelocity(); // no speed
 	}
 
 	m_PowersData.m_CarryTimeRemaining--;

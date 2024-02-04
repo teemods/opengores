@@ -870,7 +870,7 @@ int IGameController::SnapRecordFlag(int SnappingClient)
 	if(SnappingClient != SERVER_DEMO_CLIENT)
 	{
 		CClientMask TeamMask = m_pRecordFlagChar->Teams()->TeamMask(m_pRecordFlagChar->Team(), -1, pFlagOwner->GetCID());
-		if(!CmaskIsSet(TeamMask, SnappingClient))
+		if(!TeamMask.test(pSnapPlayer->GetTeam()))
 			return pFlagOwner->GetCID();
 	}
 

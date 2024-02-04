@@ -65,7 +65,8 @@ void CSoundtrack::Snap(int SnappingClient)
 	if(pOwnerChar && pOwnerChar->IsAlive())
 		TeamMask = pOwnerChar->Teams()->TeamMask(pOwnerChar->Team(), -1, m_Owner);
 
-	if(!CmaskIsSet(TeamMask, SnappingClient))
+	CPlayer *pSnapPlayer = GameServer()->m_apPlayers[SnappingClient];
+	if(!TeamMask.test(pSnapPlayer->GetTeam()))
 		return;
 
 	float AngleStart = (2.0f * pi * Server()->Tick() / static_cast<float>(Server()->TickSpeed())) / 10.0f;

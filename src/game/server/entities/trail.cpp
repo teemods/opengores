@@ -83,7 +83,8 @@ void CTrail::Snap(int SnappingClient)
 	if(pOwnerChar && pOwnerChar->IsAlive())
 		TeamMask = pOwnerChar->Teams()->TeamMask(pOwnerChar->Team(), -1, m_Owner);
 
-	if(!CmaskIsSet(TeamMask, SnappingClient))
+	CPlayer *pSnapPlayer = GameServer()->m_apPlayers[SnappingClient];
+	if(!TeamMask.test(pSnapPlayer->GetTeam()))
 		return;
 
 	CNetObj_Projectile *pObj = static_cast<CNetObj_Projectile *>(Server()->SnapNewItem(NETOBJTYPE_PROJECTILE, m_IDs[0], sizeof(CNetObj_Projectile)));

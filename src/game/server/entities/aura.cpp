@@ -137,7 +137,8 @@ void CAura::Snap(int SnappingClient)
 	if(pOwnerChar->IsAlive())
 		TeamMask = pOwnerChar->Teams()->TeamMask(pOwnerChar->Team(), -1, m_Owner);
 
-	if(!CmaskIsSet(TeamMask, SnappingClient))
+	CPlayer *pSnapPlayer = GameServer()->m_apPlayers[SnappingClient];
+	if(!TeamMask.test(pSnapPlayer->GetTeam()))
 		return;
 
 	// Check if char is moving
