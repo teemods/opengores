@@ -1225,7 +1225,7 @@ bool CPlayer::CarrySomeone()
 	{
 		if(Player->GetPlayer()->GetCID() != GetCID() && distance(Player->m_Pos, GetCharacter()->m_Pos) < 60)
 		{
-			int64_t TeamMask = GetCharacter()->Teams()->TeamMask(GetCharacter()->Team(), -1, GetCID());
+			CClientMask TeamMask = GetCharacter()->Teams()->TeamMask(GetCharacter()->Team(), -1, GetCID());
 			if(!CmaskIsSet(TeamMask, Player->GetPlayer()->GetCID()))
 			{
 				continue;
@@ -1388,7 +1388,7 @@ bool CPlayer::TickCarrying()
 		}
 
 		// Check if the carried player is in a different team mask
-		int64_t TeamMask = GetCharacter()->Teams()->TeamMask(GetCharacter()->Team());
+		CClientMask TeamMask = GetCharacter()->Teams()->TeamMask(GetCharacter()->Team());
 		if(!CmaskIsSet(TeamMask, m_PowersData.m_CarryCharacter->GetPlayer()->GetCID()))
 		{
 			return CancelCarrying();

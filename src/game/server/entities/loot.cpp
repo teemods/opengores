@@ -72,7 +72,7 @@ void CLoot::Tick()
 				continue;
 			}
 
-			int64_t TeamMask;
+			CClientMask TeamMask;
 			TeamMask = p->Teams()->TeamMask(p->Team(), -1, m_Owner);
 
 			// create pick up sound
@@ -94,17 +94,17 @@ void CLoot::Tick()
 			// send loot emoji
 			if(m_LootType == POWERUP_HEALTH)
 			{
-				GameServer()->SendEmoticon(p->GetPlayer()->GetCID(), EMOTICON_HEARTS);
+				GameServer()->SendEmoticon(p->GetPlayer()->GetCID(), EMOTICON_HEARTS, -1);
 				p->GetPlayer()->GetCharacter()->SetEmote(EMOTE_HAPPY, Server()->Tick() + 2 * Server()->TickSpeed());
 			}
 			if(m_LootType == POWERUP_ARMOR)
 			{
-				GameServer()->SendEmoticon(p->GetPlayer()->GetCID(), EMOTICON_EYES);
+				GameServer()->SendEmoticon(p->GetPlayer()->GetCID(), EMOTICON_EYES, -1);
 				p->GetPlayer()->GetCharacter()->SetEmote(EMOTE_HAPPY, Server()->Tick() + 2 * Server()->TickSpeed());
 			}
 			if(m_LootType == POWERUP_NINJA)
 			{
-				GameServer()->SendEmoticon(p->GetPlayer()->GetCID(), EMOTICON_GHOST);
+				GameServer()->SendEmoticon(p->GetPlayer()->GetCID(), EMOTICON_GHOST, -1);
 				p->GetPlayer()->GetCharacter()->SetEmote(EMOTE_SURPRISE, Server()->Tick() + 2 * Server()->TickSpeed());
 			}
 
@@ -203,7 +203,7 @@ void CLoot::Snap(int SnappingClient)
 		return;
 
 	CCharacter *pOwnerChar = 0;
-	int64_t TeamMask = -1LL;
+	CClientMask TeamMask;
 
 	if(SnappingClient >= 0)
 		pOwnerChar = GameServer()->GetPlayerChar(SnappingClient);

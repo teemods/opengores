@@ -2119,7 +2119,7 @@ void CGameContext::ConSoundtrack(IConsole::IResult *pResult, void *pUserData)
 	}
 
 	// Send emoji and eye
-	pSelf->SendEmoticon(pPlayer->GetCID(), EMOTICON_MUSIC);
+	pSelf->SendEmoticon(pPlayer->GetCID(), EMOTICON_MUSIC, -1);
 	pPlayer->GetCharacter()->SetEmote(EMOTE_HAPPY, Now + 2 * TickSpeed);
 
 	// put in cooldown and play soundtrack
@@ -2171,7 +2171,7 @@ void CGameContext::ConCarry(IConsole::IResult *pResult, void *pUserData)
 	if(pPlayer->CarrySomeone())
 	{
 		// Send emoji and eye
-		pSelf->SendEmoticon(pPlayer->GetCID(), EMOTICON_OOP);
+		pSelf->SendEmoticon(pPlayer->GetCID(), EMOTICON_OOP, -1);
 		pPlayer->GetCharacter()->SetEmote(EMOTE_PAIN, Now + 2 * TickSpeed);
 
 		// put in cooldown and carry
@@ -2235,7 +2235,7 @@ void CGameContext::ExecuteSuperHeart(IConsole::IResult *pResult, void *pUserData
 	int64_t TickSpeed = pSelf->Server()->TickSpeed();
 
 	// Send emoji and eye
-	pSelf->SendEmoticon(pPlayer->GetCID(), EMOTICON_HEARTS);
+	pSelf->SendEmoticon(pPlayer->GetCID(), EMOTICON_HEARTS, -1);
 	pPlayer->GetCharacter()->SetEmote(EMOTE_HAPPY, Now + 2 * TickSpeed);
 
 	// put in cooldown and spawn heart
@@ -2281,7 +2281,7 @@ void CGameContext::ExecuteDrop(IConsole::IResult *pResult, void *pUserData, int 
 	}
 
 	// Send emoji and eye
-	pSelf->SendEmoticon(pPlayer->GetCID(), Emoticon);
+	pSelf->SendEmoticon(pPlayer->GetCID(), Emoticon, -1);
 	pPlayer->GetCharacter()->SetEmote(Emote, Now + 2 * TickSpeed);
 
 	// put in cooldown and spawn loot
@@ -2311,14 +2311,14 @@ void CGameContext::ExecuteEmotion(IConsole::IResult *pResult, void *pUserData, i
 		return;
 	}
 
-	pSelf->SendEmoticon(pPlayer->GetCID(), Emoticon);
+	pSelf->SendEmoticon(pPlayer->GetCID(), Emoticon, -1);
 	pPlayer->GetCharacter()->SetEmote(Emote, Now + 2 * TickSpeed);
 
 	if(Now > pPlayer->m_PowersData.m_LastEmotionTick + (g_Config.m_SvEffectEmotionInterval * TickSpeed))
 	{
 		pPlayer->m_PowersData.m_LastEmotionTick = Now;
 
-		int64_t TeamMask = pPlayer->GetCharacter()->Teams()->TeamMask(pPlayer->GetCharacter()->Team(), -1, pPlayer->GetCID());
+		CClientMask TeamMask = pPlayer->GetCharacter()->Teams()->TeamMask(pPlayer->GetCharacter()->Team(), -1, pPlayer->GetCID());
 
 		pSelf->CreateSound(pPlayer->GetCharacter()->m_Pos, SoundID, TeamMask);
 	}

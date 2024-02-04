@@ -88,9 +88,7 @@ void CProjectile::TeleportOwnerToProjectile()
 		pOwnerChar->m_TeleGunTeleport = true;
 		pOwnerChar->m_IsBlueTeleGunTeleport = false;
 
-		pOwnerChar->Core()->m_HookedPlayer = -1;
-		pOwnerChar->Core()->m_HookState = HOOK_RETRACTED;
-		pOwnerChar->Core()->m_HookPos = PossiblePos;
+		pOwnerChar->Core()->SetHookedPlayer(-1);
 	}
 }
 // Finish - OpenGores

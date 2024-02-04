@@ -869,8 +869,7 @@ int IGameController::SnapRecordFlag(int SnappingClient)
 	// Verify flag owner team mask (cannot check that when demo client)
 	if(SnappingClient != SERVER_DEMO_CLIENT)
 	{
-		int64_t TeamMask = -1LL;
-		TeamMask = m_pRecordFlagChar->Teams()->TeamMask(m_pRecordFlagChar->Team(), -1, pFlagOwner->GetCID());
+		CClientMask TeamMask = m_pRecordFlagChar->Teams()->TeamMask(m_pRecordFlagChar->Team(), -1, pFlagOwner->GetCID());
 		if(!CmaskIsSet(TeamMask, SnappingClient))
 			return pFlagOwner->GetCID();
 	}

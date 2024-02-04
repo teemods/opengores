@@ -170,6 +170,10 @@ public:
 	CTuningParams *m_pTuningList;
 	CTuningParams *TuningList() { return m_pTuningList; }
 	CTuningParams *GetTuning(int i) { return &TuningList()[i]; }
+
+	// OpenGores
+	bool CheckForProjectileTeleport(int Owner, int Type);
+	// Finish OpenGores
 };
 
 #endif
