@@ -389,7 +389,7 @@ bool CGameWorld::CheckForProjectileTeleport(int Owner, int Type)
 
 	return false;
 }
-// End OpenGores
+// Finish OpenGores
 
 CTuningParams *CGameWorld::Tuning()
 {
