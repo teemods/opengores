@@ -28,10 +28,6 @@ protected:
 
 	CGLSLPrimitiveProgram *m_pPrimitiveProgram;
 	CGLSLPrimitiveProgram *m_pPrimitiveProgramTextured;
-	CGLSLTileProgram *m_pBorderTileProgram;
-	CGLSLTileProgram *m_pBorderTileProgramTextured;
-	CGLSLTileProgram *m_pBorderTileLineProgram;
-	CGLSLTileProgram *m_pBorderTileLineProgramTextured;
 	CGLSLQuadProgram *m_pQuadProgram;
 	CGLSLQuadProgram *m_pQuadProgramTextured;
 	CGLSLTextProgram *m_pTextProgram;
@@ -83,7 +79,7 @@ protected:
 	void RenderText(const CCommandBuffer::SState &State, int DrawNum, int TextTextureIndex, int TextOutlineTextureIndex, int TextureSize, const ColorRGBA &TextColor, const ColorRGBA &TextOutlineColor);
 
 	void TextureUpdate(int Slot, int X, int Y, int Width, int Height, int GLFormat, void *pTexData);
-	void TextureCreate(int Slot, int Width, int Height, int PixelSize, int GLFormat, int GLStoreFormat, int Flags, void *pTexData);
+	void TextureCreate(int Slot, int Width, int Height, int GLFormat, int GLStoreFormat, int Flags, void *pTexData);
 
 	bool Cmd_Init(const SCommand_Init *pCommand) override;
 	void Cmd_Shutdown(const SCommand_Shutdown *pCommand) override;
@@ -110,7 +106,6 @@ protected:
 
 	void Cmd_RenderTileLayer(const CCommandBuffer::SCommand_RenderTileLayer *pCommand) override;
 	void Cmd_RenderBorderTile(const CCommandBuffer::SCommand_RenderBorderTile *pCommand) override;
-	void Cmd_RenderBorderTileLine(const CCommandBuffer::SCommand_RenderBorderTileLine *pCommand) override;
 	void Cmd_RenderQuadLayer(const CCommandBuffer::SCommand_RenderQuadLayer *pCommand) override;
 	void Cmd_RenderText(const CCommandBuffer::SCommand_RenderText *pCommand) override;
 	void Cmd_RenderQuadContainer(const CCommandBuffer::SCommand_RenderQuadContainer *pCommand) override;

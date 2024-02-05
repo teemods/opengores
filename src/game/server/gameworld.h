@@ -5,7 +5,7 @@
 
 #include <game/gamecore.h>
 
-#include <list>
+#include <vector>
 
 class CEntity;
 class CCharacter;
@@ -38,8 +38,6 @@ private:
 	class CGameContext *m_pGameServer;
 	class CConfig *m_pConfig;
 	class IServer *m_pServer;
-
-	void UpdatePlayerMaps();
 
 public:
 	class CGameContext *GameServer() { return m_pGameServer; }
@@ -121,6 +119,9 @@ public:
 	*/
 	void RemoveEntity(CEntity *pEntity);
 
+	void RemoveEntitiesFromPlayer(int PlayerId);
+	void RemoveEntitiesFromPlayers(int PlayerIds[], int NumPlayers);
+
 	/*
 		Function: Snap
 			Calls Snap on all the entities in the world to create
@@ -162,10 +163,17 @@ public:
 		Returns:
 			Returns list with all Characters on line.
 	*/
-	std::list<CCharacter *> IntersectedCharacters(vec2 Pos0, vec2 Pos1, float Radius, const CEntity *pNotThis = nullptr);
+	std::vector<CCharacter *> IntersectedCharacters(vec2 Pos0, vec2 Pos1, float Radius, const CEntity *pNotThis = nullptr);
+
+	CTuningParams *Tuning();
+
+	CTuningParams *m_pTuningList;
+	CTuningParams *TuningList() { return m_pTuningList; }
+	CTuningParams *GetTuning(int i) { return &TuningList()[i]; }
 
 	// OpenGores
 	bool CheckForProjectileTeleport(int Owner, int Type);
+	// Finish OpenGores
 };
 
 #endif

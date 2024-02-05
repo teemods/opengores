@@ -26,15 +26,23 @@ GameInfoFlags = [
 ]
 GameInfoFlags2 = [
 	"ALLOW_X_SKINS", "GAMETYPE_CITY", "GAMETYPE_FDDRACE", "ENTITIES_FDDRACE", "HUD_HEALTH_ARMOR", "HUD_AMMO",
-	"HUD_DDRACE", "NO_WEAK_HOOK"
+	"HUD_DDRACE", "NO_WEAK_HOOK", "NO_SKIN_CHANGE_FOR_FROZEN"
 ]
 ExPlayerFlags = ["AFK", "PAUSED", "SPEC"]
-ProjectileFlags = [f"CLIENTID_BIT{i}" for i in range(8)] + [
+LegacyProjectileFlags = [f"CLIENTID_BIT{i}" for i in range(8)] + [
 	"NO_OWNER", "IS_DDNET", "BOUNCE_HORIZONTAL", "BOUNCE_VERTICAL",
 	"EXPLOSIVE", "FREEZE",
 ]
+ProjectileFlags = [
+	"BOUNCE_HORIZONTAL", "BOUNCE_VERTICAL", "EXPLOSIVE", "FREEZE", "NORMALIZE_VEL",
+]
+LaserFlags = [
+	"NO_PREDICT",
+]
 
-LaserTypes = ["RIFLE", "SHOTGUN", "DOOR", "FREEZE"]
+LaserTypes = ["RIFLE", "SHOTGUN", "DOOR", "FREEZE", "DRAGGER", "GUN", "PLASMA"]
+DraggerTypes = ["WEAK", "WEAK_NW", "NORMAL", "NORMAL_NW", "STRONG", "STRONG_NW"]
+GunTypes = ["UNFREEZE", "EXPLOSIVE", "FREEZE", "EXPFREEZE"]
 
 Emoticons = ["OOP", "EXCLAMATION", "HEARTS", "DROP", "DOTDOT", "MUSIC", "SORRY", "GHOST", "SUSHI", "SPLATTEE", "DEVILTEE", "ZOMG", "ZZZ", "WTF", "EYES", "QUESTION"]
 
@@ -66,12 +74,8 @@ enum
 
 enum
 {
-	GAMEINFO_CURVERSION=8,
+	GAMEINFO_CURVERSION=9,
 };
-'''
-
-RawSource = '''
-#include "protocol.h"
 '''
 
 Enums = [
@@ -81,6 +85,8 @@ Enums = [
 	Enum("AUTHED", Authed),
 	Enum("ENTITYCLASS", EntityClasses),
 	Enum("LASERTYPE", LaserTypes),
+	Enum("LASERDRAGGERTYPE", DraggerTypes),
+	Enum("LASERGUNTYPE", GunTypes),
 ]
 
 Flags = [
@@ -91,7 +97,9 @@ Flags = [
 	Flags("GAMEINFOFLAG", GameInfoFlags),
 	Flags("GAMEINFOFLAG2", GameInfoFlags2),
 	Flags("EXPLAYERFLAG", ExPlayerFlags),
+	Flags("LEGACYPROJECTILEFLAG", LegacyProjectileFlags),
 	Flags("PROJECTILEFLAG", ProjectileFlags),
+	Flags("LASERFLAG", LaserFlags),
 ]
 
 Objects = [
@@ -267,7 +275,7 @@ Objects = [
 
 	# The code assumes that this has the same in-memory representation as
 	# the Projectile net object.
-	NetObjectEx("DDNetProjectile", "projectile@netobj.ddnet.tw", [
+	NetObjectEx("DDRaceProjectile", "projectile@netobj.ddnet.tw", [
 		NetIntAny("m_X"),
 		NetIntAny("m_Y"),
 		NetIntAny("m_Angle"),
@@ -282,8 +290,32 @@ Objects = [
 		NetIntAny("m_FromX"),
 		NetIntAny("m_FromY"),
 		NetTick("m_StartTick"),
-		NetIntRange("m_Owner", 0, 'MAX_CLIENTS-1'),
+		NetIntRange("m_Owner", -1, 'MAX_CLIENTS-1'),
 		NetIntAny("m_Type"),
+		NetIntAny("m_SwitchNumber", -1),
+		NetIntAny("m_Subtype", -1),
+		NetIntAny("m_Flags", 0),
+	]),
+
+	NetObjectEx("DDNetProjectile", "ddnet-projectile@netobj.ddnet.tw", [
+		NetIntAny("m_X"),
+		NetIntAny("m_Y"),
+		NetIntAny("m_VelX"),
+		NetIntAny("m_VelY"),
+		NetIntRange("m_Type", 0, 'NUM_WEAPONS-1'),
+		NetTick("m_StartTick"),
+		NetIntRange("m_Owner", -1, 'MAX_CLIENTS-1'),
+		NetIntAny("m_SwitchNumber"),
+		NetIntAny("m_TuneZone"),
+		NetIntAny("m_Flags"),
+	]),
+
+	NetObjectEx("DDNetPickup", "pickup@netobj.ddnet.tw", [
+		NetIntAny("m_X"),
+		NetIntAny("m_Y"),
+		NetIntRange("m_Type", 0, 'max_int'),
+		NetIntRange("m_Subtype", 0, 'max_int'),
+		NetIntAny("m_SwitchNumber"),
 	]),
 
 	## Events
@@ -370,7 +402,7 @@ Messages = [
 	]),
 
 	NetMessage("Sv_TuneParams", []),
-	NetMessage("Sv_ExtraProjectile", []),
+	NetMessage("Unused", []),
 	NetMessage("Sv_ReadyToEnter", []),
 
 	NetMessage("Sv_WeaponPickup", [
@@ -403,7 +435,7 @@ Messages = [
 	]),
 
 	NetMessage("Sv_VoteSet", [
-		NetIntRange("m_Timeout", 0, 60),
+		NetIntRange("m_Timeout", 0, 'max_int'),
 		NetStringStrict("m_pDescription"),
 		NetStringStrict("m_pReason"),
 	]),
@@ -478,7 +510,7 @@ Messages = [
 		NetIntAny("m_PlayerTimeBest"),
 	]),
 
-	NetMessage("Unused", []),
+	NetMessage("Unused2", []),
 
 	NetMessage("Sv_TeamsStateLegacy", []),
 
@@ -513,4 +545,37 @@ Messages = [
 		NetIntAny("m_ServerTimeBest"),
 		NetIntAny("m_PlayerTimeBest"),
 	]),
+    
+	NetMessageEx("Sv_KillMsgTeam", "killmsgteam@netmsg.ddnet.tw", [
+		NetIntRange("m_Team", 0, 'MAX_CLIENTS-1'),
+		NetIntRange("m_First", -1, 'MAX_CLIENTS-1'),
+	]),
+
+	NetMessageEx("Sv_YourVote", "yourvote@netmsg.ddnet.org", [
+		NetIntRange("m_Voted", -1, 1),
+	]),
+
+	NetMessageEx("Sv_RaceFinish", "racefinish@netmsg.ddnet.org", [
+		NetIntRange("m_ClientID", 0, 'MAX_CLIENTS-1'),
+		NetIntAny("m_Time"),
+		NetIntAny("m_Diff"),
+		NetBool("m_RecordPersonal"),
+		NetBool("m_RecordServer", default=False),
+	]),
+
+	NetMessageEx("Sv_CommandInfo", "commandinfo@netmsg.ddnet.org", [
+			NetStringStrict("m_pName"),
+			NetStringStrict("m_pArgsFormat"),
+			NetStringStrict("m_pHelpText")
+	]),
+
+	NetMessageEx("Sv_CommandInfoRemove", "commandinfo-remove@netmsg.ddnet.org", [
+			NetStringStrict("m_pName")
+	]),
+
+	NetMessageEx("Sv_VoteOptionGroupStart", "sv-vote-option-group-start@netmsg.ddnet.org", []),
+	NetMessageEx("Sv_VoteOptionGroupEnd", "sv-vote-option-group-end@netmsg.ddnet.org", []),
+
+	NetMessageEx("Sv_CommandInfoGroupStart", "sv-commandinfo-group-start@netmsg.ddnet.org", []),
+	NetMessageEx("Sv_CommandInfoGroupEnd", "sv-commandinfo-group-end@netmsg.ddnet.org", []),
 ]

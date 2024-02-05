@@ -7,10 +7,13 @@
 
 #include <engine/shared/protocol.h>
 
-#include "alloc.h"
+#include <game/alloc.h>
+#include <game/server/save.h>
+
 #include "teeinfo.h"
 
 #include <memory>
+#include <optional>
 
 class CCharacter;
 class CGameContext;
@@ -59,8 +62,9 @@ public:
 	void OnPredictedEarlyInput(CNetObj_PlayerInput *pNewInput);
 	void OnDisconnect();
 
-	void KillCharacter(int Weapon = WEAPON_GAME);
+	void KillCharacter(int Weapon = WEAPON_GAME, bool SendKillMsg = true);
 	CCharacter *GetCharacter();
+	const CCharacter *GetCharacter() const;
 
 	void SpectatePlayerName(const char *pName);
 
@@ -88,6 +92,8 @@ public:
 	// used for snapping to just update latency if the scoreboard is active
 	int m_aCurLatency[MAX_CLIENTS];
 
+	int m_SentSnaps = 0;
+
 	// used for spectator mode
 	int m_SpectatorID;
 
@@ -104,6 +110,7 @@ public:
 	int m_LastSetSpectatorMode;
 	int m_LastChangeInfo;
 	int m_LastEmote;
+	int m_LastEmoteGlobal;
 	int m_LastKill;
 	int m_aLastCommands[4];
 	int m_LastCommandPos;
@@ -116,12 +123,11 @@ public:
 
 	int m_DieTick;
 	int m_PreviousDieTick;
-	int m_Score;
+	std::optional<int> m_Score;
 	int m_JoinTick;
 	bool m_ForceBalanced;
 	int m_LastActionTick;
 	int m_TeamChangeTick;
-	bool m_SentSemicolonTip;
 
 	// network latency calculations
 	struct
@@ -229,6 +235,7 @@ private:
 	int m_Paused;
 	int64_t m_ForcePauseTime;
 	int64_t m_LastPause;
+	bool m_Afk;
 
 	int m_DefEmote;
 	int m_OverrideEmote;
@@ -260,9 +267,9 @@ public:
 	void ProcessPause();
 	int Pause(int State, bool Force);
 	int ForcePause(int Time);
-	int IsPaused();
+	int IsPaused() const;
 
-	bool IsPlaying();
+	bool IsPlaying() const;
 	int64_t m_Last_KickVote;
 	int64_t m_Last_Team;
 	int m_ShowOthers;
@@ -270,8 +277,6 @@ public:
 	vec2 m_ShowDistance;
 	bool m_SpecTeam;
 	bool m_NinjaJetpack;
-	bool m_Afk;
-	bool m_HasFinishScore;
 
 	int m_ChatScore;
 
@@ -279,6 +284,10 @@ public:
 
 	void UpdatePlaytime();
 	void AfkTimer();
+	void SetAfk(bool Afk);
+	void SetInitialAfk(bool Afk);
+	bool IsAfk() const { return m_Afk; }
+
 	int64_t m_LastPlaytime;
 	int64_t m_LastEyeEmote;
 	int64_t m_LastBroadcast;
@@ -304,6 +313,8 @@ public:
 	bool m_VotedForPractice;
 	int m_SwapTargetsClientID; // Client ID of the swap target for the given player
 	bool m_BirthdayAnnounced;
+
+	CSaveTee m_LastTeleTee;
 };
 
 #endif

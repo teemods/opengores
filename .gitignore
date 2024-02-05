@@ -40,7 +40,6 @@ pack_*/
 release
 rules.ninja
 testrunner\[1\]_include.cmake
-vulkan_shaders_sha256.txt
 
 /SDL2.framework
 
@@ -54,6 +53,7 @@ libsteam_api.a
 config_retrieve
 config_store
 crapnet
+demo_extract_chat
 dilate
 dummy_map
 fake_server
@@ -90,6 +90,7 @@ target
 .cache
 .cproject
 .cmake
+.gdb_history
 .idea
 .project
 .settings
@@ -119,7 +120,6 @@ tags
 *.exe
 *.fifo
 *.filters
-*.json
 *.lnk
 *.log
 *.opensdf
@@ -131,6 +131,7 @@ tags
 *.sdf
 *.sln
 *.so
+*.spv
 *.sqlite
 *.sqlite-shm
 *.sqlite-wal

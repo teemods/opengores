@@ -6,7 +6,7 @@
 #include <base/vmath.h>
 #include <engine/shared/protocol.h>
 
-#include <list>
+#include <vector>
 
 enum
 {
@@ -39,10 +39,10 @@ public:
 	int GetWidth() const { return m_Width; }
 	int GetHeight() const { return m_Height; }
 	int IntersectLine(vec2 Pos0, vec2 Pos1, vec2 *pOutCollision, vec2 *pOutBeforeCollision) const;
-	int IntersectLineTeleWeapon(vec2 Pos0, vec2 Pos1, vec2 *pOutCollision, vec2 *pOutBeforeCollision, int *pTeleNr) const;
-	int IntersectLineTeleHook(vec2 Pos0, vec2 Pos1, vec2 *pOutCollision, vec2 *pOutBeforeCollision, int *pTeleNr) const;
+	int IntersectLineTeleWeapon(vec2 Pos0, vec2 Pos1, vec2 *pOutCollision, vec2 *pOutBeforeCollision, int *pTeleNr = nullptr) const;
+	int IntersectLineTeleHook(vec2 Pos0, vec2 Pos1, vec2 *pOutCollision, vec2 *pOutBeforeCollision, int *pTeleNr = nullptr) const;
 	void MovePoint(vec2 *pInoutPos, vec2 *pInoutVel, float Elasticity, int *pBounces) const;
-	void MoveBox(vec2 *pInoutPos, vec2 *pInoutVel, vec2 Size, float Elasticity) const;
+	void MoveBox(vec2 *pInoutPos, vec2 *pInoutVel, vec2 Size, vec2 Elasticity, bool *pGrounded = nullptr) const;
 	bool TestBox(vec2 Pos, vec2 Size) const;
 
 	// DDRace
@@ -62,7 +62,7 @@ public:
 	int GetIndex(vec2 PrevPos, vec2 Pos) const;
 	int GetFIndex(int x, int y) const;
 
-	int GetMoveRestrictions(CALLBACK_SWITCHACTIVE pfnSwitchActive, void *pUser, vec2 Pos, float Distance = 18.0f, int OverrideCenterTileIndex = -1);
+	int GetMoveRestrictions(CALLBACK_SWITCHACTIVE pfnSwitchActive, void *pUser, vec2 Pos, float Distance = 18.0f, int OverrideCenterTileIndex = -1) const;
 	int GetMoveRestrictions(vec2 Pos, float Distance = 18.0f)
 	{
 		return GetMoveRestrictions(nullptr, nullptr, Pos, Distance);
@@ -73,7 +73,7 @@ public:
 	int Entity(int x, int y, int Layer) const;
 	int GetPureMapIndex(float x, float y) const;
 	int GetPureMapIndex(vec2 Pos) const { return GetPureMapIndex(Pos.x, Pos.y); }
-	std::list<int> GetMapIndices(vec2 PrevPos, vec2 Pos, unsigned MaxIndices = 0) const;
+	std::vector<int> GetMapIndices(vec2 PrevPos, vec2 Pos, unsigned MaxIndices = 0) const;
 	int GetMapIndex(vec2 Pos) const;
 	bool TileExists(int Index) const;
 	bool TileExistsNext(int Index) const;
@@ -84,8 +84,8 @@ public:
 	int GetFTileFlags(int Index) const;
 	int IsTeleport(int Index) const;
 	int IsEvilTeleport(int Index) const;
-	int IsCheckTeleport(int Index) const;
-	int IsCheckEvilTeleport(int Index) const;
+	bool IsCheckTeleport(int Index) const;
+	bool IsCheckEvilTeleport(int Index) const;
 	int IsTeleportWeapon(int Index) const;
 	int IsTeleportHook(int Index) const;
 	int IsTeleCheckpoint(int Index) const;

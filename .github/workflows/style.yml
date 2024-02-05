@@ -3,15 +3,16 @@ name: Check style
 on:
   push:
     branches-ignore:
+      - gh-readonly-queue/**
       - master
-      - staging.tmp
-      - trying.tmp
-      - staging-squash-merge.tmp
   pull_request:
+  merge_group:
 
 jobs:
   check-style:
     runs-on: ubuntu-20.04
+    env:
+      CARGO_HTTP_MULTIPLEXING: false
     steps:
     - uses: actions/checkout@v3
       with:
@@ -19,11 +20,12 @@ jobs:
     - name: Prepare
       run: |
         sudo apt-get update -y
-        sudo apt-get install clang-format imagemagick ddnet-tools shellcheck pkg-config cmake ninja-build libfreetype6-dev libnotify-dev libsdl2-dev libsqlite3-dev libavcodec-dev libavformat-dev libavutil-dev libswresample-dev libswscale-dev libx264-dev python3-clang libvulkan-dev glslang-tools spirv-tools rustc cargo -y
+        sudo apt-get install clang-format imagemagick ddnet-tools shellcheck pkg-config cmake ninja-build libfreetype6-dev libnotify-dev libsdl2-dev libsqlite3-dev libavcodec-dev libavformat-dev libavutil-dev libswresample-dev libswscale-dev libx264-dev python3-clang libvulkan-dev glslang-tools spirv-tools -y
+        rustup default stable
         pip3 install pylint
-        git clone https://gitlab.com/Patiga/twmap
+        git clone https://gitlab.com/Patiga/twmap.git/
         cd twmap/twmap-tools
-        cargo install --path=.
+        cargo install --locked --path=.
         cd ../..
         rm -rf twmap
         mkdir release
@@ -40,6 +42,12 @@ jobs:
       run: scripts/languages/update_all.py
     - name: Check dilated images
       run: scripts/check_dilate.sh release data
+    - name: Check absolute includes
+      run: "! grep --exclude-dir rust-bridge -rE '^#include \"(antibot|base|engine|game|steam|test)/' src/"
+    - name: Check standard header includes
+      run: scripts/check_standard_headers.sh
+    - name: Check config variables
+      run: scripts/check_config_variables.py
     # TODO: Enable on release branches
     #- name: Out-of-date translations
     #  run: |
@@ -65,16 +73,15 @@ jobs:
       run: |
         pylint --version
         find . -type f -name "*.py" -not -path './ddnet-libs/*' -not -path './googletest-src/*' -print0 | xargs -0 pylint
-    - name: Unused headers
-      run: |
-        find src -name '*.h' | while read -r i; do grep -r -q "$(basename "$i")" || (echo "Header file $i is unused" && exit 1); done
+    - name: Unused header files
+      run: scripts/check_unused_header_files.py
     - name: Check maps
       run: |
         findings=$(find data -type f -name '*.map' -print0 | xargs -0 ~/.cargo/bin/twmap-check-ddnet 2>&1 | \
           grep -v -E "\"data/maps/(ctf|dm).*\.map\": Time cps are missing on the map" | \
           grep -v -E "\"data/themes/.*\.map\": Time cps are missing on the map" | \
-          grep -v -E "\"data/maps/ctf4\.map\": Map - Image error at index 3 : 'jungle_doodads_old' is not a valid external image in version DDNet06" | \
-          grep -v -E "\"data/themes/autumn_night\.map\": Map - Image error at index 3 : 'generic_lamps' is not a valid external image in version DDNet06" | \
+          grep -v -E "\"data/maps/ctf4\.map\": Map - In Image at index 3 -> Image 'jungle_doodads_old' is not a valid external image for DDNet06" | \
+          grep -v -E "\"data/themes/autumn_night\.map\": Map - In Image at index 3 -> Image 'generic_lamps' is not a valid external image for DDNet06" | \
           grep -v -E "\"data/maps7?/Tutorial\.map\": Map setting - Unusual: 'sv_show_others_default'" || true)
         if [ -n "$findings" ]; then
           echo "$findings"

@@ -3,6 +3,8 @@
 
 #include <engine/ghost.h>
 
+#include <base/system.h>
+
 enum
 {
 	MAX_ITEM_SIZE = 128,
@@ -16,19 +18,19 @@ struct CGhostHeader
 	unsigned char m_Version;
 	char m_aOwner[MAX_NAME_LENGTH];
 	char m_aMap[64];
-	unsigned char m_aZeroes[4]; // Crc before version 6
-	unsigned char m_aNumTicks[4];
-	unsigned char m_aTime[4];
+	unsigned char m_aZeroes[sizeof(int32_t)]; // Crc before version 6
+	unsigned char m_aNumTicks[sizeof(int32_t)];
+	unsigned char m_aTime[sizeof(int32_t)];
 	SHA256_DIGEST m_MapSha256;
 
 	int GetTicks() const
 	{
-		return bytes_be_to_int(m_aNumTicks);
+		return bytes_be_to_uint(m_aNumTicks);
 	}
 
 	int GetTime() const
 	{
-		return bytes_be_to_int(m_aTime);
+		return bytes_be_to_uint(m_aTime);
 	}
 
 	CGhostInfo ToGhostInfo() const

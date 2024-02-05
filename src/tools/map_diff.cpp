@@ -17,10 +17,12 @@ bool Process(IStorage *pStorage, const char **pMapNames)
 			return false;
 		}
 
-		// check version
-		CMapItemVersion *pVersion = (CMapItemVersion *)aMaps[i].FindItem(MAPITEMTYPE_VERSION, 0);
-		if(pVersion && pVersion->m_Version != 1)
+		const CMapItemVersion *pVersion = static_cast<CMapItemVersion *>(aMaps[i].FindItem(MAPITEMTYPE_VERSION, 0));
+		if(pVersion == nullptr || pVersion->m_Version != CMapItemVersion::CURRENT_VERSION)
+		{
+			dbg_msg("map_compare", "unsupported map version '%s'", pMapNames[i]);
 			return false;
+		}
 	}
 
 	int aStart[2], aNum[2];
@@ -41,7 +43,7 @@ bool Process(IStorage *pStorage, const char **pMapNames)
 	{
 		for(int i = 0; i < 2; ++i)
 		{
-			CMapItemLayer *pItem = (CMapItemLayer *)aMaps[i].GetItem(aStart[i] + j, nullptr, nullptr);
+			CMapItemLayer *pItem = (CMapItemLayer *)aMaps[i].GetItem(aStart[i] + j);
 			if(pItem->m_Type == LAYERTYPE_TILES)
 				(void)aMaps[i].GetData(((CMapItemLayerTilemap *)pItem)->m_Data);
 		}
@@ -52,7 +54,7 @@ bool Process(IStorage *pStorage, const char **pMapNames)
 	{
 		CMapItemLayer *apItem[2];
 		for(int i = 0; i < 2; ++i)
-			apItem[i] = (CMapItemLayer *)aMaps[i].GetItem(aStart[i] + j, nullptr, nullptr);
+			apItem[i] = (CMapItemLayer *)aMaps[i].GetItem(aStart[i] + j);
 
 		if(apItem[0]->m_Type != LAYERTYPE_TILES || apItem[1]->m_Type != LAYERTYPE_TILES)
 			continue;
@@ -97,7 +99,11 @@ int main(int argc, const char *argv[])
 {
 	CCmdlineFix CmdlineFix(&argc, &argv);
 	std::vector<std::shared_ptr<ILogger>> vpLoggers;
-	vpLoggers.push_back(std::shared_ptr<ILogger>(log_logger_stdout()));
+	std::shared_ptr<ILogger> pStdoutLogger = std::shared_ptr<ILogger>(log_logger_stdout());
+	if(pStdoutLogger)
+	{
+		vpLoggers.push_back(pStdoutLogger);
+	}
 	IOHANDLE LogFile = io_open("map_diff.txt", IOFLAG_WRITE);
 	if(LogFile)
 	{

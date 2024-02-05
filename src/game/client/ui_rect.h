@@ -84,6 +84,15 @@ public:
 	/**
 	 * Places pOtherRect inside *this* CUIRect with Cut as the margin.
 	 *
+	 * @param Cut The margin as a vec2.
+	 * The x component applies to the vertical axis.
+	 * The y component applies to the horizontal axis.
+	 * @param pOtherRect The CUIRect to place inside *this* CUIRect.
+	 */
+	void Margin(vec2 Cut, CUIRect *pOtherRect) const;
+	/**
+	 * Places pOtherRect inside *this* CUIRect with Cut as the margin.
+	 *
 	 * @param Cut The margin.
 	 * @param pOtherRect The CUIRect to place inside *this* CUIRect.
 	 */
@@ -113,6 +122,8 @@ public:
 
 	void Draw(ColorRGBA Color, int Corners, float Rounding) const;
 	void Draw4(ColorRGBA ColorTopLeft, ColorRGBA ColorTopRight, ColorRGBA ColorBottomLeft, ColorRGBA ColorBottomRight, int Corners, float Rounding) const;
+
+	vec2 Center() const { return vec2(x + w / 2.0f, y + h / 2.0f); }
 };
 
 #endif

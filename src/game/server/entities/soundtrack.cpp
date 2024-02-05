@@ -22,7 +22,7 @@ CSoundtrack::CSoundtrack(CGameWorld *pGameWorld, int Owner) :
 
 	GameWorld()->InsertEntity(this);
 
-	int64_t TeamMask = pOwner->GetCharacter()->Teams()->TeamMask(pOwner->GetCharacter()->Team(), -1, Owner);
+	CClientMask TeamMask = pOwner->GetCharacter()->Teams()->TeamMask(pOwner->GetCharacter()->Team(), -1, Owner);
 	GameServer()->CreateSound(m_Pos, SOUND_MENU, TeamMask);
 
 	for(int i = 0; i < NUM_IDS; i++)
@@ -57,7 +57,7 @@ void CSoundtrack::Snap(int SnappingClient)
 		return;
 
 	CCharacter *pOwnerChar = 0;
-	int64_t TeamMask = -1LL;
+	CClientMask TeamMask;
 
 	if(m_Owner >= 0)
 		pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
@@ -65,7 +65,8 @@ void CSoundtrack::Snap(int SnappingClient)
 	if(pOwnerChar && pOwnerChar->IsAlive())
 		TeamMask = pOwnerChar->Teams()->TeamMask(pOwnerChar->Team(), -1, m_Owner);
 
-	if(!CmaskIsSet(TeamMask, SnappingClient))
+	CPlayer *pSnapPlayer = GameServer()->m_apPlayers[SnappingClient];
+	if(!TeamMask.test(pSnapPlayer->GetTeam()))
 		return;
 
 	float AngleStart = (2.0f * pi * Server()->Tick() / static_cast<float>(Server()->TickSpeed())) / 10.0f;

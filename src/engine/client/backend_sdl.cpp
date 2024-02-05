@@ -108,30 +108,33 @@ void CGraphicsBackend_Threaded::StopProcessor()
 
 void CGraphicsBackend_Threaded::RunBuffer(CCommandBuffer *pBuffer)
 {
+	SGfxErrorContainer Error;
 #ifdef CONF_WEBASM
 	// run everything single threaded for now, context binding in a thread seems to not work as of now
-	if(!m_pProcessor->HasError())
+	Error = m_pProcessor->GetError();
+	if(Error.m_ErrorType == GFX_ERROR_TYPE_NONE)
 	{
 		RunBufferSingleThreadedUnsafe(pBuffer);
 	}
-	else
-	{
-		ProcessError();
-	}
 #else
 	WaitForIdle();
-	std::unique_lock<std::mutex> Lock(m_BufferSwapMutex);
-	if(!m_pProcessor->HasError())
 	{
-		m_pBuffer = pBuffer;
-		m_BufferInProcess.store(true, std::memory_order_relaxed);
-		m_BufferSwapCond.notify_all();
-	}
-	else
-	{
-		ProcessError();
+		std::unique_lock<std::mutex> Lock(m_BufferSwapMutex);
+		Error = m_pProcessor->GetError();
+		if(Error.m_ErrorType == GFX_ERROR_TYPE_NONE)
+		{
+			m_pBuffer = pBuffer;
+			m_BufferInProcess.store(true, std::memory_order_relaxed);
+			m_BufferSwapCond.notify_all();
+		}
 	}
 #endif
+
+	// Process error after lock is released to prevent deadlock
+	if(Error.m_ErrorType != GFX_ERROR_TYPE_NONE)
+	{
+		ProcessError(Error);
+	}
 }
 
 void CGraphicsBackend_Threaded::RunBufferSingleThreadedUnsafe(CCommandBuffer *pBuffer)
@@ -150,20 +153,23 @@ void CGraphicsBackend_Threaded::WaitForIdle()
 	m_BufferSwapCond.wait(Lock, [this]() { return m_pBuffer == nullptr; });
 }
 
-void CGraphicsBackend_Threaded::ProcessError()
+void CGraphicsBackend_Threaded::ProcessError(const SGfxErrorContainer &Error)
 {
-	const auto &Error = m_pProcessor->GetError();
-	std::string VerboseStr;
+	std::string VerboseStr = "Graphics Assertion:";
 	for(const auto &ErrStr : Error.m_vErrors)
-		VerboseStr.append(std::string(m_TranslateFunc(ErrStr.c_str(), "")) + "\n");
-	const auto CreatedMsgBox = TryCreateMsgBox(true, "Graphics Assertion", VerboseStr.c_str());
-	// check if error msg can be shown, then assert
-	dbg_assert(!CreatedMsgBox, VerboseStr.c_str());
+	{
+		VerboseStr.append("\n");
+		if(ErrStr.m_RequiresTranslation)
+			VerboseStr.append(m_TranslateFunc(ErrStr.m_Err.c_str(), ""));
+		else
+			VerboseStr.append(ErrStr.m_Err);
+	}
+	dbg_assert(false, VerboseStr.c_str());
 }
 
 bool CGraphicsBackend_Threaded::GetWarning(std::vector<std::string> &WarningStrings)
 {
-	if(HasWarning())
+	if(m_Warning.m_WarningType != GFX_WARNING_TYPE_NONE)
 	{
 		m_Warning.m_WarningType = GFX_WARNING_TYPE_NONE;
 		WarningStrings = m_Warning.m_vWarnings;
@@ -265,46 +271,47 @@ bool CCommandProcessorFragment_SDL::RunCommand(const CCommandBuffer::SCommand *p
 
 void CCommandProcessor_SDL_GL::HandleError()
 {
-	auto &Error = GetError();
-	switch(Error.m_ErrorType)
+	switch(m_Error.m_ErrorType)
 	{
 	case GFX_ERROR_TYPE_INIT:
-		Error.m_vErrors.emplace_back(Localizable("Failed during initialization. Try to change gfx_backend to OpenGL or Vulkan from settings_ddnet.cfg in the config directory and try again."));
+		m_Error.m_vErrors.emplace_back(SGfxErrorContainer::SError{true, Localizable("Failed during initialization. Try to change gfx_backend to OpenGL or Vulkan in settings_ddnet.cfg in the config directory and try again.", "Graphics error")});
 		break;
 	case GFX_ERROR_TYPE_OUT_OF_MEMORY_IMAGE:
 		[[fallthrough]];
 	case GFX_ERROR_TYPE_OUT_OF_MEMORY_BUFFER:
 		[[fallthrough]];
 	case GFX_ERROR_TYPE_OUT_OF_MEMORY_STAGING:
-		Error.m_vErrors.emplace_back(Localizable("Out of VRAM. Try removing custom assets (skins, entities etc.), especially with high resolution."));
+		m_Error.m_vErrors.emplace_back(SGfxErrorContainer::SError{true, Localizable("Out of VRAM. Try removing custom assets (skins, entities, etc.), especially those with high resolution.", "Graphics error")});
 		break;
 	case GFX_ERROR_TYPE_RENDER_RECORDING:
-		Error.m_vErrors.emplace_back(Localizable("An error during command recording occurred. Try to update your GPU drivers."));
+		m_Error.m_vErrors.emplace_back(SGfxErrorContainer::SError{true, Localizable("An error during command recording occurred. Try to update your GPU drivers.", "Graphics error")});
 		break;
 	case GFX_ERROR_TYPE_RENDER_CMD_FAILED:
-		Error.m_vErrors.emplace_back(Localizable("A render command failed. Try to update your GPU drivers."));
+		m_Error.m_vErrors.emplace_back(SGfxErrorContainer::SError{true, Localizable("A render command failed. Try to update your GPU drivers.", "Graphics error")});
 		break;
 	case GFX_ERROR_TYPE_RENDER_SUBMIT_FAILED:
-		Error.m_vErrors.emplace_back(Localizable("Submitting the render commands failed. Try to update your GPU drivers."));
+		m_Error.m_vErrors.emplace_back(SGfxErrorContainer::SError{true, Localizable("Submitting the render commands failed. Try to update your GPU drivers.", "Graphics error")});
 		break;
 	case GFX_ERROR_TYPE_SWAP_FAILED:
-		Error.m_vErrors.emplace_back(Localizable("Failed to swap framebuffers. Try to update your GPU drivers."));
+		m_Error.m_vErrors.emplace_back(SGfxErrorContainer::SError{true, Localizable("Failed to swap framebuffers. Try to update your GPU drivers.", "Graphics error")});
 		break;
 	case GFX_ERROR_TYPE_UNKNOWN:
 		[[fallthrough]];
 	default:
-		Error.m_vErrors.emplace_back(Localizable("Unknown error. Try to change gfx_backend to OpenGL or Vulkan from settings_ddnet.cfg in the config directory and try again."));
+		m_Error.m_vErrors.emplace_back(SGfxErrorContainer::SError{true, Localizable("Unknown error. Try to change gfx_backend to OpenGL or Vulkan in settings_ddnet.cfg in the config directory and try again.", "Graphics error")});
 		break;
 	}
 }
 
 void CCommandProcessor_SDL_GL::HandleWarning()
 {
-	auto &Warn = GetWarning();
-	switch(Warn.m_WarningType)
+	switch(m_Warning.m_WarningType)
 	{
 	case GFX_WARNING_TYPE_INIT_FAILED:
-		Warn.m_vWarnings.emplace_back(Localizable("Could not initialize the given graphics backend, reverting to the default backend now."));
+		m_Warning.m_vWarnings.emplace_back(Localizable("Could not initialize the given graphics backend, reverting to the default backend now.", "Graphics error"));
+		break;
+	case GFX_WARNING_TYPE_INIT_FAILED_MISSING_INTEGRATED_GPU_DRIVER:
+		m_Warning.m_vWarnings.emplace_back(Localizable("Could not initialize the given graphics backend, this is probably because you didn't install the driver of the integrated graphics card.", "Graphics error"));
 		break;
 	case GFX_WARNING_MISSING_EXTENSION:
 		// ignore this warning for now
@@ -313,7 +320,7 @@ void CCommandProcessor_SDL_GL::HandleWarning()
 		// ignore this warning for now
 		return;
 	default:
-		dbg_msg("gfx", "unhandled warning %d", (int)Warn.m_WarningType);
+		dbg_msg("gfx", "unhandled warning %d", (int)m_Warning.m_WarningType);
 		break;
 	}
 }
@@ -409,7 +416,7 @@ CCommandProcessor_SDL_GL::~CCommandProcessor_SDL_GL()
 	delete m_pGLBackend;
 }
 
-SGFXErrorContainer &CCommandProcessor_SDL_GL::GetError()
+const SGfxErrorContainer &CCommandProcessor_SDL_GL::GetError() const
 {
 	return m_Error;
 }
@@ -419,7 +426,7 @@ void CCommandProcessor_SDL_GL::ErroneousCleanup()
 	return m_pGLBackend->ErroneousCleanup();
 }
 
-SGFXWarningContainer &CCommandProcessor_SDL_GL::GetWarning()
+const SGfxWarningContainer &CCommandProcessor_SDL_GL::GetWarning() const
 {
 	return m_Warning;
 }
@@ -766,12 +773,21 @@ void CGraphicsBackend_SDL_GL::ClampDriverVersion(EBackendType BackendType)
 	}
 }
 
-bool CGraphicsBackend_SDL_GL::TryCreateMsgBox(bool AsError, const char *pTitle, const char *pMsg)
+bool CGraphicsBackend_SDL_GL::ShowMessageBox(unsigned Type, const char *pTitle, const char *pMsg)
 {
-	m_pProcessor->ErroneousCleanup();
-	SDL_DestroyWindow(m_pWindow);
-	SDL_ShowSimpleMessageBox(AsError ? SDL_MESSAGEBOX_ERROR : SDL_MESSAGEBOX_WARNING, pTitle, pMsg, nullptr);
-	return true;
+	if(m_pProcessor != nullptr)
+	{
+		m_pProcessor->ErroneousCleanup();
+	}
+	// TODO: Remove this workaround when https://github.com/libsdl-org/SDL/issues/3750 is
+	// fixed and pass the window to SDL_ShowSimpleMessageBox to make the popup modal instead
+	// of destroying the window before opening the popup.
+	if(m_pWindow != nullptr)
+	{
+		SDL_DestroyWindow(m_pWindow);
+		m_pWindow = nullptr;
+	}
+	return SDL_ShowSimpleMessageBox(Type, pTitle, pMsg, nullptr) == 0;
 }
 
 bool CGraphicsBackend_SDL_GL::IsModernAPI(EBackendType BackendType)
@@ -863,6 +879,12 @@ bool CGraphicsBackend_SDL_GL::GetDriverVersion(EGraphicsDriverAgeType DriverAgeT
 #endif
 	}
 	return false;
+}
+
+const char *CGraphicsBackend_SDL_GL::GetScreenName(int Screen) const
+{
+	const char *pName = SDL_GetDisplayName(Screen);
+	return pName == nullptr ? "unknown/error" : pName;
 }
 
 static void DisplayToVideoMode(CVideoMode *pVMode, SDL_DisplayMode *pMode, int HiDPIScale, int RefreshRate)
@@ -1163,9 +1185,6 @@ int CGraphicsBackend_SDL_GL::Init(const char *pName, int *pScreen, int *pWidth, 
 		}
 	}
 
-	if(g_Config.m_InpMouseOld)
-		SDL_SetHint(SDL_HINT_MOUSE_RELATIVE_MODE_WARP, "1");
-
 	m_pWindow = SDL_CreateWindow(
 		pName,
 		SDL_WINDOWPOS_CENTERED_DISPLAY(*pScreen),
@@ -1195,6 +1214,7 @@ int CGraphicsBackend_SDL_GL::Init(const char *pName, int *pScreen, int *pWidth, 
 		if(m_GLContext == NULL)
 		{
 			SDL_DestroyWindow(m_pWindow);
+			m_pWindow = nullptr;
 			dbg_msg("gfx", "unable to create graphic context: %s", SDL_GetError());
 			return EGraphicsBackendErrorCodes::GRAPHICS_BACKEND_ERROR_CODE_GL_CONTEXT_FAILED;
 		}
@@ -1203,6 +1223,7 @@ int CGraphicsBackend_SDL_GL::Init(const char *pName, int *pScreen, int *pWidth, 
 		{
 			SDL_GL_DeleteContext(m_GLContext);
 			SDL_DestroyWindow(m_pWindow);
+			m_pWindow = nullptr;
 			return EGraphicsBackendErrorCodes::GRAPHICS_BACKEND_ERROR_CODE_UNKNOWN;
 		}
 	}
@@ -1229,6 +1250,7 @@ int CGraphicsBackend_SDL_GL::Init(const char *pName, int *pScreen, int *pWidth, 
 		if(m_GLContext)
 			SDL_GL_DeleteContext(m_GLContext);
 		SDL_DestroyWindow(m_pWindow);
+		m_pWindow = nullptr;
 
 		// try setting to glew supported version
 		g_Config.m_GfxGLMajor = GlewMajor;
@@ -1331,6 +1353,7 @@ int CGraphicsBackend_SDL_GL::Init(const char *pName, int *pScreen, int *pWidth, 
 		if(m_GLContext)
 			SDL_GL_DeleteContext(m_GLContext);
 		SDL_DestroyWindow(m_pWindow);
+		m_pWindow = nullptr;
 
 		// try setting to version string's supported version
 		if(InitError == -2)
@@ -1395,6 +1418,7 @@ int CGraphicsBackend_SDL_GL::Shutdown()
 	if(m_GLContext != nullptr)
 		SDL_GL_DeleteContext(m_GLContext);
 	SDL_DestroyWindow(m_pWindow);
+	m_pWindow = nullptr;
 
 	SDL_QuitSubSystem(SDL_INIT_VIDEO);
 	return 0;
@@ -1435,7 +1459,7 @@ void CGraphicsBackend_SDL_GL::Maximize()
 	// TODO: SDL
 }
 
-void CGraphicsBackend_SDL_GL::SetWindowParams(int FullscreenMode, bool IsBorderless, bool AllowResizing)
+void CGraphicsBackend_SDL_GL::SetWindowParams(int FullscreenMode, bool IsBorderless)
 {
 	if(FullscreenMode > 0)
 	{
@@ -1550,7 +1574,7 @@ bool CGraphicsBackend_SDL_GL::ResizeWindow(int w, int h, int RefreshRate)
 	{
 #ifdef CONF_FAMILY_WINDOWS
 		// in windows make the window windowed mode first, this prevents strange window glitches (other games probably do something similar)
-		SetWindowParams(0, true, true);
+		SetWindowParams(0, true);
 #endif
 		SDL_DisplayMode SetMode = {};
 		SDL_DisplayMode ClosestMode = {};
@@ -1562,7 +1586,7 @@ bool CGraphicsBackend_SDL_GL::ResizeWindow(int w, int h, int RefreshRate)
 #ifdef CONF_FAMILY_WINDOWS
 		// now change it back to fullscreen, this will restore the above set state, bcs SDL saves fullscreen modes apart from other video modes (as of SDL 2.0.16)
 		// see implementation of SDL_SetWindowDisplayMode
-		SetWindowParams(1, false, true);
+		SetWindowParams(1, false);
 #endif
 		return true;
 	}
@@ -1584,7 +1608,8 @@ void CGraphicsBackend_SDL_GL::GetViewportSize(int &w, int &h)
 
 void CGraphicsBackend_SDL_GL::NotifyWindow()
 {
-#if SDL_MAJOR_VERSION > 2 || (SDL_MAJOR_VERSION == 2 && SDL_PATCHLEVEL >= 16)
+	// Minimum version 2.0.16, after version 2.0.22 the naming is changed to 2.24.0 etc.
+#if SDL_MAJOR_VERSION > 2 || (SDL_MAJOR_VERSION == 2 && SDL_MINOR_VERSION == 0 && SDL_PATCHLEVEL >= 16) || (SDL_MAJOR_VERSION == 2 && SDL_MINOR_VERSION > 0)
 	if(SDL_FlashWindow(m_pWindow, SDL_FlashOperation::SDL_FLASH_UNTIL_FOCUSED) != 0)
 	{
 		// fails if SDL hasn't implemented it

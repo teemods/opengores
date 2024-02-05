@@ -83,7 +83,7 @@ bool CreatePixelArt(const char aFilenames[3][64], const int aLayerID[2], const i
 	if(!pQuadLayer)
 		return false;
 
-	int MaxNewQuads = ceil((Img.m_Width * Img.m_Height) / aPixelSizes[0]);
+	int MaxNewQuads = std::ceil((Img.m_Width * Img.m_Height) / aPixelSizes[0]);
 	CQuad *pQuads = new CQuad[pQuadLayer->m_NumQuads + MaxNewQuads];
 
 	InsertCurrentQuads(InputMap, pQuadLayer, pQuads);
@@ -220,9 +220,9 @@ bool GetPixelClamped(const CImageInfo &Img, int x, int y, uint8_t aPixel[4])
 	aPixel[2] = 255;
 	aPixel[3] = 255;
 
-	int BPP = Img.m_Format == CImageInfo::FORMAT_RGB ? 3 : 4;
-	for(int i = 0; i < BPP; i++)
-		aPixel[i] = ((uint8_t *)Img.m_pData)[x * BPP + (Img.m_Width * BPP * y) + i];
+	const size_t PixelSize = Img.PixelSize();
+	for(size_t i = 0; i < PixelSize; i++)
+		aPixel[i] = ((uint8_t *)Img.m_pData)[x * PixelSize + (Img.m_Width * PixelSize * y) + i];
 
 	return aPixel[3] > 0;
 }
@@ -253,7 +253,7 @@ CMapItemLayerQuads *GetQuadLayer(CDataFileReader &InputMap, const int aLayerID[2
 	int Start, Num;
 	InputMap.GetType(MAPITEMTYPE_GROUP, &Start, &Num);
 
-	CMapItemGroup *pGroupItem = aLayerID[0] >= Num ? 0x0 : (CMapItemGroup *)InputMap.GetItem(Start + aLayerID[0], 0, 0);
+	CMapItemGroup *pGroupItem = aLayerID[0] >= Num ? 0x0 : (CMapItemGroup *)InputMap.GetItem(Start + aLayerID[0]);
 
 	if(!pGroupItem)
 	{
@@ -264,7 +264,7 @@ CMapItemLayerQuads *GetQuadLayer(CDataFileReader &InputMap, const int aLayerID[2
 	InputMap.GetType(MAPITEMTYPE_LAYER, &Start, &Num);
 	*pItemNumber = Start + pGroupItem->m_StartLayer + aLayerID[1];
 
-	CMapItemLayer *pLayerItem = aLayerID[1] >= pGroupItem->m_NumLayers ? 0x0 : (CMapItemLayer *)InputMap.GetItem(*pItemNumber, 0, 0);
+	CMapItemLayer *pLayerItem = aLayerID[1] >= pGroupItem->m_NumLayers ? 0x0 : (CMapItemLayer *)InputMap.GetItem(*pItemNumber);
 	if(!pLayerItem)
 	{
 		dbg_msg("map_create_pixelart", "ERROR: unable to find layer '#%d' in group '#%d'", aLayerID[1], aLayerID[0]);
@@ -319,7 +319,13 @@ bool LoadPNG(CImageInfo *pImg, const char *pFilename)
 	}
 
 	io_seek(File, 0, IOSEEK_END);
-	unsigned int FileSize = io_tell(File);
+	long int FileSize = io_tell(File);
+	if(FileSize <= 0)
+	{
+		io_close(File);
+		dbg_msg("map_create_pixelart", "ERROR: Failed to get file size (%ld). filename='%s'", FileSize, pFilename);
+		return false;
+	}
 	io_seek(File, 0, IOSEEK_START);
 	TImageByteBuffer ByteBuffer;
 	SImageByteBuffer ImageByteBuffer(&ByteBuffer);
@@ -375,15 +381,20 @@ void SaveOutputMap(CDataFileReader &InputMap, CDataFileWriter &OutputMap, CMapIt
 	for(int i = 0; i < InputMap.NumItems(); i++)
 	{
 		int ID, Type;
-		void *pItem = InputMap.GetItem(i, &Type, &ID);
+		CUuid Uuid;
+		void *pItem = InputMap.GetItem(i, &Type, &ID, &Uuid);
 
+		// Filter ITEMTYPE_EX items, they will be automatically added again.
 		if(Type == ITEMTYPE_EX)
+		{
 			continue;
+		}
+
 		if(i == NewItemNumber)
 			pItem = pNewItem;
 
 		int Size = InputMap.GetItemSize(i);
-		OutputMap.AddItem(Type, ID, Size, pItem);
+		OutputMap.AddItem(Type, ID, Size, pItem, &Uuid);
 	}
 
 	for(int i = 0; i < InputMap.NumData(); i++)

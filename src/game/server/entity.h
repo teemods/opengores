@@ -5,7 +5,8 @@
 
 #include <base/vmath.h>
 
-#include "alloc.h"
+#include <game/alloc.h>
+
 #include "gameworld.h"
 
 class CCollision;
@@ -60,6 +61,9 @@ public: // TODO: Maybe make protected
 	/* Objects */
 	std::vector<SSwitchers> &Switchers() { return m_pGameWorld->m_Core.m_vSwitchers; }
 	CGameWorld *GameWorld() { return m_pGameWorld; }
+	CTuningParams *Tuning() { return GameWorld()->Tuning(); }
+	CTuningParams *TuningList() { return GameWorld()->TuningList(); }
+	CTuningParams *GetTuning(int i) { return GameWorld()->GetTuning(i); }
 	class CConfig *Config() { return m_pGameWorld->Config(); }
 	class CGameContext *GameServer() { return m_pGameWorld->GameServer(); }
 	class IServer *Server() { return m_pGameWorld->Server(); }
@@ -127,6 +131,16 @@ public: // TODO: Maybe make protected
 			Client2 - Second client ID
 	*/
 	virtual void SwapClients(int Client1, int Client2) {}
+
+	/*
+		Function GetOwnerID
+		Returns:
+			ClientID of the initiator from this entity. -1 created by map.
+			This is used by save/load to remove related entities to the tee.
+			CCharacter should not return the PlayerId, because they get
+			handled separately in save/load code.
+	*/
+	virtual int GetOwnerID() const { return -1; }
 
 	/*
 		Function: NetworkClipped

@@ -35,7 +35,7 @@ Dependencies on Linux / macOS
 
 You can install the required libraries on your system, `touch CMakeLists.txt` and CMake will use the system-wide libraries by default. You can install all required dependencies and CMake on Debian or Ubuntu like this:
 
-    sudo apt install build-essential cargo cmake git glslang-tools google-mock libavcodec-extra libavdevice-dev libavfilter-dev libavformat-dev libavutil-dev libcurl4-openssl-dev libfreetype6-dev libglew-dev libnotify-dev libogg-dev libopus-dev libopusfile-dev libpng-dev libsdl2-dev libsqlite3-dev libssl-dev libvulkan-dev libwavpack-dev libx264-dev python rustc spirv-tools
+    sudo apt install build-essential cargo cmake git glslang-tools google-mock libavcodec-extra libavdevice-dev libavfilter-dev libavformat-dev libavutil-dev libcurl4-openssl-dev libfreetype6-dev libglew-dev libnotify-dev libogg-dev libopus-dev libopusfile-dev libpng-dev libsdl2-dev libsqlite3-dev libssl-dev libvulkan-dev libwavpack-dev libx264-dev python3 rustc spirv-tools
 
 On older distributions like Ubuntu 18.04 don't install `google-mock`, but instead set `-DDOWNLOAD_GTEST=ON` when building to get a more recent gtest/gmock version.
 
@@ -134,11 +134,19 @@ Default value is ON for Windows x86\_64 and Linux, and OFF for Windows x86 and m
 Use the Ninja build system instead of Make. This automatically parallelizes the build and is generally faster. Compile with `ninja` instead of `make`. Install Ninja with `sudo apt install ninja-build` on Debian, `sudo pacman -S --needed ninja` on Arch Linux.
 
 * **-DCMAKE_CXX_LINK_FLAGS=[FLAGS]** <br>
-Custom flags to set for compiler when linking. With clang++ as the compiler this can be [used to link](https://github.com/rui314/mold#how-to-use) with [mold](https://github.com/rui314/mold), speeds up linking by a factor of ~10:
+Custom flags to set for compiler when linking.
 
-```bash
-CC=clang CXX=clang++ cmake -DCMAKE_CXX_LINK_FLAGS="--ld-path=/usr/bin/mold" .
-```
+* **-DEXCEPTION_HANDLING=[ON|OFF]** <br>
+Enable exception handling (only works with Windows as of now, uses DrMingw there). Default value is OFF.
+
+* **-DIPO=[ON|OFF]** <br>
+Enable interprocedural optimizations, also known as Link Time Optimization (LTO). Default value is OFF.
+
+* **-DFUSE_LD=[OFF|LINKER]** <br>
+Linker to use. Default value is OFF to try mold, lld, gold.
+
+* **-DSECURITY_COMPILER_FLAGS=[ON|OFF]** <br>
+Whether to set security-relevant compiler flags like `-D_FORTIFY_SOURCE=2` and `-fstack-protector-all`. Default Value is ON.
 
 Running tests (Debian/Ubuntu)
 -----------------------------
@@ -150,7 +158,7 @@ This library isn't compiled, so you have to do it:
 sudo apt install libgtest-dev
 cd /usr/src/gtest
 sudo cmake CMakeLists.txt
-sudo make -j8
+sudo make -j$(nproc)
 
 # copy or symlink libgtest.a and libgtest_main.a to your /usr/lib folder
 sudo cp lib/*.a /usr/lib
@@ -193,7 +201,7 @@ Building on Windows with Visual Studio
 
 Download and install some version of [Microsoft Visual Studio](https://www.visualstudio.com/) (as of writing, MSVS Community 2017) with **C++ support**, install [Python 3](https://www.python.org/downloads/) **for all users** and install [CMake](https://cmake.org/download/#latest). You also need to install [Rust](https://rustup.rs/).
 
-Start CMake and select the source code folder (where DDNet resides, the directory with `CMakeLists.txt`). Additionally select a build folder, e.g. create a build subdirectory in the source code directory. Click "Configure" and select the Visual Studio generator (it should be pre-selected, so pressing "Finish" will suffice). After configuration finishes and the "Generate" reactivates, click it. When that finishes, click "Open Project". Visual Studio should open. You can compile the DDNet client by right-clicking the DDNet project (not the solution) and select "Select as StartUp project". Now you should be able to compile DDNet by clicking the green, triangular "Run" button.
+Start CMake and select the source code folder (where DDNet resides, the directory with `CMakeLists.txt`). Additionally select a build folder, e.g. create a build subdirectory in the source code directory. Click "Configure" and select the Visual Studio generator (it should be pre-selected, so pressing "Finish" will suffice). After configuration finishes and the "Generate" reactivates, click it. When that finishes, click "Open Project". Visual Studio should open. You can compile the DDNet client by right-clicking the "game-client" project and select "Set as Startup project". Now you should be able to compile DDNet by clicking the green, triangular "Run" button.
 
 Cross-compiling on Linux to Windows x86/x86\_64
 -----------------------------------------------
@@ -279,7 +287,7 @@ add_sqlserver w teeworlds record teeworlds "PW2" "localhost" "3306"
 $ mkdir build
 $ cd build
 $ cmake -DMYSQL=ON ..
-$ make -j8
+$ make -j$(nproc)
 $ ./DDNet-Server -f mine.cfg
 ```
 
@@ -344,8 +352,12 @@ git config blame.ignoreRevsFile formatting-revs.txt
 
 (Neo)Vim Syntax Highlighting for config files
 ----------------------------------------
-Copy the file detection and syntax files to your vim config folder, in the case of neovim:
+Copy the file detection and syntax files to your vim config folder:
 
 ```bash
+# vim
+cp -R other/vim/* ~/.vim/
+
+# neovim
 cp -R other/vim/* ~/.config/nvim/
 ```

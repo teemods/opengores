@@ -32,7 +32,7 @@ bool GetLayerGroupIDs(CDataFileReader &InputMap, const int LayerNumber, int &Gro
 
 	for(int i = 0; i < Num; i++)
 	{
-		CMapItemGroup *pItem = (CMapItemGroup *)InputMap.GetItem(Start + i, 0, 0);
+		CMapItemGroup *pItem = (CMapItemGroup *)InputMap.GetItem(Start + i);
 		if(LayerNumber >= pItem->m_StartLayer && LayerNumber <= pItem->m_StartLayer + pItem->m_NumLayers)
 		{
 			GroupID = i;
@@ -46,7 +46,7 @@ bool GetLayerGroupIDs(CDataFileReader &InputMap, const int LayerNumber, int &Gro
 
 int FxToTilePos(const int FxPos)
 {
-	return (int)floor(fx2f(FxPos) / 32);
+	return std::floor(fx2f(FxPos) / 32);
 }
 
 bool GetEnvelopedQuads(const CQuad *pQuads, const int NumQuads, const int EnvID, const int GroupID, const int LayerID, int &QuadsCounter, EnvelopedQuad pEnvQuads[1024])
@@ -79,7 +79,7 @@ void PrintEnvelopedQuads(const EnvelopedQuad pEnvQuads[1024], const int EnvID, c
 
 	dbg_msg("map_find_env", "Found %d quads with env number #%d:", QuadsCounter, EnvID + 1);
 	for(int i = 0; i < QuadsCounter; i++)
-		dbg_msg("map_find_env", "%*d. Group: #%d - Layer: #%d - Pos: %d,%d", (int)(log10(abs(QuadsCounter))) + 1, i + 1, pEnvQuads[i].m_GroupID, pEnvQuads[i].m_LayerID, pEnvQuads[i].m_TilePosX, pEnvQuads[i].m_TilePosY);
+		dbg_msg("map_find_env", "%*d. Group: #%d - Layer: #%d - Pos: %d,%d", (int)(std::log10(absolute(QuadsCounter))) + 1, i + 1, pEnvQuads[i].m_GroupID, pEnvQuads[i].m_LayerID, pEnvQuads[i].m_TilePosX, pEnvQuads[i].m_TilePosY);
 }
 
 bool FindEnv(const char aFilename[64], const int EnvID)
@@ -95,7 +95,7 @@ bool FindEnv(const char aFilename[64], const int EnvID)
 	for(int i = 0; i < LayersCount; i++)
 	{
 		CMapItemLayer *pItem;
-		pItem = (CMapItemLayer *)InputMap.GetItem(LayersStart + i, 0, 0);
+		pItem = (CMapItemLayer *)InputMap.GetItem(LayersStart + i);
 
 		if(pItem->m_Type != LAYERTYPE_QUADS)
 			continue;

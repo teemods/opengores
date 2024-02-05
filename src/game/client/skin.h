@@ -47,7 +47,7 @@ public:
 	struct SSkinMetricVariableInt
 	{
 		int m_Value;
-		operator int() { return m_Value; }
+		operator int() const { return m_Value; }
 		SSkinMetricVariableInt &operator=(int NewVal)
 		{
 			if(IsSizeType)
@@ -82,22 +82,22 @@ public:
 		SSkinMetricVariableInt<true> m_MaxWidth;
 		SSkinMetricVariableInt<true> m_MaxHeight;
 
-		float WidthNormalized()
+		float WidthNormalized() const
 		{
 			return (float)m_Width / (float)m_MaxWidth;
 		}
 
-		float HeightNormalized()
+		float HeightNormalized() const
 		{
 			return (float)m_Height / (float)m_MaxHeight;
 		}
 
-		float OffsetXNormalized()
+		float OffsetXNormalized() const
 		{
 			return (float)m_OffsetX / (float)m_MaxWidth;
 		}
 
-		float OffsetYNormalized()
+		float OffsetYNormalized() const
 		{
 			return (float)m_OffsetY / (float)m_MaxHeight;
 		}
@@ -142,6 +142,23 @@ public:
 	CSkin &operator=(CSkin &&) = default;
 
 	const char *GetName() const { return m_aName; }
+
+	static bool IsValidName(const char *pName)
+	{
+		if(pName[0] == '\0' || str_length(pName) >= (int)sizeof(CSkin("").m_aName))
+		{
+			return false;
+		}
+
+		for(int i = 0; pName[i] != '\0'; ++i)
+		{
+			if(pName[i] == '"' || pName[i] == '/' || pName[i] == '\\')
+			{
+				return false;
+			}
+		}
+		return true;
+	}
 };
 
 #endif

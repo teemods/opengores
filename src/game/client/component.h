@@ -59,6 +59,10 @@ protected:
 	 */
 	class CRenderTools *RenderTools() const;
 	/**
+	 * Get the config manager interface.
+	 */
+	class IConfigManager *ConfigManager() const;
+	/**
 	 * Get the config interface.
 	 */
 	class CConfig *Config() const;
@@ -124,6 +128,11 @@ protected:
 	 */
 	float LocalTime() const;
 
+	/**
+	 * Get the http interface
+	 */
+	class IHttp *Http() const;
+
 public:
 	/**
 	 * The component virtual destructor.
@@ -174,11 +183,19 @@ public:
 	 */
 	virtual void OnWindowResize() {}
 	/**
+	 * Called when skins have been invalidated and must be updated.
+	 */
+	virtual void OnRefreshSkins() {}
+	/**
 	 * Called when the component should get rendered.
 	 *
 	 * The render order depends on the component insertion order.
 	 */
 	virtual void OnRender(){};
+	/**
+	 * Called when a new snapshot is received.
+	 */
+	virtual void OnNewSnapshot(){};
 	/**
 	 * Called when the input gets released, for example when a text box loses focus.
 	 */
@@ -205,9 +222,9 @@ public:
 	virtual bool OnCursorMove(float x, float y, IInput::ECursorType CursorType) { return false; }
 	/**
 	 * Called on a input event.
-	 * @param e The input event.
+	 * @param Event The input event.
 	 */
-	virtual bool OnInput(IInput::CEvent e) { return false; }
+	virtual bool OnInput(const IInput::CEvent &Event) { return false; }
 };
 
 #endif

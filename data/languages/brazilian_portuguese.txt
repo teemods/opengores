@@ -24,6 +24,12 @@
 # pv                  2022-06-01 20:44:00
 # Rafael Fontenelle   2022-09-17 23:23:00
 # Rafael Fontenelle   2022-10-25 11:22:00
+# Rafael Fontenelle   2023-01-09 10:33:00
+# Rafael Fontenelle   2023-03-26 19:11:00
+# Rafael Fontenelle   2023-07-07 12:11:00
+# Rafael Fontenelle   2023-08-14 14:17:00
+# Rafael Fontenelle   2023-09-25 14:23:00
+# Rafael Fontenelle   2023-12-05 17:01:00
 ##### /authors #####
 
 ##### translated strings #####
@@ -45,9 +51,6 @@
 
 %s wins!
 == Vitória de %s!
-
--Page %d-
-== -Página %d-
 
 Abort
 == Cancelar
@@ -97,12 +100,6 @@ Clan
 Client
 == Cliente
 
-Close
-== Fechar
-
-Connect
-== Conectar
-
 Connecting to
 == Conectando a
 
@@ -129,9 +126,6 @@ Delete
 
 Delete demo
 == Deletar demo
-
-Demo details
-== Detalhes da demo
 
 Demofile: %s
 == Demo: %s
@@ -172,9 +166,6 @@ Favorites
 Feet
 == Pés
 
-Filter
-== Filtro
-
 Fire
 == Atirar
 
@@ -186,9 +177,6 @@ Force vote
 
 Free-View
 == Visualização livre
-
-Friends
-== Amigos
 
 Fullscreen
 == Tela cheia
@@ -295,9 +283,6 @@ No servers match your filter criteria
 Ok
 == Ok
 
-Open
-== Abrir
-
 Parent Folder
 == Diretório pai
 
@@ -312,10 +297,6 @@ Ping
 
 Pistol
 == Pistola
-
-[Demo browser]
-Play
-== Assistir
 
 Play background music
 == Tocar música de fundo
@@ -350,9 +331,6 @@ Red team
 Red team wins!
 == Vitória do time vermelho!
 
-Refresh
-== Atualizar
-
 Remote console
 == Console remoto
 
@@ -362,17 +340,11 @@ Remove
 Remove friend
 == Deletar amigo
 
-Rename
-== Renomear
-
 Rename demo
 == Renomear demo
 
 Reset filter
 == Redefinir filtro
-
-Sample rate
-== Frequência do som
 
 Score
 == Pontos
@@ -388,12 +360,6 @@ Screenshot
 
 Server address:
 == Endereço:
-
-Server details
-== Detalhes do servidor
-
-Server filter
-== Filtro de servidores
 
 Server info
 == Servidor
@@ -418,9 +384,6 @@ Show name plates
 
 Show only chat messages from friends
 == Mostrar apenas mensagens de amigos
-
-Skins
-== Skins
 
 Sound
 == Som
@@ -466,9 +429,6 @@ The audio device couldn't be initialised.
 
 The server is running a non-standard tuning on a pure game type.
 == O servidor está rodando com modificações em um tipo de jogo oficial.
-
-There's an unsaved map in the editor, you might want to save it before you quit the game.
-== Existe um mapa não salvo no editor, você pode querer salvá-lo antes de sair do jogo.
 
 Time limit
 == Limite de tempo
@@ -545,9 +505,6 @@ Ratio
 Max demos
 == Máximo de demos
 
-Dummy settings
-== Configs do dummy
-
 AntiPing
 == AntiPing
 
@@ -562,9 +519,6 @@ Join game
 
 Countries
 == Países
-
-Crc:
-== CRC:
 
 FSAA samples
 == Amostras FSAA
@@ -584,9 +538,6 @@ Show ghost
 Clan plates size
 == Tamanho da placa do clã
 
-Info
-== Info
-
 No updates available
 == Nenhuma atualização disponível
 
@@ -604,12 +555,6 @@ HUD
 
 Show names in chat in team colors
 == Mostrar nomes no chat com cores do time
-
-Select a name
-== Selecione um nome
-
-Netversion:
-== Netversion:
 
 Enable team chat sound
 == Habilitar som de chat do time
@@ -632,17 +577,11 @@ DDNet Client needs to be restarted to complete update!
 Max Screenshots
 == Máximo de capturas de tela
 
-Size:
-== Tamanho:
-
 Sound volume
 == Volume do som
 
 Hue
 == Matiz
-
-Please use a different name
-== Por favor, use um nome diferente
 
 Show others
 == Mostrar outros
@@ -652,12 +591,6 @@ Gameplay
 
 Restart
 == Reiniciar
-
-Old mouse mode
-== Modo antigo de mouse
-
-Display Modes
-== Modos de exibição
 
 Round
 == Turno
@@ -695,9 +628,6 @@ Ghost
 Remove chat
 == Remover chat
 
-Threaded sound loading
-== Carregamento de som em fluxos
-
 Check now
 == Verificar agora
 
@@ -706,9 +636,6 @@ Exclude
 
 DDNet Client updated!
 == DDNet Client atualizado!
-
-Type:
-== Tipo:
 
 Internet
 == Internet
@@ -727,9 +654,6 @@ Automatically take statboard screenshot
 
 System message
 == Mensagem do sistema
-
-Quit anyway?
-== Sair mesmo assim?
 
 DDNet %s is available:
 == DDNet %s está disponível:
@@ -757,9 +681,6 @@ Refresh Rate
 
 New random timeout code
 == Novo código aleatório de timeout
-
-Created:
-== Criado:
 
 Suicides
 == Suicídios
@@ -815,12 +736,6 @@ LAN
 Connecting dummy
 == Conectando dummy
 
-Version:
-== Versão:
-
-Map:
-== Mapa:
-
 Lht.
 == Lumin.
 
@@ -841,9 +756,6 @@ Highlighted message
 
 Alpha
 == Alfa
-
-Length:
-== Duração:
 
 Switch weapon when out of ammo
 == Trocar de arma quando acabar munição
@@ -944,9 +856,6 @@ Are you sure that you want to disconnect your dummy?
 Skin prefix
 == Prefixo de skins
 
-Markers:
-== Marcadores:
-
 Markers
 == Marcadores
 
@@ -1010,8 +919,8 @@ Converse
 Successfully saved the replay!
 == A reprodução foi salva com sucesso
 
-Default length: %d
-== Duração padrão: %d
+Default length
+== Duração padrão
 
 Replay feature is disabled!
 == O Recurso de reprodução está desabilitado!
@@ -1052,9 +961,6 @@ Please enter your nickname below.
 Video name:
 == Nome do vídeo
 
-Render
-== Renderizar
-
 Connect Dummy
 == Conectar dummy
 
@@ -1069,9 +975,6 @@ Show others (own team only)
 
 Warning
 == Atenção
-
-Country / Region
-== País / Região
 
 Speed
 == Velocidade
@@ -1118,9 +1021,6 @@ Editor
 [Start menu]
 Play
 == Jogar
-
-Saving ddnet-settings.cfg failed
-== Falha ao salvar ddnet-settings.cfg
 
 Theme
 == Tema
@@ -1206,12 +1106,6 @@ Preview
 Background
 == Plano de fundo
 
-Entities Background color
-== Cor de fundo das entidades
-
-Regular Background Color
-== Cor de fundo comum
-
 AFR
 == AFR
 
@@ -1258,13 +1152,7 @@ https://ddnet.org/discord
 == https://ddnet.org/discord
 
 Are you sure that you want to disconnect and switch to a different server?
-== Tem certeza que deseja desconectar e trocar pata um servidor diferente?
-
-Refreshing...
-== Atualizando...
-
-Kill Messages
-== Mensagens de kill
+== Tem certeza que deseja desconectar e trocar para um servidor diferente?
 
 Show local player's key presses
 == Mostrar pressionamento de teclas de jogadores locais
@@ -1296,9 +1184,6 @@ default
 custom
 == personalizado
 
-Graphics cards
-== Placas de vídeo
-
 auto
 == auto
 
@@ -1313,9 +1198,6 @@ Tutorial
 
 Can't find a Tutorial server
 == Não foi possível encontrar o servidor de tutorial
-
-Toggle to edit your dummy settings
-== Alterne para editar as configurações do seu dummy
 
 Choose default eyes when joining a server
 == Escolha os olhos padrões ao entrar em um servidor
@@ -1371,12 +1253,6 @@ Download community skins
 Enable controller
 == Habilitar controle
 
-Controller %d: %s
-== Controle %d: %s
-
-Click to cycle through all available controllers.
-== Clique para trocar entre todos os controles disponíveis.
-
 [Ingame controller mode]
 Relative
 == Relativo
@@ -1397,20 +1273,11 @@ UI controller sens.
 Controller jitter tolerance
 == Tolerância jitter do controle
 
-No controller found. Plug in a controller and restart the game.
-== Nenhum controle encontrado. Conecte um controle e reinicie o jogo.
-
-Device
-== Dispositivo
-
 Status
 == Status
 
 Aim bind
 == Associação de mira
-
-Controller Axis #%d
-== Eixo #%d do controle
 
 Mouse
 == Mouse
@@ -1571,12 +1438,6 @@ Slow down the demo
 Speed up the demo
 == Acelerar a demo
 
-Mark the beginning of a cut
-== Marcar o início de um corte
-
-Mark the end of a cut
-== Marcar o fim de um corte
-
 Export cut as a separate demo
 == Exportar corte como uma demo separada
 
@@ -1651,3 +1512,313 @@ Reset controls
 
 Are you sure that you want to reset the controls to their defaults?
 == Tem certeza que deseja redefinir os controles para seu padrão?
+
+[Graphics error]
+Failed during initialization. Try to change gfx_backend to OpenGL or Vulkan in settings_ddnet.cfg in the config directory and try again.
+== Falha durante a inicialização. Tente alterar gfx_backend para OpenGL ou Vulkan em settings_ddnet.cfg no diretório de configuração e tente novamente.
+
+[Graphics error]
+Out of VRAM. Try removing custom assets (skins, entities, etc.), especially those with high resolution.
+== VRAM insuficiente. Tente remover ativos personalizados (skins, entidades, etc.), especialmente aqueles com alta resolução.
+
+[Graphics error]
+An error during command recording occurred. Try to update your GPU drivers.
+== Ocorreu um erro durante a gravação do comando. Tente atualizar seus drivers de GPU.
+
+[Graphics error]
+A render command failed. Try to update your GPU drivers.
+== Um comando de renderização falhou. Tente atualizar seus drivers de GPU.
+
+[Graphics error]
+Submitting the render commands failed. Try to update your GPU drivers.
+== O envio dos comandos de renderização falhou. Tente atualizar seus drivers de GPU.
+
+[Graphics error]
+Failed to swap framebuffers. Try to update your GPU drivers.
+== Falha ao trocar framebuffers. Tente atualizar seus drivers de GPU.
+
+[Graphics error]
+Unknown error. Try to change gfx_backend to OpenGL or Vulkan in settings_ddnet.cfg in the config directory and try again.
+== Erro desconhecido. Tente alterar gfx_backend para OpenGL ou Vulkan em settings_ddnet.cfg no diretório de configuração e tente novamente.
+
+[Graphics error]
+Could not initialize the given graphics backend, reverting to the default backend now.
+== Não foi possível inicializar o backend gráfico fornecido, revertendo para o backend padrão agora.
+
+Open the directory that contains the demo files
+== Abre o diretório que contém os arquivos de demonstração
+
+Save power by lowering refresh rate (higher input latency)
+== Economiza energia diminuindo a taxa de atualização (maior latência de entrada)
+
+Open the settings file
+== Abre o arquivo de configurações
+
+Open the directory that contains the configuration and user files
+== Abre o diretório que contém os arquivos de configuração e do usuário
+
+Open the directory to add custom themes
+== Abre o diretório para adicionar os temas personalizados
+
+Open the directory to add custom skins
+== Abre o diretório para adicionar skins personalizadas
+
+No controller found. Plug in a controller.
+== Nenhum controle encontrado. Conecte um controle.
+
+Unregister protocol and file extensions
+== Protoloco e arquivos de extensões não registrados
+
+Open the directory to add custom assets
+== Abre o diretório para adicionar os ativos personalizados
+
+[Graphics error]
+Could not initialize the given graphics backend, this is probably because you didn't install the driver of the integrated graphics card.
+== Não foi possível inicializar o backend de vídeo fornecido, isso provavelmente porque você não instalou o driver da placa de vídeo.
+
+Could not save downloaded map. Try manually deleting this file: %s
+== Não foi possível salvar o mapa baixado. Tente excluir manualmente este arquivo: %s
+
+Copy info
+== Copiar informação
+
+Create a random skin
+== Criar uma skin aleatória
+
+A demo with this name already exists
+== Uma demo com este nome já existe
+
+No server selected
+== Nenhum serviço selecionado
+
+Online players (%d)
+== Jogadores online (%d)
+
+Online clanmates (%d)
+== Colegas de clã online (%d)
+
+[friends (server browser)]
+Offline (%d)
+== Offline (%d)
+
+Click to select server. Double click to join your friend.
+== Clique para selecionar o servidor. Clique duplo para se juntar a seus amigos.
+
+Click to remove this player from your friends list.
+== Clique para remover este jogador de sua lista de amigos.
+
+Click to remove this clan from your friends list.
+== Clique para remover este clã a partir de sua lista de amigos.
+
+None
+== Ninguém
+
+Add Clan
+== Adicionar clã
+
+Mark the beginning of a cut (right click to reset)
+== Marcar o início de um corte (clique direito para redefinir)
+
+Mark the end of a cut (right click to reset)
+== Marcar o fim de um corte (clique direito para redefinir)
+
+Close the demo player
+== Fechar o reprodutor de demo
+
+Export demo cut
+== Exportar corte de demo
+
+Cut interval
+== Intervalo de corte
+
+Cut length
+== Comprimento do corte
+
+Axis
+== Eixo
+
+Graphics card
+== Placa de vídeo
+
+Quitting. Please wait…
+== Saindo. Por favor, aguarde…
+
+Restarting. Please wait…
+== Reiniciando. Por favor, aguarde…
+
+Multi-View
+== Multivisão
+
+Rename folder
+== Renomear pasta
+
+A folder with this name already exists
+== Uma pasta com este nome já existe
+
+Unable to rename the folder
+== Não foi possível renomear a pasta
+
+(paused)
+== (pausado)
+
+All combined
+== Tudo combinado
+
+Folder Link
+== Link da pasta
+
+Are you sure that you want to delete the folder '%s'?
+== Tem certeza que você deseja excluir a pasta "%s"?
+
+Delete folder
+== Excluir pasta
+
+Unable to delete the folder '%s'. Make sure it's empty first.
+== Não foi possível excluir a pasta "%s". Certifique-se que ela esteja vazia primeiro.
+
+Moved ingame
+== Movido no jogo
+
+Go back the specified duration
+== Voltar na duração especificada
+
+[Demo player duration]
+%d min.
+== %d min.
+
+[Demo player duration]
+%d sec.
+== $d seg.
+
+Change the skip duration
+== Alterar a duração de pulo
+
+Go forward the specified duration
+== Avançar na duração especificada
+
+Render cut to video
+== Renderizar corte do vídeo
+
+Error playing demo
+== Erro ao reproduzir demo
+
+Some map images could not be loaded. Check the local console for details.
+== Algumas imagens de mapa não puderam ser carregadas. Verifique o console local para detalhes.
+
+Some map sounds could not be loaded. Check the local console for details.
+== Alguns sons de mapa não puderam ser carregadas. Verifique o console local para detalhes.
+
+Loading menu themes
+== Carregando temas de menu
+
+Render complete
+== Renderização concluída
+
+Videos directory
+== Diretório de vídeos
+
+Video was saved to '%s'
+== O vídeo foi salvo em "%s"
+
+No demo selected
+== Nenhuma demo selecionada
+
+Created
+== Criada
+
+Netversion
+== Netversion
+
+[Demo details]
+map not included
+== mapa não incluído
+
+Ghosts directory
+== Diretório de fantasmas
+
+Activate all
+== Ativar tudo
+
+Deactivate all
+== Desativar tudo
+
+Enable ghost
+== Habilitar fantasma
+
+Only save improvements
+== Salvar somente melhorias
+
+Regular background color
+== Cor de fundo regular
+
+Entities background color
+== Cor de fundo de entidades
+
+Saving settings to '%s' failed
+== Falha ao salvar as configurações para '%s'
+
+Searching
+== Pesquisando
+
+Enter Username
+== Insira o nome de usuário
+
+Enter Password
+== Insira a senha
+
+NOT CONNECTED
+== NÃO CONECTADO
+
+Match %d of %d
+== Correspondência %d de %d
+
+No results
+== Nenhum resultado
+
+Lines %d - %d (%s)
+== Linhas %d - %d (%s)
+
+Locked
+== Bloqueado
+
+Following
+== Seguindo
+
+Press a key…
+== Pressione uma tecla…
+
+Are you sure that you want to restart?
+== Tem certeza que você deseja reiniciar?
+
+There's an unsaved map in the editor, you might want to save it.
+== Há um mapa não salvo no editor, você pode querer salvá-lo.
+
+Continue anyway?
+== Continuar mesmo assim?
+
+Communities
+== Comunidades
+
+Please use a different filename
+== Por favor, use um nome de arquivo diferente
+
+Info Messages
+== Mensagens de informação
+
+Show local time always
+== Mostrar sempre o tempo local
+
+Chat font size
+== Tamanho da fonte do chat
+
+Chat width
+== Largura do chat
+
+Authed name color in scoreboard
+== Cor do seu nome no placar
+
+Same clan color in scoreboard
+== Cor do mesmo clã no placar
+
+Show finish messages
+== Mostrar mensagens de finalização

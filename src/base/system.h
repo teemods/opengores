@@ -9,13 +9,34 @@
 #define BASE_SYSTEM_H
 
 #include "detect.h"
+#include "types.h"
 
 #ifndef __USE_GNU
 #define __USE_GNU
 #endif
 
-#include <stdint.h>
-#include <time.h>
+#include <chrono>
+#include <cinttypes>
+#include <cstdarg>
+#include <cstdint>
+#include <cstring>
+#include <ctime>
+#include <functional>
+#include <mutex>
+#include <optional>
+#include <string>
+
+#ifdef __MINGW32__
+#undef PRId64
+#undef PRIu64
+#undef PRIX64
+#define PRId64 "I64d"
+#define PRIu64 "I64u"
+#define PRIX64 "I64X"
+#define PRIzu "Iu"
+#else
+#define PRIzu "zu"
+#endif
 
 #ifdef CONF_FAMILY_UNIX
 #include <sys/un.h>
@@ -26,10 +47,13 @@
 #include <sys/socket.h>
 #endif
 
-#include <chrono>
-#include <functional>
-
-extern "C" {
+#if __cplusplus >= 201703L
+#define MAYBE_UNUSED [[maybe_unused]]
+#elif defined(__GNUC__)
+#define MAYBE_UNUSED __attribute__((unused))
+#else
+#define MAYBE_UNUSED
+#endif
 
 /**
  * @defgroup Debug
@@ -50,10 +74,10 @@ extern "C" {
  * @see dbg_break
  */
 #define dbg_assert(test, msg) dbg_assert_imp(__FILE__, __LINE__, test, msg)
-void dbg_assert_imp(const char *filename, int line, int test, const char *msg);
+void dbg_assert_imp(const char *filename, int line, bool test, const char *msg);
 
 #ifdef __clang_analyzer__
-#include <assert.h>
+#include <cassert>
 #undef dbg_assert
 #define dbg_assert(test, msg) assert(test)
 #endif
@@ -89,6 +113,9 @@ bool dbg_assert_has_failed();
 void
 dbg_break();
 
+typedef std::function<void(const char *message)> DBG_ASSERT_HANDLER;
+void dbg_assert_set_handler(DBG_ASSERT_HANDLER handler);
+
 /**
  * Prints a debug message.
  *
@@ -122,7 +149,7 @@ void dbg_msg(const char *sys, const char *fmt, ...)
  *
  * @see mem_move
  */
-void mem_copy(void *dest, const void *source, unsigned size);
+void mem_copy(void *dest, const void *source, size_t size);
 
 /**
  * Copies a a memory block.
@@ -137,7 +164,7 @@ void mem_copy(void *dest, const void *source, unsigned size);
  *
  * @see mem_copy
  */
-void mem_move(void *dest, const void *source, unsigned size);
+void mem_move(void *dest, const void *source, size_t size);
 
 /**
  * Sets a complete memory block to 0.
@@ -147,7 +174,12 @@ void mem_move(void *dest, const void *source, unsigned size);
  * @param block Pointer to the block to zero out.
  * @param size Size of the block.
  */
-void mem_zero(void *block, unsigned size);
+template<typename T>
+inline void mem_zero(T *block, size_t size)
+{
+	static_assert((std::is_trivially_constructible<T>::value && std::is_trivially_destructible<T>::value) || std::is_fundamental<T>::value);
+	memset(block, 0, size);
+}
 
 /**
  * Compares two blocks of memory
@@ -162,7 +194,7 @@ void mem_zero(void *block, unsigned size);
  * @return 0 - Block a is equal to block b.
  * @return > 0 - Block a is greater than block b.
  */
-int mem_comp(const void *a, const void *b, int size);
+int mem_comp(const void *a, const void *b, size_t size);
 
 /**
  * Checks whether a block of memory contains null bytes.
@@ -172,10 +204,9 @@ int mem_comp(const void *a, const void *b, int size);
  * @param block Pointer to the block to check for nulls.
  * @param size Size of the block.
  *
- * @return 1 - The block has a null byte.
- * @return 0 - The block does not have a null byte.
+ * @return true if the block has a null byte, false otherwise.
  */
-int mem_has_null(const void *block, unsigned size);
+bool mem_has_null(const void *block, size_t size);
 
 /**
  * @defgroup File-IO
@@ -196,11 +227,7 @@ enum
 	IOSEEK_START = 0,
 	IOSEEK_CUR = 1,
 	IOSEEK_END = 2,
-
-	IO_MAX_PATH_LENGTH = 512,
 };
-
-typedef struct IOINTERNAL *IOHANDLE;
 
 /**
  * Opens a file.
@@ -269,9 +296,9 @@ char *io_read_all_str(IOHANDLE io);
  * @param io Handle to the file.
  * @param size Number of bytes to skip.
  *
- * @return Number of bytes skipped.
+ * @return 0 on success.
  */
-unsigned io_skip(IOHANDLE io, int size);
+int io_skip(IOHANDLE io, int size);
 
 /**
  * Writes data from a buffer to file.
@@ -287,15 +314,15 @@ unsigned io_skip(IOHANDLE io, int size);
 unsigned io_write(IOHANDLE io, const void *buffer, unsigned size);
 
 /**
- * Writes newline to file.
+ * Writes a platform dependent newline to file.
  *
  * @ingroup File-IO
  *
  * @param io Handle to the file.
  *
- * @return Number of bytes written.
+ * @return true on success, false on failure.
  */
-unsigned io_write_newline(IOHANDLE io);
+bool io_write_newline(IOHANDLE io);
 
 /**
  * Seeks to a specified offset in the file.
@@ -580,111 +607,15 @@ void thread_detach(void *thread);
  * @param user Pointer to pass to the thread.
  * @param name Name describing the use of the thread
  *
- * @return The thread if no error occurred, 0 on error.
+ * @return true on success, false on failure.
  */
-void *thread_init_and_detach(void (*threadfunc)(void *), void *user, const char *name);
-
-// Enable thread safety attributes only with clang.
-// The attributes can be safely erased when compiling with other compilers.
-#if defined(__clang__) && (!defined(SWIG))
-#define THREAD_ANNOTATION_ATTRIBUTE__(x) __attribute__((x))
-#else
-#define THREAD_ANNOTATION_ATTRIBUTE__(x) // no-op
-#endif
-
-#define CAPABILITY(x) \
-	THREAD_ANNOTATION_ATTRIBUTE__(capability(x))
-
-#define SCOPED_CAPABILITY \
-	THREAD_ANNOTATION_ATTRIBUTE__(scoped_lockable)
-
-#define GUARDED_BY(x) \
-	THREAD_ANNOTATION_ATTRIBUTE__(guarded_by(x))
-
-#define PT_GUARDED_BY(x) \
-	THREAD_ANNOTATION_ATTRIBUTE__(pt_guarded_by(x))
-
-#define ACQUIRED_BEFORE(...) \
-	THREAD_ANNOTATION_ATTRIBUTE__(acquired_before(__VA_ARGS__))
-
-#define ACQUIRED_AFTER(...) \
-	THREAD_ANNOTATION_ATTRIBUTE__(acquired_after(__VA_ARGS__))
-
-#define REQUIRES(...) \
-	THREAD_ANNOTATION_ATTRIBUTE__(requires_capability(__VA_ARGS__))
-
-#define REQUIRES_SHARED(...) \
-	THREAD_ANNOTATION_ATTRIBUTE__(requires_shared_capability(__VA_ARGS__))
-
-#define ACQUIRE(...) \
-	THREAD_ANNOTATION_ATTRIBUTE__(acquire_capability(__VA_ARGS__))
-
-#define ACQUIRE_SHARED(...) \
-	THREAD_ANNOTATION_ATTRIBUTE__(acquire_shared_capability(__VA_ARGS__))
-
-#define RELEASE(...) \
-	THREAD_ANNOTATION_ATTRIBUTE__(release_capability(__VA_ARGS__))
-
-#define RELEASE_SHARED(...) \
-	THREAD_ANNOTATION_ATTRIBUTE__(release_shared_capability(__VA_ARGS__))
-
-#define RELEASE_GENERIC(...) \
-	THREAD_ANNOTATION_ATTRIBUTE__(release_generic_capability(__VA_ARGS__))
-
-#define TRY_ACQUIRE(...) \
-	THREAD_ANNOTATION_ATTRIBUTE__(try_acquire_capability(__VA_ARGS__))
-
-#define TRY_ACQUIRE_SHARED(...) \
-	THREAD_ANNOTATION_ATTRIBUTE__(try_acquire_shared_capability(__VA_ARGS__))
-
-#define EXCLUDES(...) \
-	THREAD_ANNOTATION_ATTRIBUTE__(locks_excluded(__VA_ARGS__))
-
-#define ASSERT_CAPABILITY(x) \
-	THREAD_ANNOTATION_ATTRIBUTE__(assert_capability(x))
-
-#define ASSERT_SHARED_CAPABILITY(x) \
-	THREAD_ANNOTATION_ATTRIBUTE__(assert_shared_capability(x))
-
-#define RETURN_CAPABILITY(x) \
-	THREAD_ANNOTATION_ATTRIBUTE__(lock_returned(x))
-
-#define NO_THREAD_SAFETY_ANALYSIS \
-	THREAD_ANNOTATION_ATTRIBUTE__(no_thread_safety_analysis)
+bool thread_init_and_detach(void (*threadfunc)(void *), void *user, const char *name);
 
 /**
- * @defgroup Locks
- *
- * Synchronization primitives.
- *
+ * @defgroup Semaphore
  * @see Threads
  */
 
-typedef CAPABILITY("mutex") void *LOCK;
-
-/**
- * @ingroup Locks
- */
-LOCK lock_create();
-/**
- * @ingroup Locks
- */
-void lock_destroy(LOCK lock);
-
-/**
- * @ingroup Locks
- */
-int lock_trylock(LOCK lock) TRY_ACQUIRE(1, lock);
-/**
- * @ingroup Locks
- */
-void lock_wait(LOCK lock) ACQUIRE(lock);
-/**
- * @ingroup Locks
- */
-void lock_unlock(LOCK lock) RELEASE(lock);
-
-/* Group: Semaphores */
 #if defined(CONF_FAMILY_WINDOWS)
 typedef void *SEMAPHORE;
 #elif defined(CONF_PLATFORM_MACOS)
@@ -698,19 +629,19 @@ typedef sem_t SEMAPHORE;
 #endif
 
 /**
- * @ingroup Locks
+ * @ingroup Semaphore
  */
 void sphore_init(SEMAPHORE *sem);
 /**
- * @ingroup Locks
+ * @ingroup Semaphore
  */
 void sphore_wait(SEMAPHORE *sem);
 /**
- * @ingroup Locks
+ * @ingroup Semaphore
  */
 void sphore_signal(SEMAPHORE *sem);
 /**
- * @ingroup Locks
+ * @ingroup Semaphore
  */
 void sphore_destroy(SEMAPHORE *sem);
 
@@ -780,12 +711,15 @@ int time_houroftheday();
 /**
  * @ingroup Time
  */
-enum
+enum ETimeSeason
 {
 	SEASON_SPRING = 0,
 	SEASON_SUMMER,
 	SEASON_AUTUMN,
 	SEASON_WINTER,
+	SEASON_EASTER,
+	SEASON_HALLOWEEN,
+	SEASON_XMAS,
 	SEASON_NEWYEAR
 };
 
@@ -798,47 +732,17 @@ enum
  *
  * @see SEASON_SPRING
  */
-int time_season();
+ETimeSeason time_season();
 
 /**
  * @defgroup Network-General
  */
 
-/**
- * @ingroup Network-General
- */
-typedef struct NETSOCKET_INTERNAL *NETSOCKET;
+extern const NETADDR NETADDR_ZEROED;
 
 /**
  * @ingroup Network-General
  */
-enum
-{
-	NETADDR_MAXSTRSIZE = 1 + (8 * 4 + 7) + 1 + 1 + 5 + 1, // [XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX]:XXXXX
-
-	NETTYPE_LINK_BROADCAST = 4,
-
-	NETTYPE_INVALID = 0,
-	NETTYPE_IPV4 = 1,
-	NETTYPE_IPV6 = 2,
-	NETTYPE_WEBSOCKET_IPV4 = 8,
-
-	NETTYPE_ALL = NETTYPE_IPV4 | NETTYPE_IPV6 | NETTYPE_WEBSOCKET_IPV4,
-	NETTYPE_MASK = NETTYPE_ALL | NETTYPE_LINK_BROADCAST,
-};
-
-/**
- * @ingroup Network-General
- */
-typedef struct NETADDR
-{
-	unsigned int type;
-	unsigned char ip[16];
-	unsigned short port;
-
-	bool operator==(const NETADDR &other) const;
-	bool operator!=(const NETADDR &other) const { return !(*this == other); }
-} NETADDR;
 
 #ifdef CONF_FAMILY_UNIX
 /**
@@ -856,11 +760,9 @@ typedef struct sockaddr_un UNIXSOCKETADDR;
  *
  * @ingroup Network-General
  *
- * @return 0 on success.
- *
  * @remark You must call this function before using any other network functions.
  */
-int net_init();
+void net_init();
 
 /*
 	Function: net_host_lookup
@@ -913,6 +815,31 @@ int net_addr_comp_noport(const NETADDR *a, const NETADDR *b);
  * @remark The string will always be zero terminated
  */
 void net_addr_str(const NETADDR *addr, char *string, int max_length, int add_port);
+
+/**
+ * Turns url string into a network address struct.
+ * The url format is tw-0.6+udp://{ipaddr}[:{port}]
+ * ipaddr: can be ipv4 or ipv6
+ * port: is a optional internet protocol port
+ *
+ * This format is used for parsing the master server, be careful before changing it.
+ *
+ * Examples:
+ *   tw-0.6+udp://127.0.0.1
+ *   tw-0.6+udp://127.0.0.1:8303
+ *
+ * @param addr Address to fill in.
+ * @param string String to parse.
+ * @param host_buf Pointer to a buffer to write the host to
+ *                 It will include the port if one is included in the url
+ *                 It can also be set to NULL then it will be ignored
+ * @param host_buf_size Size of the host buffer or 0 if no host_buf pointer is given
+ *
+ * @return 0 on success,
+ *         positive if the input wasn't a valid DDNet URL,
+ *         negative if the input is a valid DDNet URL but the host part was not a valid IPv4/IPv6 address
+ */
+int net_addr_from_url(NETADDR *addr, const char *string, char *host_buf, size_t host_buf_size);
 
 /**
  * Turns string into a network address.
@@ -1138,6 +1065,17 @@ void net_unix_set_addr(UNIXSOCKETADDR *addr, const char *path);
  */
 void net_unix_close(UNIXSOCKET sock);
 
+#elif defined(CONF_FAMILY_WINDOWS)
+
+/**
+ * Formats a Windows error code as a human-readable string.
+ *
+ * @param error The Windows error code.
+ *
+ * @return A new std::string representing the error code.
+ */
+std::string windows_format_system_message(unsigned long error);
+
 #endif
 
 /**
@@ -1161,6 +1099,23 @@ void net_unix_close(UNIXSOCKET sock);
 void str_append(char *dst, const char *src, int dst_size);
 
 /**
+ * Appends a string to a fixed-size array of chars.
+ *
+ * @ingroup Strings
+ *
+ * @param dst Array that shall receive the string.
+ * @param src String to append.
+ *
+ * @remark The strings are treated as zero-terminated strings.
+ * @remark Guarantees that dst string will contain zero-termination.
+ */
+template<int N>
+void str_append(char (&dst)[N], const char *src)
+{
+	str_append(dst, src, N);
+}
+
+/**
  * Copies a string to another.
  *
  * @ingroup Strings
@@ -1169,10 +1124,29 @@ void str_append(char *dst, const char *src, int dst_size);
  * @param src String to be copied.
  * @param dst_size Size of the buffer dst.
  *
+ * @return Length of written string, even if it has been truncated
+ *
  * @remark The strings are treated as zero-terminated strings.
  * @remark Guarantees that dst string will contain zero-termination.
  */
-void str_copy(char *dst, const char *src, int dst_size);
+int str_copy(char *dst, const char *src, int dst_size);
+
+/**
+ * Copies a string to a fixed-size array of chars.
+ *
+ * @ingroup Strings
+ *
+ * @param dst Array that shall receive the string.
+ * @param src String to be copied.
+ *
+ * @remark The strings are treated as zero-terminated strings.
+ * @remark Guarantees that dst string will contain zero-termination.
+ */
+template<int N>
+void str_copy(char (&dst)[N], const char *src)
+{
+	str_copy(dst, src, N);
+}
 
 /**
  * Truncates a utf8 encoded string to a given length.
@@ -1224,13 +1198,32 @@ int str_length(const char *str);
  * @param buffer Pointer to the buffer to receive the formatted string.
  * @param buffer_size Size of the buffer.
  * @param format printf formatting string.
- * @param ... Parameters for the formatting.
+ * @param args The variable argument list.
  *
- * @return Length of written string, even if it has been truncated
+ * @return Length of written string, even if it has been truncated.
  *
  * @remark See the C manual for syntax for the printf formatting string.
  * @remark The strings are treated as zero-terminated strings.
- * @remark Guarantees that dst string will contain zero-termination.
+ * @remark Guarantees that buffer string will contain zero-termination.
+ */
+int str_format_v(char *buffer, int buffer_size, const char *format, va_list args)
+	GNUC_ATTRIBUTE((format(printf, 3, 0)));
+
+/**
+ * Performs printf formatting into a buffer.
+ *
+ * @ingroup Strings
+ *
+ * @param buffer Pointer to the buffer to receive the formatted string.
+ * @param buffer_size Size of the buffer.
+ * @param format printf formatting string.
+ * @param ... Parameters for the formatting.
+ *
+ * @return Length of written string, even if it has been truncated.
+ *
+ * @remark See the C manual for syntax for the printf formatting string.
+ * @remark The strings are treated as zero-terminated strings.
+ * @remark Guarantees that buffer string will contain zero-termination.
  */
 int str_format(char *buffer, int buffer_size, const char *format, ...)
 	GNUC_ATTRIBUTE((format(printf, 3, 4)));
@@ -1619,21 +1612,33 @@ const char *str_rchr(const char *haystack, char needle);
  */
 int str_countchr(const char *haystack, char needle);
 
-/*
-	Function: str_hex
-		Takes a datablock and generates a hex string of it, with spaces
-		between bytes.
-
-	Parameters:
-		dst - Buffer to fill with hex data
-		dst_size - size of the buffer
-		data - Data to turn into hex
-		data - Size of the data
-
-	Remarks:
-		- The destination buffer will be zero-terminated
-*/
+/**
+ * Takes a datablock and generates a hex string of it, with spaces between bytes.
+ *
+ * @param dst Buffer to fill with hex data.
+ * @param dst_size Size of the buffer (at least 3 * data_size + 1 to contain all data).
+ * @param data Data to turn into hex.
+ * @param data_size Size of the data.
+ *
+ * @remark The destination buffer will be zero-terminated.
+ */
 void str_hex(char *dst, int dst_size, const void *data, int data_size);
+
+/**
+ * Takes a datablock and generates a hex string of it, in the C style array format,
+ * i.e. with bytes formatted in 0x00-0xFF notation and commas with spaces between the bytes.
+ * The output can be split over multiple lines by specifying the maximum number of bytes
+ * that should be printed per line.
+ *
+ * @param dst Buffer to fill with hex data.
+ * @param dst_size Size of the buffer (at least 6 * data_size + 1 to contain all data).
+ * @param data Data to turn into hex.
+ * @param data_size Size of the data.
+ * @param bytes_per_line After this many printed bytes a newline will be printed.
+ *
+ * @remark The destination buffer will be zero-terminated.
+ */
+void str_hex_cstyle(char *dst, int dst_size, const void *data, int data_size, int bytes_per_line = 12);
 
 /*
 	Function: str_hex_decode
@@ -1706,6 +1711,21 @@ void str_timestamp_format(char *buffer, int buffer_size, const char *format)
 void str_timestamp_ex(time_t time, char *buffer, int buffer_size, const char *format)
 	GNUC_ATTRIBUTE((format(strftime, 4, 0)));
 
+/**
+ * Parses a string into a timestamp following a specified format.
+ *
+ * @ingroup Timestamp
+ *
+ * @param string Pointer to the string to parse
+ * @param format The time format to use (for example FORMAT_NOSPACE below)
+ * @param timestamp Pointer to the timestamp result
+ *
+ * @return true on success, false if the string could not be parsed with the specified format
+ *
+ */
+bool timestamp_from_str(const char *string, const char *format, time_t *timestamp)
+	GNUC_ATTRIBUTE((format(strftime, 2, 0)));
+
 #define FORMAT_TIME "%H:%M:%S"
 #define FORMAT_SPACE "%Y-%m-%d %H:%M:%S"
 #define FORMAT_NOSPACE "%Y-%m-%d_%H-%M-%S"
@@ -1717,6 +1737,7 @@ enum
 	TIME_MINS,
 	TIME_HOURS_CENTISECS,
 	TIME_MINS_CENTISECS,
+	TIME_SECS_CENTISECS,
 };
 
 /*
@@ -1751,196 +1772,259 @@ int str_time_float(float secs, int format, char *buffer, int buffer_size);
 */
 void str_escape(char **dst, const char *src, const char *end);
 
-/* Group: Filesystem */
+/**
+ * @defgroup Filesystem
+ *
+ * Utilities for accessing the file system.
+ */
 
-/*
-	Function: fs_listdir
-		Lists the files in a directory
-
-	Parameters:
-		dir - Directory to list
-		cb - Callback function to call for each entry
-		type - Type of the directory
-		user - Pointer to give to the callback
-*/
-typedef int (*FS_LISTDIR_CALLBACK)(const char *name, int is_dir, int dir_type, void *user);
+/**
+ * Lists the files and folders in a directory.
+ *
+ * @ingroup Filesystem
+ *
+ * @param dir Directory to list.
+ * @param cb Callback function to call for each entry.
+ * @param type Type of the directory.
+ * @param user Pointer to give to the callback.
+ *
+ * @remark The strings are treated as zero-terminated strings.
+ */
 void fs_listdir(const char *dir, FS_LISTDIR_CALLBACK cb, int type, void *user);
 
-typedef struct
-{
-	const char *m_pName;
-	time_t m_TimeCreated; // seconds since UNIX Epoch
-	time_t m_TimeModified; // seconds since UNIX Epoch
-} CFsFileInfo;
-
-/*
-	Function: fs_listdir_fileinfo
-		Lists the files in a directory and gets additional file information
-
-	Parameters:
-		dir - Directory to list
-		cb - Callback function to call for each entry
-		type - Type of the directory
-		user - Pointer to give to the callback
-*/
-typedef int (*FS_LISTDIR_CALLBACK_FILEINFO)(const CFsFileInfo *info, int is_dir, int dir_type, void *user);
+/**
+ * Lists the files and folders in a directory and gets additional file information.
+ *
+ * @ingroup Filesystem
+ *
+ * @param dir Directory to list.
+ * @param cb Callback function to call for each entry.
+ * @param type Type of the directory.
+ * @param user Pointer to give to the callback.
+ *
+ * @remark The strings are treated as zero-terminated strings.
+ */
 void fs_listdir_fileinfo(const char *dir, FS_LISTDIR_CALLBACK_FILEINFO cb, int type, void *user);
 
-/*
-	Function: fs_makedir
-		Creates a directory
-
-	Parameters:
-		path - Directory to create
-
-	Returns:
-		Returns 0 on success. Negative value on failure.
-
-	Remarks:
-		Does not create several directories if needed. "a/b/c" will result
-		in a failure if b or a does not exist.
-*/
+/**
+ * Creates a directory.
+ *
+ * @ingroup Filesystem
+ *
+ * @param path Directory to create.
+ *
+ * @return 0 on success. Negative value on failure.
+ *
+ * @remark Does not create several directories if needed. "a/b/c" will
+ * result in a failure if b or a does not exist.
+ *
+ * @remark The strings are treated as zero-terminated strings.
+ */
 int fs_makedir(const char *path);
 
-/*
-	Function: fs_removedir
-		Removes a directory
-
-	Parameters:
-		path - Directory to remove
-
-	Returns:
-		Returns 0 on success. Negative value on failure.
-
-	Remarks:
-		Cannot remove a non-empty directory.
-*/
+/**
+ * Removes a directory.
+ *
+ * @ingroup Filesystem
+ *
+ * @param path Directory to remove.
+ *
+ * @return 0 on success. Negative value on failure.
+ *
+ * @remark Cannot remove a non-empty directory.
+ *
+ * @remark The strings are treated as zero-terminated strings.
+ */
 int fs_removedir(const char *path);
 
-/*
-	Function: fs_makedir_rec_for
-		Recursively create directories for a file
-
-	Parameters:
-		path - File for which to create directories
-
-	Returns:
-		Returns 0 on success. Negative value on failure.
-*/
+/**
+ * Recursively create directories for a file.
+ *
+ * @ingroup Filesystem
+ *
+ * @param path - File for which to create directories.
+ *
+ * @return 0 on success. Negative value on failure.
+ *
+ * @remark The strings are treated as zero-terminated strings.
+ */
 int fs_makedir_rec_for(const char *path);
 
-/*
-	Function: fs_storage_path
-		Fetches per user configuration directory.
-
-	Returns:
-		Returns 0 on success. Negative value on failure.
-
-	Remarks:
-		- Returns ~/.appname on UNIX based systems
-		- Returns ~/Library/Applications Support/appname on macOS
-		- Returns %APPDATA%/Appname on Windows based systems
-*/
+/**
+ * Fetches per user configuration directory.
+ *
+ * @ingroup Filesystem
+ *
+ * @param appname Name of the application.
+ * @param path Buffer that will receive the storage path.
+ * @param max Size of the buffer.
+ *
+ * @return 0 on success. Negative value on failure.
+ *
+ * @remark Returns ~/.appname on UNIX based systems.
+ * @remark Returns ~/Library/Applications Support/appname on macOS.
+ * @remark Returns %APPDATA%/Appname on Windows based systems.
+ *
+ * @remark The strings are treated as zero-terminated strings.
+ */
 int fs_storage_path(const char *appname, char *path, int max);
 
-/*
-	Function: fs_is_dir
-		Checks if directory exists
+/**
+ * Checks if a file exists.
+ *
+ * @ingroup Filesystem
+ *
+ * @param path the path to check.
+ *
+ * @return 1 if a file with the given path exists,
+ * 0 on failure or if the file does not exist.
+ *
+ * @remark The strings are treated as zero-terminated strings.
+ */
+int fs_is_file(const char *path);
 
-	Returns:
-		Returns 1 on success, 0 on failure.
-*/
+/**
+ * Checks if a folder exists.
+ *
+ * @ingroup Filesystem
+ *
+ * @param path the path to check.
+ *
+ * @return 1 if a folder with the given path exists,
+ * 0 on failure or if the folder does not exist.
+ *
+ * @remark The strings are treated as zero-terminated strings.
+ */
 int fs_is_dir(const char *path);
 
-/*
-    Function: fs_is_relative_path
-	Checks whether a given path is relative or absolute.
-
-    Returns:
-	Returns 1 if relative, 0 if absolute.
-*/
+/**
+ * Checks whether a given path is relative or absolute.
+ *
+ * @ingroup Filesystem
+ *
+ * @param path Path to check.
+ *
+ * @return 1 if relative, 0 if absolute.
+ *
+ * @remark The strings are treated as zero-terminated strings.
+ */
 int fs_is_relative_path(const char *path);
 
-/*
-	Function: fs_chdir
-		Changes current working directory
-
-	Returns:
-		Returns 0 on success, 1 on failure.
-*/
+/**
+ * Changes the current working directory.
+ *
+ * @ingroup Filesystem
+ *
+ * @param path New working directory path.
+ *
+ * @return 0 on success, 1 on failure.
+ *
+ * @remark The strings are treated as zero-terminated strings.
+ */
 int fs_chdir(const char *path);
 
-/*
-	Function: fs_getcwd
-		Gets the current working directory.
-
-	Returns:
-		Returns a pointer to the buffer on success, 0 on failure.
-*/
+/**
+ * Gets the current working directory.
+ *
+ * @ingroup Filesystem
+ *
+ * @param buffer Buffer that will receive the current working directory.
+ * @param buffer_size Size of the buffer.
+ *
+ * @return Pointer to the buffer on success, nullptr on failure.
+ *
+ * @remark The strings are treated as zero-terminated strings.
+ */
 char *fs_getcwd(char *buffer, int buffer_size);
 
-/*
-	Function: fs_parent_dir
-		Get the parent directory of a directory
+/**
+ * Gets the name of a file or folder specified by a path,
+ * i.e. the last segment of the path.
+ *
+ * @ingroup Filesystem
+ *
+ * @param path Path from which to retrieve the filename.
+ *
+ * @return Filename of the path.
+ *
+ * @remark Supports forward and backward slashes as path segment separator.
+ * @remark No distinction between files and folders is being made.
+ * @remark The strings are treated as zero-terminated strings.
+ */
+const char *fs_filename(const char *path);
 
-	Parameters:
-		path - The directory string
+/**
+ * Splits a filename into name (without extension) and file extension.
+ *
+ * @ingroup Filesystem
+ *
+ * @param filename The filename to split.
+ * @param name Buffer that will receive the name without extension, may be nullptr.
+ * @param name_size Size of the name buffer (ignored if name is nullptr).
+ * @param extension Buffer that will receive the extension, may be nullptr.
+ * @param extension_size Size of the extension buffer (ignored if extension is nullptr).
+ *
+ * @remark Does NOT handle forward and backward slashes.
+ * @remark No distinction between files and folders is being made.
+ * @remark The strings are treated as zero-terminated strings.
+ */
+void fs_split_file_extension(const char *filename, char *name, size_t name_size, char *extension = nullptr, size_t extension_size = 0);
 
-	Returns:
-		Returns 0 on success, 1 on failure.
-
-	Remarks:
-		- The string is treated as zero-terminated string.
-*/
+/**
+ * Get the parent directory of a directory.
+ *
+ * @ingroup Filesystem
+ *
+ * @param path Path of the directory. The parent will be store in this buffer as well.
+ *
+ * @return 0 on success, 1 on failure.
+ *
+ * @remark The strings are treated as zero-terminated strings.
+ */
 int fs_parent_dir(char *path);
 
-/*
-	Function: fs_remove
-		Deletes the file with the specified name.
-
-	Parameters:
-		filename - The file to delete
-
-	Returns:
-		Returns 0 on success, 1 on failure.
-
-	Remarks:
-		- The strings are treated as zero-terminated strings.
-		- Returns an error if the path specifies a directory name.
-*/
+/**
+ * Deletes a file.
+ *
+ * @ingroup Filesystem
+ *
+ * @param filename Path of the file to delete.
+ *
+ * @return 0 on success, 1 on failure.
+ *
+ * @remark The strings are treated as zero-terminated strings.
+ * @remark Returns an error if the path specifies a directory name.
+ */
 int fs_remove(const char *filename);
 
-/*
-	Function: fs_rename
-		Renames the file or directory. If the paths differ the file will be moved.
-
-	Parameters:
-		oldname - The current name
-		newname - The new name
-
-	Returns:
-		Returns 0 on success, 1 on failure.
-
-	Remarks:
-		- The strings are treated as zero-terminated strings.
-*/
+/**
+ * Renames the file or directory. If the paths differ the file will be moved.
+ *
+ * @ingroup Filesystem
+ *
+ * @param oldname The current path of a file or directory.
+ * @param newname The new path for the file or directory.
+ *
+ * @return 0 on success, 1 on failure.
+ *
+ * @remark The strings are treated as zero-terminated strings.
+ */
 int fs_rename(const char *oldname, const char *newname);
 
-/*
-	Function: fs_file_time
-		Gets the creation and the last modification date of a file.
-
-	Parameters:
-		name - The filename.
-		created - Pointer to time_t
-		modified - Pointer to time_t
-
-	Returns:
-		0 on success, non-zero on failure
-
-	Remarks:
-		- Returned time is in seconds since UNIX Epoch
-*/
+/**
+ * Gets the creation and the last modification date of a file or directory.
+ *
+ * @ingroup Filesystem
+ *
+ * @param name Path of a file or directory.
+ * @param created Pointer where the creation time will be stored.
+ * @param modified Pointer where the modification time will be stored.
+ *
+ * @return 0 on success, non-zero on failure.
+ *
+ * @remark The strings are treated as zero-terminated strings.
+ * @remark Returned time is in seconds since UNIX Epoch.
+ */
 int fs_file_time(const char *name, time_t *created, time_t *modified);
 
 /*
@@ -2014,6 +2098,15 @@ int open_link(const char *link);
 */
 int open_file(const char *path);
 
+/**
+ * Swaps the endianness of data. Each element is swapped individually by reversing its bytes.
+ *
+ * @param data Pointer to data to be swapped.
+ * @param elem_size Size in bytes of each element.
+ * @param num Number of elements.
+ *
+ * @remark The caller must ensure that the data is at least `elem_size * num` bytes in size.
+ */
 void swap_endian(void *data, unsigned elem_size, unsigned num);
 
 typedef struct
@@ -2027,9 +2120,20 @@ typedef struct
 void net_stats(NETSTATS *stats);
 
 int str_toint(const char *str);
+bool str_toint(const char *str, int *out);
 int str_toint_base(const char *str, int base);
 unsigned long str_toulong_base(const char *str, int base);
+int64_t str_toint64_base(const char *str, int base = 10);
 float str_tofloat(const char *str);
+bool str_tofloat(const char *str, float *out);
+
+void str_from_int(int value, char *buffer, size_t buffer_size);
+
+template<size_t N>
+void str_from_int(int value, char (&dst)[N])
+{
+	str_from_int(value, dst, N);
+}
 
 /**
  * Determines whether a character is whitespace.
@@ -2045,7 +2149,11 @@ float str_tofloat(const char *str);
 int str_isspace(char c);
 
 char str_uppercase(char c);
+
 int str_isallnum(const char *str);
+
+int str_isallnum_hex(const char *str);
+
 unsigned str_quickhash(const char *str);
 
 int str_utf8_to_skeleton(const char *str, int *buf, int buf_len);
@@ -2114,6 +2222,9 @@ int str_utf8_comp_nocase_num(const char *a, const char *b, int num);
 	Parameters:
 		haystack - String to search in
 		needle - String to search for
+        end - A pointer that will be set to a pointer into haystack directly behind the
+            last character where the needle was found. Will be set to nullptr if needle
+            could not be found. Optional parameter.
 
 	Returns:
 		A pointer into haystack where the needle was found.
@@ -2122,7 +2233,7 @@ int str_utf8_comp_nocase_num(const char *a, const char *b, int num);
 	Remarks:
 		- The strings are treated as zero-terminated strings.
 */
-const char *str_utf8_find_nocase(const char *haystack, const char *needle);
+const char *str_utf8_find_nocase(const char *haystack, const char *needle, const char **end = nullptr);
 
 /*
 	Function: str_utf8_isspace
@@ -2275,7 +2386,33 @@ int str_utf8_check(const char *str);
 		- The string is treated as zero-terminated utf8 string.
 		- It's the user's responsibility to make sure the bounds are aligned.
 */
-void str_utf8_stats(const char *str, int max_size, int max_count, int *size, int *count);
+void str_utf8_stats(const char *str, size_t max_size, size_t max_count, size_t *size, size_t *count);
+
+/**
+ * Converts a byte offset of a utf8 string to the utf8 character offset.
+ *
+ * @param text Pointer to the string.
+ * @param byte_offset Offset in bytes.
+ *
+ * @return Offset in utf8 characters. Clamped to the maximum length of the string in utf8 characters.
+ *
+ * @remark The string is treated as a zero-terminated utf8 string.
+ * @remark It's the user's responsibility to make sure the bounds are aligned.
+ */
+size_t str_utf8_offset_bytes_to_chars(const char *str, size_t byte_offset);
+
+/**
+ * Converts a utf8 character offset of a utf8 string to the byte offset.
+ *
+ * @param text Pointer to the string.
+ * @param char_offset Offset in utf8 characters.
+ *
+ * @return Offset in bytes. Clamped to the maximum length of the string in bytes.
+ *
+ * @remark The string is treated as a zero-terminated utf8 string.
+ * @remark It's the user's responsibility to make sure the bounds are aligned.
+ */
+size_t str_utf8_offset_chars_to_bytes(const char *str, size_t char_offset);
 
 /*
 	Function: str_next_token
@@ -2310,50 +2447,31 @@ const char *str_next_token(const char *str, const char *delim, char *buffer, int
 */
 int str_in_list(const char *list, const char *delim, const char *needle);
 
-/*
-	Function: bytes_be_to_int
-		Packs 4 big endian bytes into an int
-
-	Returns:
-		The packed int
-
-	Remarks:
-		- Assumes the passed array is 4 bytes
-		- Assumes int is 4 bytes
-*/
-int bytes_be_to_int(const unsigned char *bytes);
-
-/*
-	Function: int_to_bytes_be
-		Packs an int into 4 big endian bytes
-
-	Remarks:
-		- Assumes the passed array is 4 bytes
-		- Assumes int is 4 bytes
-*/
-void int_to_bytes_be(unsigned char *bytes, int value);
-
-/*
-	Function: bytes_be_to_uint
-		Packs 4 big endian bytes into an unsigned
-
-	Returns:
-		The packed unsigned
-
-	Remarks:
-		- Assumes the passed array is 4 bytes
-		- Assumes unsigned is 4 bytes
-*/
+/**
+ * Packs 4 big endian bytes into an unsigned.
+ *
+ * @param bytes Pointer to an array of bytes that will be packed.
+ *
+ * @return The packed unsigned.
+ *
+ * @remark Assumes the passed array is least 4 bytes in size.
+ * @remark Assumes unsigned is 4 bytes in size.
+ *
+ * @see uint_to_bytes_be
+ */
 unsigned bytes_be_to_uint(const unsigned char *bytes);
 
-/*
-	Function: uint_to_bytes_be
-		Packs an unsigned into 4 big endian bytes
-
-	Remarks:
-		- Assumes the passed array is 4 bytes
-		- Assumes unsigned is 4 bytes
-*/
+/**
+ * Packs an unsigned into 4 big endian bytes.
+ *
+ * @param bytes Pointer to an array where the bytes will be stored.
+ * @param value The values that will be packed into the array.
+ *
+ * @remark Assumes the passed array is least 4 bytes in size.
+ * @remark Assumes unsigned is 4 bytes in size.
+ *
+ * @see bytes_be_to_uint
+ */
 void uint_to_bytes_be(unsigned char *bytes, unsigned value);
 
 /*
@@ -2393,31 +2511,45 @@ void cmdline_free(int argc, const char **argv);
 
 #if defined(CONF_FAMILY_WINDOWS)
 typedef void *PROCESS;
+constexpr PROCESS INVALID_PROCESS = nullptr;
 #else
 typedef pid_t PROCESS;
+constexpr PROCESS INVALID_PROCESS = 0;
 #endif
 
-/*
-	Function: shell_execute
-		Executes a given file.
+enum class EShellExecuteWindowState
+{
+	FOREGROUND,
+	BACKGROUND,
+};
 
-	Returns:
-		handle/pid of the new process
-*/
-PROCESS shell_execute(const char *file);
+/**
+ * Executes a given file.
+ *
+ * @param file The file to execute.
+ * @param window_state The window state how the process window should be shown.
+ *
+ * @return Handle of the new process, or `INVALID_PROCESS` on error.
+ */
+PROCESS shell_execute(const char *file, EShellExecuteWindowState window_state);
 
-/*
-	Function: kill_process
-		Sends kill signal to a process.
-
-	Parameters:
-		process - handle/pid of the process
-
-	Returns:
-		0 - Error
-		1 - Success
-*/
+/**
+ * Sends kill signal to a process.
+ *
+ * @param process Handle of the process to kill.
+ *
+ * @return 1 on success, 0 on error.
+ */
 int kill_process(PROCESS process);
+
+/**
+ * Checks if a process is alive.
+ *
+ * @param process Handle/PID of the process.
+ *
+ * @return bool Returns true if the process is currently running, false if the process is not running (dead).
+ */
+bool is_process_alive(PROCESS process);
 
 /*
 	Function: generate_password
@@ -2494,34 +2626,34 @@ int secure_rand();
 */
 int secure_rand_below(int below);
 
-/*
-	Function: set_console_msg_color
-		Sets the console color.
+/**
+ * Returns a human-readable version string of the operating system.
+ *
+ * @param version Buffer to use for the output.
+ * @param length Length of the output buffer.
+ *
+ * @return true on success, false on failure.
+ */
+bool os_version_str(char *version, size_t length);
 
-	Parameters:
-		rgb - If NULL it will reset the console color to default, else it will transform the rgb color to a console color
-*/
-void set_console_msg_color(const void *rgbvoid);
-
-/*
-	Function: os_version_str
-		Returns a human-readable version string of the operating system
-
-	Parameters:
-		version - Buffer to use for the output.
-		length - Length of the output buffer.
-
-	Returns:
-		0 - Success in getting the version.
-		1 - Failure in getting the version.
-*/
-int os_version_str(char *version, int length);
+/**
+ * Returns a string of the preferred locale of the user / operating system.
+ * The string conforms to [RFC 3066](https://www.ietf.org/rfc/rfc3066.txt)
+ * and only contains the characters `a`-`z`, `A`-`Z`, `0`-`9` and `-`.
+ * If the preferred locale could not be determined this function
+ * falls back to the locale `"en-US"`.
+ *
+ * @param locale Buffer to use for the output.
+ * @param length Length of the output buffer.
+ *
+ * @remark The destination buffer will be zero-terminated.
+ */
+void os_locale_str(char *locale, size_t length);
 
 #if defined(CONF_EXCEPTION_HANDLING)
 void init_exception_handler();
 void set_exception_handler_log_file(const char *log_file_path);
 #endif
-}
 
 /**
  * Fetches a sample from a high resolution timer and converts it in nanoseconds.
@@ -2558,6 +2690,32 @@ public:
 
 #if defined(CONF_FAMILY_WINDOWS)
 /**
+ * Converts a utf8 encoded string to a wide character string
+ * for use with the Windows API.
+ *
+ * @param str The utf8 encoded string to convert.
+ *
+ * @return The argument as a wide character string.
+ *
+ * @remark The argument string must be zero-terminated.
+ * @remark Fails with assertion error if passed utf8 is invalid.
+ */
+std::wstring windows_utf8_to_wide(const char *str);
+
+/**
+ * Converts a wide character string obtained from the Windows API
+ * to a utf8 encoded string.
+ *
+ * @param wide_str The wide character string to convert.
+ *
+ * @return The argument as a utf8 encoded string, wrapped in an optional.
+ * The optional is empty, if the wide string contains invalid codepoints.
+ *
+ * @remark The argument string must be zero-terminated.
+ */
+std::optional<std::string> windows_wide_to_utf8(const wchar_t *wide_str);
+
+/**
  * This is a RAII wrapper to initialize/uninitialize the Windows COM library,
  * which may be necessary for using the open_file and open_link functions.
  * Must be used on every thread. It's automatically used on threads created
@@ -2570,24 +2728,93 @@ public:
 	CWindowsComLifecycle(bool HasWindow);
 	~CWindowsComLifecycle();
 };
-#endif
 
 /**
- * Copies a string to a fixed-size array of chars.
+ * Registers a protocol handler.
  *
- * @ingroup Strings
+ * @ingroup Shell
  *
- * @param dst Array that shall receive the string.
- * @param src String to be copied.
+ * @param protocol_name The name of the protocol.
+ * @param executable The absolute path of the executable that will be associated with the protocol.
+ * @param updated Pointer to a variable that will be set to true, iff the shell needs to be updated.
  *
- * @remark The strings are treated as zero-terminated strings.
- * @remark Guarantees that dst string will contain zero-termination.
+ * @return true on success, false on failure.
+ *
+ * @remark The caller must later call shell_update, iff the shell needs to be updated.
  */
-template<int N>
-void str_copy(char (&dst)[N], const char *src)
-{
-	str_copy(dst, src, N);
-}
+bool shell_register_protocol(const char *protocol_name, const char *executable, bool *updated);
+
+/**
+ * Registers a file extension.
+ *
+ * @ingroup Shell
+ *
+ * @param extension The file extension, including the leading dot.
+ * @param description A readable description for the file extension.
+ * @param executable_name A unique name that will used to describe the application.
+ * @param executable The absolute path of the executable that will be associated with the file extension.
+ * @param updated Pointer to a variable that will be set to true, iff the shell needs to be updated.
+ *
+ * @return true on success, false on failure.
+ *
+ * @remark The caller must later call shell_update, iff the shell needs to be updated.
+ */
+bool shell_register_extension(const char *extension, const char *description, const char *executable_name, const char *executable, bool *updated);
+
+/**
+ * Registers an application.
+ *
+ * @ingroup Shell
+ *
+ * @param name Readable name of the application.
+ * @param executable The absolute path of the executable being registered.
+ * @param updated Pointer to a variable that will be set to true, iff the shell needs to be updated.
+ *
+ * @return true on success, false on failure.
+ *
+ * @remark The caller must later call shell_update, iff the shell needs to be updated.
+ */
+bool shell_register_application(const char *name, const char *executable, bool *updated);
+
+/**
+ * Unregisters a protocol or file extension handler.
+ *
+ * @ingroup Shell
+ *
+ * @param shell_class The shell class to delete.
+ * For protocols this is the name of the protocol.
+ * For file extensions this is the program ID associated with the file extension.
+ * @param updated Pointer to a variable that will be set to true, iff the shell needs to be updated.
+ *
+ * @return true on success, false on failure.
+ *
+ * @remark The caller must later call shell_update, iff the shell needs to be updated.
+ */
+bool shell_unregister_class(const char *shell_class, bool *updated);
+
+/**
+ * Unregisters an application.
+ *
+ * @ingroup Shell
+ *
+ * @param executable The absolute path of the executable being unregistered.
+ * @param updated Pointer to a variable that will be set to true, iff the shell needs to be updated.
+ *
+ * @return true on success, false on failure.
+ *
+ * @remark The caller must later call shell_update, iff the shell needs to be updated.
+ */
+bool shell_unregister_application(const char *executable, bool *updated);
+
+/**
+ * Notifies the system that a protocol or file extension has been changed and the shell needs to be updated.
+ *
+ * @ingroup Shell
+ *
+ * @remark This is a potentially expensive operation, so it should only be called when necessary.
+ */
+void shell_update();
+#endif
 
 template<>
 struct std::hash<NETADDR>

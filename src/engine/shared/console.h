@@ -5,6 +5,7 @@
 
 #include "memheap.h"
 #include <base/math.h>
+#include <base/system.h>
 #include <engine/console.h>
 #include <engine/storage.h>
 
@@ -46,8 +47,7 @@ class CConsole : public IConsole
 	};
 
 	CExecFile *m_pFirstExec;
-	class CConfig *m_pConfig;
-	class IStorage *m_pStorage;
+	IStorage *m_pStorage;
 	int m_AccessLevel;
 
 	CCommand *m_pRecycleList;
@@ -58,8 +58,6 @@ class CConsole : public IConsole
 	static void Con_Chain(IResult *pResult, void *pUserData);
 	static void Con_Echo(IResult *pResult, void *pUserData);
 	static void Con_Exec(IResult *pResult, void *pUserData);
-	static void ConToggle(IResult *pResult, void *pUser);
-	static void ConToggleStroke(IResult *pResult, void *pUser);
 	static void ConCommandAccess(IResult *pResult, void *pUser);
 	static void ConCommandStatus(IConsole::IResult *pResult, void *pUser);
 
@@ -139,7 +137,7 @@ class CConsole : public IConsole
 
 		int m_Victim;
 		void ResetVictim();
-		bool HasVictim();
+		bool HasVictim() const;
 		void SetVictim(int Victim);
 		void SetVictim(const char *pVictim);
 		int GetVictim() const override;
@@ -170,7 +168,7 @@ class CConsole : public IConsole
 
 		void AddEntry()
 		{
-			CQueueEntry *pEntry = static_cast<CQueueEntry *>(m_Queue.Allocate(sizeof(CQueueEntry)));
+			CQueueEntry *pEntry = m_Queue.Allocate<CQueueEntry>();
 			pEntry->m_pNext = 0;
 			if(!m_pFirst)
 				m_pFirst = pEntry;
@@ -189,9 +187,9 @@ class CConsole : public IConsole
 	void AddCommandSorted(CCommand *pCommand);
 	CCommand *FindCommand(const char *pName, int FlagMask);
 
-public:
-	CConfig *Config() { return m_pConfig; }
+	bool m_Cheated;
 
+public:
 	CConsole(int FlagMask);
 	~CConsole();
 
@@ -211,7 +209,7 @@ public:
 	bool LineIsValid(const char *pStr) override;
 	void ExecuteLine(const char *pStr, int ClientID = -1, bool InterpretSemicolons = true) override;
 	void ExecuteLineFlag(const char *pStr, int FlagMask, int ClientID = -1, bool InterpretSemicolons = true) override;
-	void ExecuteFile(const char *pFilename, int ClientID = -1, bool LogFailure = false, int StorageType = IStorage::TYPE_ALL) override;
+	bool ExecuteFile(const char *pFilename, int ClientID = -1, bool LogFailure = false, int StorageType = IStorage::TYPE_ALL) override;
 
 	char *Format(char *pBuf, int Size, const char *pFrom, const char *pStr) override;
 	void Print(int Level, const char *pFrom, const char *pStr, ColorRGBA PrintColor = gs_ConsoleDefaultColor) const override;
@@ -220,10 +218,14 @@ public:
 	void InitChecksum(CChecksumData *pData) const override;
 
 	void SetAccessLevel(int AccessLevel) override { m_AccessLevel = clamp(AccessLevel, (int)(ACCESS_LEVEL_ADMIN), (int)(ACCESS_LEVEL_USER)); }
-	void ResetServerGameSettings() override;
+
 	// DDRace
 
 	static void ConUserCommandStatus(IConsole::IResult *pResult, void *pUser);
+
+	bool Cheated() const override { return m_Cheated; }
+
+	int FlagMask() const override { return m_FlagMask; }
 	void SetFlagMask(int FlagMask) override { m_FlagMask = FlagMask; }
 };
 

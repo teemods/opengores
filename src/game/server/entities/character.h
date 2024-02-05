@@ -41,6 +41,7 @@ public:
 	void SwapClients(int Client1, int Client2) override;
 
 	bool CanSnapCharacter(int SnappingClient);
+	bool IsSnappingCharacterInView(int SnappingClientID);
 
 	bool IsGrounded();
 
@@ -59,11 +60,12 @@ public:
 
 	void OnPredictedInput(CNetObj_PlayerInput *pNewInput);
 	void OnDirectInput(CNetObj_PlayerInput *pNewInput);
+	void ReleaseHook();
 	void ResetHook();
 	void ResetInput();
 	void FireWeapon();
 
-	void Die(int Killer, int Weapon);
+	void Die(int Killer, int Weapon, bool SendKillMsg = true);
 	bool TakeDamage(vec2 Force, int Dmg, int From, int Weapon);
 
 	bool Spawn(class CPlayer *pPlayer, vec2 Pos);
@@ -85,7 +87,16 @@ public:
 	bool IsAlive() const { return m_Alive; }
 	bool IsPaused() const { return m_Paused; }
 	class CPlayer *GetPlayer() { return m_pPlayer; }
-	int64_t TeamMask();
+	CClientMask TeamMask();
+
+	void SetPosition(const vec2 &Position);
+	void Move(vec2 RelPos);
+
+	void ResetVelocity();
+	void SetVelocity(vec2 NewVelocity);
+	void SetRawVelocity(vec2 NewVelocity);
+	void AddVelocity(vec2 Addition);
+	void ApplyMoveRestrictions();
 
 	// OpenGores
 	void SetCollideOthers(bool on);
@@ -112,6 +123,8 @@ private:
 
 	int m_ReloadTimer;
 	int m_AttackTick;
+
+	int m_MoveRestrictions;
 
 	int m_DamageTaken;
 
@@ -208,9 +221,6 @@ public:
 	int m_TileIndex;
 	int m_TileFIndex;
 
-	int m_MoveRestrictions;
-
-	vec2 m_Intersection;
 	int64_t m_LastStartWarning;
 	int64_t m_LastRescue;
 	bool m_LastRefillJumps;
@@ -234,7 +244,7 @@ public:
 	void SetArmor(int Armor) { m_Armor = Armor; }
 	CCharacterCore GetCore() { return m_Core; }
 	void SetCore(CCharacterCore Core) { m_Core = Core; }
-	CCharacterCore *Core() { return &m_Core; }
+	const CCharacterCore *Core() const { return &m_Core; }
 	bool GetWeaponGot(int Type) { return m_Core.m_aWeapons[Type].m_Got; }
 	void SetWeaponGot(int Type, bool Value) { m_Core.m_aWeapons[Type].m_Got = Value; }
 	int GetWeaponAmmo(int Type) { return m_Core.m_aWeapons[Type].m_Ammo; }

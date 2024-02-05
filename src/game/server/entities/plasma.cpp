@@ -118,14 +118,14 @@ void CPlasma::Snap(int SnappingClient)
 	if(NetworkClipped(SnappingClient))
 		return;
 
-	CNetObj_Laser *pObj = static_cast<CNetObj_Laser *>(Server()->SnapNewItem(
-		NETOBJTYPE_LASER, GetID(), sizeof(CNetObj_Laser)));
-	if(!pObj)
-		return;
+	int SnappingClientVersion = GameServer()->GetClientVersion(SnappingClient);
 
-	pObj->m_X = (int)m_Pos.x;
-	pObj->m_Y = (int)m_Pos.y;
-	pObj->m_FromX = (int)m_Pos.x;
-	pObj->m_FromY = (int)m_Pos.y;
-	pObj->m_StartTick = m_EvalTick;
+	int Subtype = (m_Explosive ? 1 : 0) | (m_Freeze ? 2 : 0);
+	GameServer()->SnapLaserObject(CSnapContext(SnappingClientVersion), GetID(),
+		m_Pos, m_Pos, m_EvalTick, -1, LASERTYPE_PLASMA, Subtype, m_Number);
+}
+
+void CPlasma::SwapClients(int Client1, int Client2)
+{
+	m_ForClientID = m_ForClientID == Client1 ? Client2 : m_ForClientID == Client2 ? Client1 : m_ForClientID;
 }

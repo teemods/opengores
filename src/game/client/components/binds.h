@@ -32,8 +32,10 @@ public:
 	public:
 		CBinds *m_pBinds;
 		virtual int Sizeof() const override { return sizeof(*this); }
-		virtual bool OnInput(IInput::CEvent Event) override;
+		virtual bool OnInput(const IInput::CEvent &Event) override;
 	};
+
+	bool m_MouseOnAction;
 
 	enum
 	{
@@ -60,7 +62,7 @@ public:
 	static const char *GetKeyBindModifiersName(int ModifierCombination);
 
 	virtual void OnConsoleInit() override;
-	virtual bool OnInput(IInput::CEvent Event) override;
+	virtual bool OnInput(const IInput::CEvent &Event) override;
 
 	// DDRace
 

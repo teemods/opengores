@@ -124,7 +124,7 @@ bool ReplaceArea(IStorage *pStorage, const char aaMapNames[3][64], const float a
 		for(int j = 0; j < 2; j++)
 		{
 			apLayerGroups[j] = GetLayerGroup(aInputMaps[j], i + 1);
-			apItem[j] = (CMapItemLayer *)aInputMaps[j].GetItem(aLayersStart[j] + i, 0, 0);
+			apItem[j] = (CMapItemLayer *)aInputMaps[j].GetItem(aLayersStart[j] + i);
 		}
 
 		if(!apLayerGroups[0] || !apLayerGroups[1])
@@ -166,15 +166,20 @@ void SaveOutputMap(CDataFileReader &InputMap, CDataFileWriter &OutputMap)
 	for(int i = 0; i < InputMap.NumItems(); i++)
 	{
 		int ID, Type;
-		void *pItem = InputMap.GetItem(i, &Type, &ID);
+		CUuid Uuid;
+		void *pItem = InputMap.GetItem(i, &Type, &ID, &Uuid);
 
+		// Filter ITEMTYPE_EX items, they will be automatically added again.
 		if(Type == ITEMTYPE_EX)
+		{
 			continue;
+		}
+
 		if(g_apNewItem[i])
 			pItem = g_apNewItem[i];
 
 		int Size = InputMap.GetItemSize(i);
-		OutputMap.AddItem(Type, ID, Size, pItem);
+		OutputMap.AddItem(Type, ID, Size, pItem, &Uuid);
 	}
 
 	for(int i = 0; i < InputMap.NumData(); i++)
@@ -205,7 +210,7 @@ bool CompareLayers(const char aaMapNames[3][64], CDataFileReader aInputMaps[2])
 	{
 		CMapItemLayer *apItem[2];
 		for(int j = 0; j < 2; j++)
-			apItem[j] = (CMapItemLayer *)aInputMaps[j].GetItem(aStart[j] + i, 0, 0);
+			apItem[j] = (CMapItemLayer *)aInputMaps[j].GetItem(aStart[j] + i);
 
 		if(apItem[0]->m_Type != apItem[1]->m_Type)
 		{
@@ -229,7 +234,7 @@ void CompareGroups(const char aaMapNames[3][64], CDataFileReader aInputMaps[2])
 	{
 		CMapItemGroup *apItem[2];
 		for(int j = 0; j < 2; j++)
-			apItem[j] = (CMapItemGroup *)aInputMaps[j].GetItem(aStart[j] + i, 0, 0);
+			apItem[j] = (CMapItemGroup *)aInputMaps[j].GetItem(aStart[j] + i);
 
 		bool bSameConfig = apItem[0]->m_ParallaxX == apItem[1]->m_ParallaxX && apItem[0]->m_ParallaxY == apItem[1]->m_ParallaxY && apItem[0]->m_OffsetX == apItem[1]->m_OffsetX && apItem[0]->m_OffsetY == apItem[1]->m_OffsetY && apItem[0]->m_UseClipping == apItem[1]->m_UseClipping && apItem[0]->m_ClipX == apItem[1]->m_ClipX && apItem[0]->m_ClipY == apItem[1]->m_ClipY && apItem[0]->m_ClipW == apItem[1]->m_ClipW && apItem[0]->m_ClipH == apItem[1]->m_ClipH;
 
@@ -245,7 +250,7 @@ const CMapItemGroup *GetLayerGroup(CDataFileReader &InputMap, const int LayerNum
 
 	for(int i = 0; i < Num; i++)
 	{
-		CMapItemGroup *pItem = (CMapItemGroup *)InputMap.GetItem(Start + i, 0, 0);
+		CMapItemGroup *pItem = (CMapItemGroup *)InputMap.GetItem(Start + i);
 		if(LayerNumber >= pItem->m_StartLayer && LayerNumber <= pItem->m_StartLayer + pItem->m_NumLayers)
 			return pItem;
 	}
@@ -479,8 +484,8 @@ MapObject CreateMapObject(const CMapItemGroup *pLayerGroup, const int PosX, cons
 
 	for(int i = 0; i < 2; i++)
 	{
-		Ob.m_aaScreenOffset[i][0] = -Ob.ms_aStandardScreen[i];
-		Ob.m_aaScreenOffset[i][1] = Ob.ms_aStandardScreen[i];
+		Ob.m_aaScreenOffset[i][0] = -MapObject::ms_aStandardScreen[i];
+		Ob.m_aaScreenOffset[i][1] = MapObject::ms_aStandardScreen[i];
 		if(Ob.m_aSpeed[i] < 0)
 			std::swap(Ob.m_aaScreenOffset[i][0], Ob.m_aaScreenOffset[i][1]);
 	}
@@ -499,7 +504,7 @@ void SetExtendedArea(MapObject &Ob)
 		{
 			float aInspectedArea[2];
 			if(GetLineIntersection(Ob.m_aaBaseArea[i], Ob.m_aaScreenOffset[i], aInspectedArea))
-				memcpy(Ob.m_aaExtendedArea[i], aInspectedArea, sizeof(float[2]));
+				mem_copy(Ob.m_aaExtendedArea[i], aInspectedArea, sizeof(float[2]));
 			continue;
 		}
 
@@ -520,13 +525,13 @@ bool GetVisibleArea(const float aaGameArea[2][2], const MapObject &Ob, float aaV
 		SetInexistent((float *)aaVisibleArea, 4);
 
 	float aaInspectedArea[2][2];
-	memcpy(aaInspectedArea, aaGameArea, sizeof(float[2][2]));
+	mem_copy(aaInspectedArea, aaGameArea, sizeof(float[2][2]));
 
 	for(int i = 0; i < 2; i++)
 	{
 		if(Ob.m_aSpeed[i] == 1)
 		{
-			memcpy(aaInspectedArea[i], Ob.m_aaExtendedArea[i], sizeof(float[2]));
+			mem_copy(aaInspectedArea[i], Ob.m_aaExtendedArea[i], sizeof(float[2]));
 			continue;
 		}
 
@@ -538,7 +543,7 @@ bool GetVisibleArea(const float aaGameArea[2][2], const MapObject &Ob, float aaV
 	}
 
 	if(aaVisibleArea)
-		memcpy(aaVisibleArea, aaInspectedArea, sizeof(float[2][2]));
+		mem_copy(aaVisibleArea, aaInspectedArea, sizeof(float[2][2]));
 
 	return true;
 }
@@ -594,8 +599,8 @@ void GetGameAreaDistance(const float aaaGameAreas[2][2][2], const MapObject aObs
 void GetGameAreaDistance(const float aaaGameAreas[2][2][2], const MapObject aObs[2], const float aaVisibleArea[2][2], float aDistance[2])
 {
 	float aaaVisibleAreas[2][2][2];
-	memcpy(aaaVisibleAreas[0], aaVisibleArea[0], sizeof(float[2][2]));
-	memcpy(aaaVisibleAreas[1], aaVisibleArea[0], sizeof(float[2][2]));
+	mem_copy(aaaVisibleAreas[0], aaVisibleArea[0], sizeof(float[2][2]));
+	mem_copy(aaaVisibleAreas[1], aaVisibleArea[0], sizeof(float[2][2]));
 	GetGameAreaDistance(aaaGameAreas, aObs, aaaVisibleAreas, aDistance);
 }
 
@@ -618,8 +623,8 @@ void ConvertToTiles(const float aaArea[2][2], int aaTiles[2][2])
 {
 	for(int i = 0; i < 2; i++)
 	{
-		aaTiles[i][0] = floor((floor(aaArea[i][0] * 100.0f) / 100.0f) / 32.0f);
-		aaTiles[i][1] = ceil((floor(aaArea[i][1] * 100.0f) / 100.0f) / 32.0f);
+		aaTiles[i][0] = std::floor((std::floor(aaArea[i][0] * 100.0f) / 100.0f) / 32.0f);
+		aaTiles[i][1] = std::ceil((std::floor(aaArea[i][1] * 100.0f) / 100.0f) / 32.0f);
 	}
 }
 
@@ -636,7 +641,7 @@ bool GetLineIntersection(const float aLine1[2], const float aLine2[2], float aIn
 		return false;
 
 	if(aIntersection)
-		memcpy(aIntersection, aBorders, sizeof(float[2]));
+		mem_copy(aIntersection, aBorders, sizeof(float[2]));
 
 	return true;
 }

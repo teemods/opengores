@@ -4,7 +4,7 @@
 
 #include <game/generated/protocol.h>
 #include <game/mapitems.h>
-#include <game/server/teams.h>
+#include <game/server/score.h>
 #include <game/teamscore.h>
 
 #include "gamecontext.h"
@@ -19,7 +19,8 @@
 #include "entities/pickup.h"
 #include "entities/projectile.h"
 
-IGameController::IGameController(class CGameContext *pGameServer)
+IGameController::IGameController(class CGameContext *pGameServer) :
+	m_Teams(pGameServer), m_pLoadBestTimeResult(nullptr)
 {
 	m_pGameServer = pGameServer;
 	m_pConfig = m_pGameServer->Config();
@@ -32,15 +33,15 @@ IGameController::IGameController(class CGameContext *pGameServer)
 	m_SuddenDeath = 0;
 	m_RoundStartTick = Server()->Tick();
 	m_RoundCount = 0;
-	m_GameFlags = GAMEFLAG_FLAGS;
+	m_GameFlags = 0;
 	m_aMapWish[0] = 0;
 
 	m_UnbalancedTick = -1;
 	m_ForceBalanced = false;
 
 	m_CurrentRecord = 0;
-	m_CurrentRecordHolder[0] = 0;
-	m_pRecordFlagChar = NULL;
+
+	InitTeleporter();
 }
 
 IGameController::~IGameController() = default;
@@ -52,13 +53,6 @@ void IGameController::DoActivityCheck()
 
 	for(int i = 0; i < MAX_CLIENTS; ++i)
 	{
-#ifdef CONF_DEBUG
-		if(g_Config.m_DbgDummies)
-		{
-			if(i >= MAX_CLIENTS - g_Config.m_DbgDummies)
-				break;
-		}
-#endif
 		if(GameServer()->m_apPlayers[i] && GameServer()->m_apPlayers[i]->GetTeam() != TEAM_SPECTATORS && Server()->GetAuthedState(i) == AUTHED_NO)
 		{
 			if(Server()->Tick() > GameServer()->m_apPlayers[i]->m_LastActionTick + g_Config.m_SvInactiveKickTime * Server()->TickSpeed() * 60)
@@ -204,11 +198,11 @@ bool IGameController::OnEntity(int Index, int x, int y, int Layer, int Flags, bo
 			if(aSides[i] >= ENTITY_LASER_SHORT && aSides[i] <= ENTITY_LASER_LONG)
 			{
 				new CDoor(
-					&GameServer()->m_World, // GameWorld
-					Pos, // Pos
-					pi / 4 * i, // Rotation
-					32 * 3 + 32 * (aSides[i] - ENTITY_LASER_SHORT) * 3, // Length
-					Number // Number
+					&GameServer()->m_World, //GameWorld
+					Pos, //Pos
+					pi / 4 * i, //Rotation
+					32 * 3 + 32 * (aSides[i] - ENTITY_LASER_SHORT) * 3, //Length
+					Number //Number
 				);
 			}
 		}
@@ -227,15 +221,15 @@ bool IGameController::OnEntity(int Index, int x, int y, int Layer, int Flags, bo
 		float Deg = Dir * (pi / 2);
 		CProjectile *pBullet = new CProjectile(
 			&GameServer()->m_World,
-			WEAPON_SHOTGUN, // Type
-			-1, // Owner
-			Pos, // Pos
-			vec2(sin(Deg), cos(Deg)), // Dir
-			-2, // Span
-			true, // Freeze
-			true, // Explosive
-			0, // Force
-			(g_Config.m_SvShotgunBulletSound) ? SOUND_GRENADE_EXPLODE : -1, // SoundImpact
+			WEAPON_SHOTGUN, //Type
+			-1, //Owner
+			Pos, //Pos
+			vec2(std::sin(Deg), std::cos(Deg)), //Dir
+			-2, //Span
+			true, //Freeze
+			true, //Explosive
+			(g_Config.m_SvShotgunBulletSound) ? SOUND_GRENADE_EXPLODE : -1, //SoundImpact
+			vec2(std::sin(Deg), std::cos(Deg)), // InitDir
 			Layer,
 			Number);
 		pBullet->SetBouncing(2 - (Dir % 2));
@@ -247,22 +241,22 @@ bool IGameController::OnEntity(int Index, int x, int y, int Layer, int Flags, bo
 			Dir = 0;
 		else if(Flags == (TILEFLAG_ROTATE))
 			Dir = 1;
-		else if(Flags == (TILEFLAG_FLIP_HORIZONTAL | TILEFLAG_FLIP_VERTICAL))
+		else if(Flags == (TILEFLAG_XFLIP | TILEFLAG_YFLIP))
 			Dir = 2;
 		else
 			Dir = 3;
 		float Deg = Dir * (pi / 2);
 		CProjectile *pBullet = new CProjectile(
 			&GameServer()->m_World,
-			WEAPON_SHOTGUN, // Type
-			-1, // Owner
-			Pos, // Pos
-			vec2(sin(Deg), cos(Deg)), // Dir
-			-2, // Span
-			true, // Freeze
-			false, // Explosive
-			0,
+			WEAPON_SHOTGUN, //Type
+			-1, //Owner
+			Pos, //Pos
+			vec2(std::sin(Deg), std::cos(Deg)), //Dir
+			-2, //Span
+			true, //Freeze
+			false, //Explosive
 			SOUND_GRENADE_EXPLODE,
+			vec2(std::sin(Deg), std::cos(Deg)), // InitDir
 			Layer,
 			Number);
 		pBullet->SetBouncing(2 - (Dir % 2));
@@ -384,11 +378,11 @@ bool IGameController::OnEntity(int Index, int x, int y, int Layer, int Flags, bo
 		new CGun(&GameServer()->m_World, Pos, false, false, Layer, Number);
 	}
 
-	if(Type != -1)
+	if(Type != -1) // NOLINT(clang-analyzer-unix.Malloc)
 	{
 		CPickup *pPickup = new CPickup(&GameServer()->m_World, Type, SubType, Layer, Number);
 		pPickup->m_Pos = Pos;
-		return true;
+		return true; // NOLINT(clang-analyzer-unix.Malloc)
 	}
 
 	return false;
@@ -486,6 +480,9 @@ int IGameController::OnCharacterDeath(class CCharacter *pVictim, class CPlayer *
 
 void IGameController::OnCharacterSpawn(class CCharacter *pChr)
 {
+	pChr->SetTeams(&Teams());
+	Teams().OnCharacterSpawn(pChr->GetPlayer()->GetCID());
+
 	// default health
 	pChr->IncreaseHealth(10);
 
@@ -495,6 +492,8 @@ void IGameController::OnCharacterSpawn(class CCharacter *pChr)
 
 	// flag system
 	UpdateRecordFlag();
+
+	pChr->SetTeleports(&m_TeleOuts, &m_TeleCheckOuts);
 }
 
 void IGameController::HandleCharacterTiles(CCharacter *pChr, int MapIndex)
@@ -540,12 +539,29 @@ void IGameController::Tick()
 		}
 	}
 
+	if(m_pLoadBestTimeResult != nullptr && m_pLoadBestTimeResult->m_Completed)
+	{
+		if(m_pLoadBestTimeResult->m_Success)
+		{
+			m_CurrentRecord = m_pLoadBestTimeResult->m_CurrentRecord;
+
+			for(int i = 0; i < MAX_CLIENTS; i++)
+			{
+				if(GameServer()->m_apPlayers[i] && GameServer()->m_apPlayers[i]->GetClientVersion() >= VERSION_DDRACE)
+				{
+					GameServer()->SendRecord(i);
+				}
+			}
+		}
+		m_pLoadBestTimeResult = nullptr;
+	}
+
 	DoActivityCheck();
 }
 
 void IGameController::Snap(int SnappingClient)
 {
-	CNetObj_GameInfo *pGameInfoObj = (CNetObj_GameInfo *)Server()->SnapNewItem(NETOBJTYPE_GAMEINFO, 0, sizeof(CNetObj_GameInfo));
+	CNetObj_GameInfo *pGameInfoObj = Server()->SnapNewItem<CNetObj_GameInfo>(0);
 	if(!pGameInfoObj)
 		return;
 
@@ -584,7 +600,7 @@ void IGameController::Snap(int SnappingClient)
 		}
 	}
 
-	CNetObj_GameInfoEx *pGameInfoEx = (CNetObj_GameInfoEx *)Server()->SnapNewItem(NETOBJTYPE_GAMEINFOEX, 0, sizeof(CNetObj_GameInfoEx));
+	CNetObj_GameInfoEx *pGameInfoEx = Server()->SnapNewItem<CNetObj_GameInfoEx>(0);
 	if(!pGameInfoEx)
 		return;
 
@@ -613,7 +629,7 @@ void IGameController::Snap(int SnappingClient)
 
 	if(Server()->IsSixup(SnappingClient))
 	{
-		protocol7::CNetObj_GameData *pGameData = static_cast<protocol7::CNetObj_GameData *>(Server()->SnapNewItem(-protocol7::NETOBJTYPE_GAMEDATA, 0, sizeof(protocol7::CNetObj_GameData)));
+		protocol7::CNetObj_GameData *pGameData = Server()->SnapNewItem<protocol7::CNetObj_GameData>(0);
 		if(!pGameData)
 			return;
 
@@ -628,60 +644,16 @@ void IGameController::Snap(int SnappingClient)
 
 		pGameData->m_GameStateEndTick = 0;
 
-		protocol7::CNetObj_GameDataRace *pRaceData = static_cast<protocol7::CNetObj_GameDataRace *>(Server()->SnapNewItem(-protocol7::NETOBJTYPE_GAMEDATARACE, 0, sizeof(protocol7::CNetObj_GameDataRace)));
+		protocol7::CNetObj_GameDataRace *pRaceData = Server()->SnapNewItem<protocol7::CNetObj_GameDataRace>(0);
 		if(!pRaceData)
 			return;
 
 		pRaceData->m_BestTime = round_to_int(m_CurrentRecord * 1000);
-		pRaceData->m_Precision = 0;
+		pRaceData->m_Precision = 2;
 		pRaceData->m_RaceFlags = protocol7::RACEFLAG_HIDE_KILLMSG | protocol7::RACEFLAG_KEEP_WANTED_WEAPON;
 	}
 
-	if(!GameServer()->Switchers().empty())
-	{
-		int Team = pPlayer && pPlayer->GetCharacter() ? pPlayer->GetCharacter()->Team() : 0;
-
-		if(pPlayer && (pPlayer->GetTeam() == TEAM_SPECTATORS || pPlayer->IsPaused()) && pPlayer->m_SpectatorID != SPEC_FREEVIEW && GameServer()->m_apPlayers[pPlayer->m_SpectatorID] && GameServer()->m_apPlayers[pPlayer->m_SpectatorID]->GetCharacter())
-			Team = GameServer()->m_apPlayers[pPlayer->m_SpectatorID]->GetCharacter()->Team();
-
-		if(Team == TEAM_SUPER)
-			return;
-
-		CNetObj_SwitchState *pSwitchState = static_cast<CNetObj_SwitchState *>(Server()->SnapNewItem(NETOBJTYPE_SWITCHSTATE, Team, sizeof(CNetObj_SwitchState)));
-		if(!pSwitchState)
-			return;
-
-		pSwitchState->m_HighestSwitchNumber = clamp((int)GameServer()->Switchers().size() - 1, 0, 255);
-		mem_zero(pSwitchState->m_aStatus, sizeof(pSwitchState->m_aStatus));
-
-		std::vector<std::pair<int, int>> vEndTicks; // <EndTick, SwitchNumber>
-
-		for(int i = 0; i <= pSwitchState->m_HighestSwitchNumber; i++)
-		{
-			int Status = (int)GameServer()->Switchers()[i].m_aStatus[Team];
-			pSwitchState->m_aStatus[i / 32] |= (Status << (i % 32));
-
-			int EndTick = GameServer()->Switchers()[i].m_aEndTick[Team];
-			if(EndTick > 0 && EndTick < Server()->Tick() + 3 * Server()->TickSpeed() && GameServer()->Switchers()[i].m_aLastUpdateTick[Team] < Server()->Tick())
-			{
-				// only keep track of EndTicks that have less than three second left and are not currently being updated by a player being present on a switch tile, to limit how often these are sent
-				vEndTicks.emplace_back(std::pair<int, int>(GameServer()->Switchers()[i].m_aEndTick[Team], i));
-			}
-		}
-
-		// send the endtick of switchers that are about to toggle back (up to four, prioritizing those with the earliest endticks)
-		mem_zero(pSwitchState->m_aSwitchNumbers, sizeof(pSwitchState->m_aSwitchNumbers));
-		mem_zero(pSwitchState->m_aEndTicks, sizeof(pSwitchState->m_aEndTicks));
-
-		std::sort(vEndTicks.begin(), vEndTicks.end());
-		const int NumTimedSwitchers = minimum((int)vEndTicks.size(), (int)std::size(pSwitchState->m_aEndTicks));
-
-		for(int i = 0; i < NumTimedSwitchers; i++)
-		{
-			pSwitchState->m_aSwitchNumbers[i] = vEndTicks[i].second;
-			pSwitchState->m_aEndTicks[i] = vEndTicks[i].first;
-		}
-	}
+	GameServer()->SnapSwitchers(SnappingClient);
 
 	// OpenGores
 	SnapFlags(SnappingClient);
@@ -689,12 +661,6 @@ void IGameController::Snap(int SnappingClient)
 
 int IGameController::GetAutoTeam(int NotThisID)
 {
-	// this will force the auto balancer to work overtime as well
-#ifdef CONF_DEBUG
-	if(g_Config.m_DbgStress)
-		return 0;
-#endif
-
 	int aNumplayers[2] = {0, 0};
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
@@ -707,14 +673,21 @@ int IGameController::GetAutoTeam(int NotThisID)
 
 	int Team = 0;
 
-	if(CanJoinTeam(Team, NotThisID))
+	if(CanJoinTeam(Team, NotThisID, nullptr, 0))
 		return Team;
 	return -1;
 }
 
-bool IGameController::CanJoinTeam(int Team, int NotThisID)
+bool IGameController::CanJoinTeam(int Team, int NotThisID, char *pErrorReason, int ErrorReasonSize)
 {
-	if(Team == TEAM_SPECTATORS || (GameServer()->m_apPlayers[NotThisID] && GameServer()->m_apPlayers[NotThisID]->GetTeam() != TEAM_SPECTATORS))
+	const CPlayer *pPlayer = GameServer()->m_apPlayers[NotThisID];
+	if(pPlayer && pPlayer->IsPaused())
+	{
+		if(pErrorReason)
+			str_copy(pErrorReason, "Use /pause first then you can kill", ErrorReasonSize);
+		return false;
+	}
+	if(Team == TEAM_SPECTATORS || (pPlayer && pPlayer->GetTeam() != TEAM_SPECTATORS))
 		return true;
 
 	int aNumplayers[2] = {0, 0};
@@ -727,7 +700,12 @@ bool IGameController::CanJoinTeam(int Team, int NotThisID)
 		}
 	}
 
-	return (aNumplayers[0] + aNumplayers[1]) < Server()->MaxClients() - g_Config.m_SvSpectatorSlots;
+	if((aNumplayers[0] + aNumplayers[1]) < Server()->MaxClients() - g_Config.m_SvSpectatorSlots)
+		return true;
+
+	if(pErrorReason)
+		str_format(pErrorReason, ErrorReasonSize, "Only %d active players are allowed", Server()->MaxClients() - g_Config.m_SvSpectatorSlots);
+	return false;
 }
 
 int IGameController::ClampTeam(int Team)
@@ -737,10 +715,37 @@ int IGameController::ClampTeam(int Team)
 	return 0;
 }
 
-int64_t IGameController::GetMaskForPlayerWorldEvent(int Asker, int ExceptID)
+CClientMask IGameController::GetMaskForPlayerWorldEvent(int Asker, int ExceptID)
 {
-	// Send all world events to everyone by default
-	return CmaskAllExceptOne(ExceptID);
+	if(Asker == -1)
+		return CClientMask().set().reset(ExceptID);
+
+	return Teams().TeamMask(GameServer()->GetDDRaceTeam(Asker), ExceptID, Asker);
+}
+
+void IGameController::InitTeleporter()
+{
+	if(!GameServer()->Collision()->Layers()->TeleLayer())
+		return;
+	int Width = GameServer()->Collision()->Layers()->TeleLayer()->m_Width;
+	int Height = GameServer()->Collision()->Layers()->TeleLayer()->m_Height;
+
+	for(int i = 0; i < Width * Height; i++)
+	{
+		int Number = GameServer()->Collision()->TeleLayer()[i].m_Number;
+		int Type = GameServer()->Collision()->TeleLayer()[i].m_Type;
+		if(Number > 0)
+		{
+			if(Type == TILE_TELEOUT)
+			{
+				m_TeleOuts[Number - 1].emplace_back(i % Width * 32.0f + 16.0f, i / Width * 32.0f + 16.0f);
+			}
+			else if(Type == TILE_TELECHECKOUT)
+			{
+				m_TeleCheckOuts[Number - 1].emplace_back(i % Width * 32.0f + 16.0f, i / Width * 32.0f + 16.0f);
+			}
+		}
+	}
 }
 
 void IGameController::DoTeamChange(CPlayer *pPlayer, int Team, bool DoChatMsg)
@@ -814,9 +819,8 @@ int IGameController::SnapRecordFlag(int SnappingClient)
 	// Verify flag owner team mask (cannot check that when demo client)
 	if(SnappingClient != SERVER_DEMO_CLIENT)
 	{
-		int64_t TeamMask = -1LL;
-		TeamMask = m_pRecordFlagChar->Teams()->TeamMask(m_pRecordFlagChar->Team(), -1, pFlagOwner->GetCID());
-		if(!CmaskIsSet(TeamMask, SnappingClient))
+		CClientMask TeamMask = m_pRecordFlagChar->Teams()->TeamMask(m_pRecordFlagChar->Team(), -1, pFlagOwner->GetCID());
+		if(!TeamMask.test(pSnapPlayer->GetTeam()))
 			return pFlagOwner->GetCID();
 	}
 

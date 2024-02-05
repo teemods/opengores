@@ -20,7 +20,7 @@ public:
 		CSkins *m_pSkins;
 
 	protected:
-		virtual int OnCompletion(int State) override;
+		virtual void OnCompletion(EHttpState State) override;
 
 	public:
 		CGetPngFile(CSkins *pSkins, const char *pUrl, IStorage *pStorage, const char *pDest);
@@ -64,10 +64,17 @@ public:
 	void Refresh(TSkinLoadedCBFunc &&SkinLoadedFunc);
 	int Num();
 	std::unordered_map<std::string_view, std::unique_ptr<CSkin>> &GetSkinsUnsafe() { return m_Skins; }
-	const CSkin *FindOrNullptr(const char *pName);
+	const CSkin *FindOrNullptr(const char *pName, bool IgnorePrefix = false);
 	const CSkin *Find(const char *pName);
 
 	bool IsDownloadingSkins() { return m_DownloadingSkins; }
+
+	static bool IsVanillaSkin(const char *pName);
+
+	constexpr static const char *VANILLA_SKINS[] = {"bluekitty", "bluestripe", "brownbear",
+		"cammo", "cammostripes", "coala", "default", "limekitty",
+		"pinky", "redbopp", "redstripe", "saddo", "toptri",
+		"twinbop", "twintri", "warpaint", "x_ninja", "x_spec"};
 
 private:
 	std::unordered_map<std::string_view, std::unique_ptr<CSkin>> m_Skins;

@@ -7,8 +7,10 @@
 
 struct CScrollRegionParams
 {
+	bool m_Active;
 	float m_ScrollbarWidth;
 	float m_ScrollbarMargin;
+	bool m_ScrollbarNoMarginRight;
 	float m_SliderMinHeight;
 	float m_ScrollUnit;
 	ColorRGBA m_ClipBgColor;
@@ -26,8 +28,10 @@ struct CScrollRegionParams
 
 	CScrollRegionParams()
 	{
+		m_Active = true;
 		m_ScrollbarWidth = 20.0f;
 		m_ScrollbarMargin = 5.0f;
+		m_ScrollbarNoMarginRight = false;
 		m_SliderMinHeight = 25.0f;
 		m_ScrollUnit = 10.0f;
 		m_ClipBgColor = ColorRGBA(0.0f, 0.0f, 0.0f, 0.0f);
@@ -64,7 +68,7 @@ Usage:
 	s_ScrollRegion.AddRect(Rect);
 
 	-- [Optional] Knowing if a rect is clipped --
-	s_ScrollRegion.IsRectClipped(Rect);
+	s_ScrollRegion.RectClipped(Rect);
 
 	-- [Optional] Scroll to a rect (to the last added rect)--
 	...
@@ -86,11 +90,26 @@ Usage:
 // Instances of CScrollRegion must be static, as member addresses are used as UI item IDs
 class CScrollRegion : private CUIElementBase
 {
+public:
+	// TODO: Properly fix whatever is causing the 1-pixel discrepancy in scrolling rect height and remove this magic value.
+	// Currently this must be added when calculating the required height of a UI rect for a scroll region to get a perfect fit.
+	static constexpr float HEIGHT_MAGIC_FIX = 1.0f;
+
+	enum EScrollRelative
+	{
+		SCROLLRELATIVE_UP = -1,
+		SCROLLRELATIVE_NONE = 0,
+		SCROLLRELATIVE_DOWN = 1,
+	};
+
 private:
 	float m_ScrollY;
 	float m_ContentH;
 	float m_RequestScrollY; // [0, ContentHeight]
+	EScrollRelative m_ScrollDirection;
+	float m_ScrollSpeedMultiplier;
 
+	float m_AnimTimeMax;
 	float m_AnimTime;
 	float m_AnimInitScrollY;
 	float m_AnimTargetScrollY;
@@ -98,7 +117,7 @@ private:
 	CUIRect m_ClipRect;
 	CUIRect m_RailRect;
 	CUIRect m_LastAddedRect; // saved for ScrollHere()
-	vec2 m_SliderGrabPos; // where did user grab the slider
+	float m_SliderGrabPos; // where did user grab the slider
 	vec2 m_ContentScrollOff;
 	CScrollRegionParams m_Params;
 
@@ -115,9 +134,13 @@ public:
 	void End();
 	bool AddRect(const CUIRect &Rect, bool ShouldScrollHere = false); // returns true if the added rect is visible (not clipped)
 	void ScrollHere(EScrollOption Option = SCROLLHERE_KEEP_IN_VIEW);
-	bool IsRectClipped(const CUIRect &Rect) const;
-	bool IsScrollbarShown() const;
-	bool IsAnimating() const;
+	void ScrollRelative(EScrollRelative Direction, float SpeedMultiplier = 1.0f);
+	const CUIRect *ClipRect() const { return &m_ClipRect; }
+	void DoEdgeScrolling();
+	bool RectClipped(const CUIRect &Rect) const;
+	bool ScrollbarShown() const;
+	bool Animating() const;
+	const CScrollRegionParams &Params() const { return m_Params; }
 };
 
 #endif

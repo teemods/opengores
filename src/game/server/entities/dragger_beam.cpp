@@ -71,8 +71,7 @@ void CDraggerBeam::Tick()
 	// In the center of the dragger a tee does not experience speed-up
 	else if(distance(pTarget->m_Pos, m_Pos) > 28)
 	{
-		vec2 Temp = pTarget->Core()->m_Vel + (normalize(m_Pos - pTarget->m_Pos) * m_Strength);
-		pTarget->Core()->m_Vel = ClampVel(pTarget->m_MoveRestrictions, Temp);
+		pTarget->AddVelocity(normalize(m_Pos - pTarget->m_Pos) * m_Strength);
 	}
 }
 
@@ -108,16 +107,8 @@ void CDraggerBeam::Snap(int SnappingClient)
 	{
 		return;
 	}
-	CNetObj_Laser *pObjLaser = static_cast<CNetObj_Laser *>(
-		Server()->SnapNewItem(NETOBJTYPE_LASER, GetID(), sizeof(CNetObj_Laser)));
-	if(!pObjLaser)
-	{
-		return;
-	}
-	pObjLaser->m_X = (int)m_Pos.x;
-	pObjLaser->m_Y = (int)m_Pos.y;
-	pObjLaser->m_FromX = (int)TargetPos.x;
-	pObjLaser->m_FromY = (int)TargetPos.y;
+
+	int Subtype = (m_IgnoreWalls ? 1 : 0) | (clamp(round_to_int(m_Strength - 1.f), 0, 2) << 1);
 
 	int StartTick = m_EvalTick;
 	if(StartTick < Server()->Tick() - 4)
@@ -128,5 +119,24 @@ void CDraggerBeam::Snap(int SnappingClient)
 	{
 		StartTick = Server()->Tick();
 	}
-	pObjLaser->m_StartTick = StartTick;
+
+	int SnappingClientVersion = GameServer()->GetClientVersion(SnappingClient);
+	if(SnappingClientVersion >= VERSION_DDNET_ENTITY_NETOBJS)
+	{
+		StartTick = -1;
+	}
+
+	int SnapObjID = GetID();
+	if(m_pDragger->WillDraggerBeamUseDraggerID(m_ForClientID, SnappingClient))
+	{
+		SnapObjID = m_pDragger->GetID();
+	}
+
+	GameServer()->SnapLaserObject(CSnapContext(SnappingClientVersion), SnapObjID,
+		TargetPos, m_Pos, StartTick, m_ForClientID, LASERTYPE_DRAGGER, Subtype, m_Number);
+}
+
+void CDraggerBeam::SwapClients(int Client1, int Client2)
+{
+	m_ForClientID = m_ForClientID == Client1 ? Client2 : m_ForClientID == Client2 ? Client1 : m_ForClientID;
 }

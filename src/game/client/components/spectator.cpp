@@ -1,7 +1,7 @@
 /* (c) Magnus Auvinen. See licence.txt in the root of the distribution for more information. */
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
 
-#include <climits>
+#include <limits>
 
 #include <engine/graphics.h>
 #include <engine/shared/config.h>
@@ -132,7 +132,7 @@ void CSpectator::ConSpectateClosest(IConsole::IResult *pResult, void *pUserData)
 		CurPosition.y = CurCharacter.m_Y;
 	}
 
-	int ClosestDistance = INT_MAX;
+	int ClosestDistance = std::numeric_limits<int>::max();
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
 		if(i == SpectatorID || !Snap.m_apPlayerInfos[i] || Snap.m_apPlayerInfos[i]->m_Team == TEAM_SPECTATORS || (SpectatorID == SPEC_FREEVIEW && i == Snap.m_LocalClientID))
@@ -149,8 +149,20 @@ void CSpectator::ConSpectateClosest(IConsole::IResult *pResult, void *pUserData)
 		pSelf->Spectate(NewSpectatorID);
 }
 
+void CSpectator::ConMultiView(IConsole::IResult *pResult, void *pUserData)
+{
+	CSpectator *pSelf = (CSpectator *)pUserData;
+	int Input = pResult->GetInteger(0);
+
+	if(Input == -1)
+		std::fill(std::begin(pSelf->GameClient()->m_aMultiViewId), std::end(pSelf->GameClient()->m_aMultiViewId), false); // remove everyone from multiview
+	else if(Input < MAX_CLIENTS && Input >= 0)
+		pSelf->GameClient()->m_aMultiViewId[Input] = !pSelf->GameClient()->m_aMultiViewId[Input]; // activate or deactivate one player from multiview
+}
+
 CSpectator::CSpectator()
 {
+	m_SelectorMouse = vec2(0.0f, 0.0f);
 	OnReset();
 	m_OldMouseX = m_OldMouseY = 0.0f;
 }
@@ -162,6 +174,7 @@ void CSpectator::OnConsoleInit()
 	Console()->Register("spectate_next", "", CFGFLAG_CLIENT, ConSpectateNext, this, "Spectate the next player");
 	Console()->Register("spectate_previous", "", CFGFLAG_CLIENT, ConSpectatePrevious, this, "Spectate the previous player");
 	Console()->Register("spectate_closest", "", CFGFLAG_CLIENT, ConSpectateClosest, this, "Spectate the closest player");
+	Console()->Register("spectate_multiview", "i[id]", CFGFLAG_CLIENT, ConMultiView, this, "Add/remove Client-IDs to spectate them exclusively (-1 to reset)");
 }
 
 bool CSpectator::OnCursorMove(float x, float y, IInput::ECursorType CursorType)
@@ -181,15 +194,58 @@ void CSpectator::OnRelease()
 
 void CSpectator::OnRender()
 {
+	if(!GameClient()->m_MultiViewActivated && m_MultiViewActivateDelay != 0.0f)
+	{
+		if(m_MultiViewActivateDelay <= Client()->LocalTime())
+		{
+			m_MultiViewActivateDelay = 0.0f;
+			GameClient()->m_MultiViewActivated = true;
+		}
+	}
+
 	if(!m_Active)
 	{
+		// closing the spectator menu
 		if(m_WasActive)
 		{
 			if(m_SelectedSpectatorID != NO_SELECTION)
-				Spectate(m_SelectedSpectatorID);
+			{
+				if(m_SelectedSpectatorID == MULTI_VIEW)
+					GameClient()->m_MultiViewActivated = true;
+				else if(m_SelectedSpectatorID == SPEC_FREEVIEW || m_SelectedSpectatorID == SPEC_FOLLOW)
+					GameClient()->m_MultiViewActivated = false;
+
+				if(!GameClient()->m_MultiViewActivated)
+					Spectate(m_SelectedSpectatorID);
+
+				if(GameClient()->m_MultiViewActivated && m_SelectedSpectatorID != MULTI_VIEW && m_pClient->m_Teams.Team(m_SelectedSpectatorID) != GameClient()->m_MultiViewTeam)
+				{
+					GameClient()->ResetMultiView();
+					Spectate(m_SelectedSpectatorID);
+					m_MultiViewActivateDelay = Client()->LocalTime() + 0.3f;
+				}
+			}
 			m_WasActive = false;
 		}
 		return;
+	}
+
+	if(m_SelectedSpectatorID != NO_SELECTION)
+	{
+		// clicking a component
+		if(m_Clicked)
+		{
+			if(!GameClient()->m_MultiViewActivated)
+				Spectate(m_SelectedSpectatorID);
+
+			if(m_SelectedSpectatorID == MULTI_VIEW)
+				GameClient()->m_MultiViewActivated = true;
+			else if(m_SelectedSpectatorID == SPEC_FREEVIEW || m_SelectedSpectatorID == SPEC_FOLLOW)
+				GameClient()->m_MultiViewActivated = false;
+
+			if(!GameClient()->m_MultiViewActivated && m_SelectedSpectatorID >= 0 && m_SelectedSpectatorID < MAX_CLIENTS)
+				m_Clicked = false;
+		}
 	}
 
 	if(!m_pClient->m_Snap.m_SpecInfo.m_Active && Client()->State() != IClient::STATE_DEMOPLAYBACK)
@@ -213,6 +269,7 @@ void CSpectator::OnRender()
 	float TeeSizeMod = 1.0f;
 	float RoundRadius = 30.0f;
 	bool Selected = false;
+	bool MultiViewSelected = false;
 	int TotalPlayers = 0;
 	int PerLine = 8;
 	float BoxMove = -10.0f;
@@ -253,34 +310,48 @@ void CSpectator::OnRender()
 	if((Client()->State() == IClient::STATE_DEMOPLAYBACK && m_pClient->m_DemoSpecID == SPEC_FREEVIEW) ||
 		(Client()->State() != IClient::STATE_DEMOPLAYBACK && m_pClient->m_Snap.m_SpecInfo.m_SpectatorID == SPEC_FREEVIEW))
 	{
-		Graphics()->DrawRect(Width / 2.0f - (ObjWidth - 20.0f), Height / 2.0f - 280.0f, 270.0f, 60.0f, ColorRGBA(1.0f, 1.0f, 1.0f, 0.25f), IGraphics::CORNER_ALL, 20.0f);
+		Graphics()->DrawRect(Width / 2.0f - (ObjWidth - 20.0f), Height / 2.0f - 280.0f, ((ObjWidth * 2.0f) / 3.0f) - 40.0f, 60.0f, ColorRGBA(1.0f, 1.0f, 1.0f, 0.25f), IGraphics::CORNER_ALL, 20.0f);
+	}
+
+	if(GameClient()->m_MultiViewActivated)
+	{
+		Graphics()->DrawRect(Width / 2.0f - (ObjWidth - 20.0f) + (ObjWidth * 2.0f / 3.0f), Height / 2.0f - 280.0f, ((ObjWidth * 2.0f) / 3.0f) - 40.0f, 60.0f, ColorRGBA(1.0f, 1.0f, 1.0f, 0.25f), IGraphics::CORNER_ALL, 20.0f);
 	}
 
 	if(Client()->State() == IClient::STATE_DEMOPLAYBACK && m_pClient->m_Snap.m_LocalClientID >= 0 && m_pClient->m_DemoSpecID == SPEC_FOLLOW)
 	{
-		Graphics()->DrawRect(Width / 2.0f - (ObjWidth - 310.0f), Height / 2.0f - 280.0f, 270.0f, 60.0f, ColorRGBA(1.0f, 1.0f, 1.0f, 0.25f), IGraphics::CORNER_ALL, 20.0f);
+		Graphics()->DrawRect(Width / 2.0f - (ObjWidth - 20.0f) + (ObjWidth * 2.0f * 2.0f / 3.0f), Height / 2.0f - 280.0f, ((ObjWidth * 2.0f) / 3.0f) - 40.0f, 60.0f, ColorRGBA(1.0f, 1.0f, 1.0f, 0.25f), IGraphics::CORNER_ALL, 20.0f);
 	}
 
-	if(m_SelectorMouse.x >= -(ObjWidth - 20.0f) && m_SelectorMouse.x <= -(ObjWidth - 290 + 10.0f) &&
+	if(m_SelectorMouse.x >= -(ObjWidth - 20.0f) && m_SelectorMouse.x <= -(ObjWidth - 20.0f) + ((ObjWidth * 2.0f) / 3.0f) - 40.0f &&
 		m_SelectorMouse.y >= -280.0f && m_SelectorMouse.y <= -220.0f)
 	{
 		m_SelectedSpectatorID = SPEC_FREEVIEW;
 		Selected = true;
 	}
 	TextRender()->TextColor(1.0f, 1.0f, 1.0f, Selected ? 1.0f : 0.5f);
-	TextRender()->Text(0, Width / 2.0f - (ObjWidth - 60.0f), Height / 2.0f - 280.f + (60.f - BigFontSize) / 2.f, BigFontSize, Localize("Free-View"), -1.0f);
+	TextRender()->Text(Width / 2.0f - (ObjWidth - 40.0f), Height / 2.0f - 280.f + (60.f - BigFontSize) / 2.f, BigFontSize, Localize("Free-View"), -1.0f);
+
+	if(m_SelectorMouse.x >= -(ObjWidth - 20.0f) + (ObjWidth * 2.0f / 3.0f) && m_SelectorMouse.x <= -(ObjWidth - 20.0f) + (ObjWidth * 2.0f / 3.0f) + ((ObjWidth * 2.0f) / 3.0f) - 40.0f &&
+		m_SelectorMouse.y >= -280.0f && m_SelectorMouse.y <= -220.0f)
+	{
+		m_SelectedSpectatorID = MULTI_VIEW;
+		MultiViewSelected = true;
+	}
+	TextRender()->TextColor(1.0f, 1.0f, 1.0f, MultiViewSelected ? 1.0f : 0.5f);
+	TextRender()->Text(Width / 2.0f - (ObjWidth - 40.0f) + (ObjWidth * 2.0f / 3.0f), Height / 2.0f - 280.f + (60.f - BigFontSize) / 2.f, BigFontSize, Localize("Multi-View"), -1.0f);
 
 	if(Client()->State() == IClient::STATE_DEMOPLAYBACK && m_pClient->m_Snap.m_LocalClientID >= 0)
 	{
 		Selected = false;
-		if(m_SelectorMouse.x > -(ObjWidth - 290.0f) && m_SelectorMouse.x <= -(ObjWidth - 590.0f) &&
+		if(m_SelectorMouse.x >= -(ObjWidth - 20.0f) + (ObjWidth * 2.0f * 2.0f / 3.0f) && m_SelectorMouse.x <= -(ObjWidth - 20.0f) + (ObjWidth * 2.0f * 2.0f / 3.0f) + ((ObjWidth * 2.0f) / 3.0f) - 40.0f &&
 			m_SelectorMouse.y >= -280.0f && m_SelectorMouse.y <= -220.0f)
 		{
 			m_SelectedSpectatorID = SPEC_FOLLOW;
 			Selected = true;
 		}
 		TextRender()->TextColor(1.0f, 1.0f, 1.0f, Selected ? 1.0f : 0.5f);
-		TextRender()->Text(0, Width / 2.0f - (ObjWidth - 350.0f), Height / 2.0f - 280.0f + (60.f - BigFontSize) / 2.f, BigFontSize, Localize("Follow"), -1.0f);
+		TextRender()->Text(Width / 2.0f - (ObjWidth - 40.0f) + (ObjWidth * 2.0f * 2.0f / 3.0f), Height / 2.0f - 280.0f + (60.f - BigFontSize) / 2.f, BigFontSize, Localize("Follow"), -1.0f);
 	}
 
 	float x = -(ObjWidth - 35.0f), y = StartY;
@@ -331,7 +402,7 @@ void CSpectator::OnRender()
 
 		if(DDTeam != TEAM_FLOCK)
 		{
-			ColorRGBA Color = color_cast<ColorRGBA>(ColorHSLA(DDTeam / 64.0f, 1.0f, 0.5f, 0.5f));
+			const ColorRGBA Color = m_pClient->GetDDTeamColor(DDTeam).WithAlpha(0.5f);
 			int Corners = 0;
 			if(OldDDTeam != DDTeam)
 				Corners |= IGraphics::CORNER_TL | IGraphics::CORNER_TR;
@@ -353,6 +424,30 @@ void CSpectator::OnRender()
 		{
 			m_SelectedSpectatorID = m_pClient->m_Snap.m_apInfoByDDTeamName[i]->m_ClientID;
 			Selected = true;
+			if(GameClient()->m_MultiViewActivated && m_Clicked)
+			{
+				if(GameClient()->m_MultiViewTeam == DDTeam)
+				{
+					GameClient()->m_aMultiViewId[m_SelectedSpectatorID] = !GameClient()->m_aMultiViewId[m_SelectedSpectatorID];
+					if(!GameClient()->m_aMultiViewId[m_pClient->m_Snap.m_SpecInfo.m_SpectatorID])
+					{
+						int NewClientID = GameClient()->FindFirstMultiViewId();
+						if(NewClientID < MAX_CLIENTS && NewClientID >= 0)
+						{
+							GameClient()->CleanMultiViewId(NewClientID);
+							GameClient()->m_aMultiViewId[NewClientID] = true;
+							Spectate(NewClientID);
+						}
+					}
+				}
+				else
+				{
+					GameClient()->ResetMultiView();
+					Spectate(m_SelectedSpectatorID);
+					m_MultiViewActivateDelay = Client()->LocalTime() + 0.3f;
+				}
+				m_Clicked = false;
+			}
 		}
 		float TeeAlpha;
 		if(Client()->State() == IClient::STATE_DEMOPLAYBACK &&
@@ -366,10 +461,24 @@ void CSpectator::OnRender()
 			TextRender()->TextColor(1.0f, 1.0f, 1.0f, Selected ? 1.0f : 0.5f);
 			TeeAlpha = 1.0f;
 		}
-		TextRender()->Text(0, Width / 2.0f + x + 50.0f, Height / 2.0f + y + BoxMove + (LineHeight - FontSize) / 2.f, FontSize, m_pClient->m_aClients[m_pClient->m_Snap.m_apInfoByDDTeamName[i]->m_ClientID].m_aName, 220.0f);
+		TextRender()->Text(Width / 2.0f + x + 50.0f, Height / 2.0f + y + BoxMove + (LineHeight - FontSize) / 2.f, FontSize, m_pClient->m_aClients[m_pClient->m_Snap.m_apInfoByDDTeamName[i]->m_ClientID].m_aName, 220.0f);
+
+		if(GameClient()->m_MultiViewActivated)
+		{
+			if(GameClient()->m_aMultiViewId[m_pClient->m_Snap.m_apInfoByDDTeamName[i]->m_ClientID])
+			{
+				TextRender()->TextColor(0.1f, 1.0f, 0.1f, Selected ? 1.0f : 0.5f);
+				TextRender()->Text(Width / 2.0f + x + 50.0f + 180.0f, Height / 2.0f + y + BoxMove + (LineHeight - FontSize) / 2.f, FontSize - 3, "⬤", 220.0f);
+			}
+			else if(GameClient()->m_MultiViewTeam == DDTeam)
+			{
+				TextRender()->TextColor(1.0f, 0.1f, 0.1f, Selected ? 1.0f : 0.5f);
+				TextRender()->Text(Width / 2.0f + x + 50.0f + 180.0f, Height / 2.0f + y + BoxMove + (LineHeight - FontSize) / 2.f, FontSize - 3, "◯", 220.0f);
+			}
+		}
 
 		// flag
-		if(m_pClient->m_Snap.m_pGameInfoObj->m_GameFlags & GAMEFLAG_FLAGS &&
+		if(m_pClient->m_Snap.m_pGameInfoObj && (m_pClient->m_Snap.m_pGameInfoObj->m_GameFlags & GAMEFLAG_FLAGS) &&
 			m_pClient->m_Snap.m_pGameDataObj && (m_pClient->m_Snap.m_pGameDataObj->m_FlagCarrierRed == m_pClient->m_Snap.m_apInfoByDDTeamName[i]->m_ClientID || m_pClient->m_Snap.m_pGameDataObj->m_FlagCarrierBlue == m_pClient->m_Snap.m_apInfoByDDTeamName[i]->m_ClientID))
 		{
 			Graphics()->BlendNormal();
@@ -390,9 +499,9 @@ void CSpectator::OnRender()
 		CTeeRenderInfo TeeInfo = m_pClient->m_aClients[m_pClient->m_Snap.m_apInfoByDDTeamName[i]->m_ClientID].m_RenderInfo;
 		TeeInfo.m_Size *= TeeSizeMod;
 
-		CAnimState *pIdleState = CAnimState::GetIdle();
+		const CAnimState *pIdleState = CAnimState::GetIdle();
 		vec2 OffsetToMid;
-		RenderTools()->GetRenderTeeOffsetToRenderedTee(pIdleState, &TeeInfo, OffsetToMid);
+		CRenderTools::GetRenderTeeOffsetToRenderedTee(pIdleState, &TeeInfo, OffsetToMid);
 		vec2 TeeRenderPos(Width / 2.0f + x + 20.0f, Height / 2.0f + y + BoxMove + LineHeight / 2.0f + OffsetToMid.y);
 
 		RenderTools()->RenderTee(pIdleState, &TeeInfo, EMOTE_NORMAL, vec2(1.0f, 0.0f), TeeRenderPos, TeeAlpha);
@@ -401,7 +510,7 @@ void CSpectator::OnRender()
 		{
 			ColorRGBA rgb = color_cast<ColorRGBA>(ColorHSLA(g_Config.m_ClMessageFriendColor));
 			TextRender()->TextColor(rgb.WithAlpha(1.f));
-			TextRender()->Text(0, Width / 2.0f + x - TeeInfo.m_Size / 2.0f, Height / 2.0f + y + BoxMove + (LineHeight - FontSize) / 2.f, FontSize, "♥", 220.0f);
+			TextRender()->Text(Width / 2.0f + x - TeeInfo.m_Size / 2.0f, Height / 2.0f + y + BoxMove + (LineHeight - FontSize) / 2.f, FontSize, "♥", 220.0f);
 			TextRender()->TextColor(1.0f, 1.0f, 1.0f, 1.0f);
 		}
 
@@ -436,4 +545,24 @@ void CSpectator::Spectate(int SpectatorID)
 	CNetMsg_Cl_SetSpectatorMode Msg;
 	Msg.m_SpectatorID = SpectatorID;
 	Client()->SendPackMsgActive(&Msg, MSGFLAG_VITAL);
+}
+
+void CSpectator::SpectateClosest()
+{
+	ConSpectateClosest(NULL, this);
+}
+
+bool CSpectator::OnInput(const IInput::CEvent &Event)
+{
+	if(m_Active && Event.m_Flags & IInput::FLAG_PRESS && Event.m_Key == KEY_MOUSE_1)
+	{
+		m_Clicked = true;
+		return true;
+	}
+	else if(Event.m_Flags & IInput::FLAG_RELEASE && Event.m_Key == KEY_MOUSE_1)
+	{
+		m_Clicked = false;
+		return false;
+	}
+	return false;
 }

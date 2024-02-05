@@ -6,6 +6,7 @@
 #include "mapitems.h"
 #include "teamscore.h"
 
+#include <base/system.h>
 #include <engine/shared/config.h>
 
 const char *CTuningParams::ms_apNames[] =
@@ -48,20 +49,6 @@ bool CTuningParams::Get(const char *pName, float *pValue) const
 	return false;
 }
 
-int CTuningParams::PossibleTunings(const char *pStr, IConsole::FPossibleCallback pfnCallback, void *pUser)
-{
-	int Index = 0;
-	for(int i = 0; i < Num(); i++)
-	{
-		if(str_find_nocase(Name(i), pStr))
-		{
-			pfnCallback(Index, Name(i), pUser);
-			Index++;
-		}
-	}
-	return Index;
-}
-
 float CTuningParams::GetWeaponFireDelay(int Weapon) const
 {
 	switch(Weapon)
@@ -80,7 +67,7 @@ float VelocityRamp(float Value, float Start, float Range, float Curvature)
 {
 	if(Value < Start)
 		return 1.0f;
-	return 1.0f / powf(Curvature, (Value - Start) / Range);
+	return 1.0f / std::pow(Curvature, (Value - Start) / Range);
 }
 
 void CCharacterCore::Init(CWorldCore *pWorld, CCollision *pCollision, CTeamsCore *pTeams, std::map<int, std::vector<vec2>> *pTeleOuts)
@@ -94,7 +81,13 @@ void CCharacterCore::Init(CWorldCore *pWorld, CCollision *pCollision, CTeamsCore
 
 	// fail safe, if core's tuning didn't get updated at all, just fallback to world tuning.
 	m_Tuning = m_pWorld->m_aTuning[g_Config.m_ClDummy];
-	Reset();
+}
+
+void CCharacterCore::SetCoreWorld(CWorldCore *pWorld, CCollision *pCollision, CTeamsCore *pTeams)
+{
+	m_pWorld = pWorld;
+	m_pCollision = pCollision;
+	m_pTeams = pTeams;
 }
 
 void CCharacterCore::Reset()
@@ -104,6 +97,7 @@ void CCharacterCore::Reset()
 	m_NewHook = false;
 	m_HookPos = vec2(0, 0);
 	m_HookDir = vec2(0, 0);
+	m_HookTeleBase = vec2(0, 0);
 	m_HookTick = 0;
 	m_HookState = HOOK_IDLE;
 	SetHookedPlayer(-1);
@@ -160,7 +154,7 @@ void CCharacterCore::Tick(bool UseInput, bool DoDeferredTick)
 		m_Direction = m_Input.m_Direction;
 
 		// setup angle
-		float TmpAngle = atan2f(m_Input.m_TargetY, m_Input.m_TargetX);
+		float TmpAngle = std::atan2(m_Input.m_TargetY, m_Input.m_TargetX);
 		if(TmpAngle < -(pi / 2.0f))
 		{
 			m_Angle = (int)((TmpAngle + (2.0f * pi)) * 256.0f);
@@ -251,7 +245,6 @@ void CCharacterCore::Tick(bool UseInput, bool DoDeferredTick)
 	if(m_HookState == HOOK_IDLE)
 	{
 		SetHookedPlayer(-1);
-		m_HookState = HOOK_IDLE;
 		m_HookPos = m_Pos;
 	}
 	else if(m_HookState >= HOOK_RETRACT_START && m_HookState < HOOK_RETRACT_END)
@@ -372,7 +365,7 @@ void CCharacterCore::Tick(bool UseInput, bool DoDeferredTick)
 			// release_hooked();
 		}
 
-		// don't do this hook rutine when we are hook to a player
+		// don't do this hook routine when we are already hooked to a player
 		if(m_HookedPlayer == -1 && distance(m_HookPos, m_Pos) > 46.0f)
 		{
 			vec2 HookVel = normalize(m_HookPos - m_Pos) * m_Tuning.m_HookDragAccel;
@@ -492,7 +485,17 @@ void CCharacterCore::Move()
 	vec2 NewPos = m_Pos;
 
 	vec2 OldVel = m_Vel;
-	m_pCollision->MoveBox(&NewPos, &m_Vel, PhysicalSizeVec2(), 0);
+	bool Grounded = false;
+	m_pCollision->MoveBox(&NewPos, &m_Vel, PhysicalSizeVec2(),
+		vec2(m_Tuning.m_GroundElasticityX,
+			m_Tuning.m_GroundElasticityY),
+		&Grounded);
+
+	if(Grounded)
+	{
+		m_Jumped &= ~2;
+		m_JumpedTotal = 0;
+	}
 
 	m_Colliding = 0;
 	if(m_Vel.x < 0.001f && m_Vel.x > -0.001f)
@@ -544,7 +547,7 @@ void CCharacterCore::Move()
 	m_Pos = NewPos;
 }
 
-void CCharacterCore::Write(CNetObj_CharacterCore *pObjCore)
+void CCharacterCore::Write(CNetObj_CharacterCore *pObjCore) const
 {
 	pObjCore->m_X = round_to_int(m_Pos.x);
 	pObjCore->m_Y = round_to_int(m_Pos.y);

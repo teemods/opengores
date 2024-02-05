@@ -5,7 +5,7 @@
 
 #include <game/client/components/maplayers.h>
 
-#include <stdint.h>
+#include <cstdint>
 
 class CLayers;
 class CMapImages;
@@ -15,7 +15,7 @@ class CMapImages;
 
 class CBackgroundEngineMap : public CMap
 {
-	MACRO_INTERFACE("background_enginemap", 0)
+	MACRO_INTERFACE("background_enginemap")
 };
 
 class CBackground : public CMapLayers
@@ -25,10 +25,7 @@ protected:
 	bool m_Loaded;
 	char m_aMapName[MAX_MAP_LENGTH];
 
-	// to avoid spam when in menu
-	int64_t m_LastLoad;
-
-	// to avoid memory leak when switching to %current%
+	//to avoid memory leak when switching to %current%
 	CBackgroundEngineMap *m_pBackgroundMap;
 	CLayers *m_pBackgroundLayers;
 	CMapImages *m_pBackgroundImages;
@@ -45,6 +42,7 @@ public:
 	virtual void OnRender() override;
 
 	void LoadBackground();
+	const char *MapName() const { return m_aMapName; }
 };
 
 #endif

@@ -7,6 +7,7 @@
 #include <game/teamscore.h>
 
 #include <list>
+#include <vector>
 
 class CCollision;
 class CCharacter;
@@ -14,13 +15,16 @@ class CEntity;
 
 class CGameWorld
 {
-	friend CCharacter;
-
 public:
 	enum
 	{
 		ENTTYPE_PROJECTILE = 0,
 		ENTTYPE_LASER,
+		ENTTYPE_DOOR,
+		ENTTYPE_DRAGGER,
+		ENTTYPE_LIGHT,
+		ENTTYPE_GUN,
+		ENTTYPE_PLASMA,
 		ENTTYPE_PICKUP,
 		ENTTYPE_FLAG,
 		ENTTYPE_CHARACTER,
@@ -44,15 +48,14 @@ public:
 
 	// DDRace
 	void ReleaseHooked(int ClientID);
-	std::list<CCharacter *> IntersectedCharacters(vec2 Pos0, vec2 Pos1, float Radius, const CEntity *pNotThis = nullptr);
+	std::vector<CCharacter *> IntersectedCharacters(vec2 Pos0, vec2 Pos1, float Radius, const CEntity *pNotThis = nullptr);
 
 	int m_GameTick;
-	int m_GameTickSpeed;
 	CCollision *m_pCollision;
 
 	// getter for server variables
 	int GameTick() { return m_GameTick; }
-	int GameTickSpeed() { return m_GameTickSpeed; }
+	int GameTickSpeed() { return SERVER_TICK_SPEED; }
 	CCollision *Collision() { return m_pCollision; }
 	CTeamsCore *Teams() { return &m_Teams; }
 	std::vector<SSwitchers> &Switchers() { return m_Core.m_vSwitchers; }
@@ -61,7 +64,7 @@ public:
 	CCharacter *GetCharacterByID(int ID) { return (ID >= 0 && ID < MAX_CLIENTS) ? m_apCharacters[ID] : nullptr; }
 
 	// from gamecontext
-	void CreateExplosion(vec2 Pos, int Owner, int Weapon, bool NoDamage, int ActivatedTeam, int64_t Mask);
+	void CreateExplosion(vec2 Pos, int Owner, int Weapon, bool NoDamage, int ActivatedTeam, CClientMask Mask);
 
 	// for client side prediction
 	struct
@@ -84,11 +87,14 @@ public:
 	CGameWorld *m_pParent;
 	CGameWorld *m_pChild;
 
-	void OnModified();
-	void NetObjBegin();
+	int m_LocalClientID;
+
+	bool IsLocalTeam(int OwnerID) const;
+	void OnModified() const;
+	void NetObjBegin(CTeamsCore Teams, int LocalClientID);
 	void NetCharAdd(int ObjID, CNetObj_Character *pChar, CNetObj_DDNetCharacter *pExtended, int GameTeam, bool IsLocal);
 	void NetObjAdd(int ObjID, int ObjType, const void *pObjData, const CNetObj_EntityEx *pDataEx);
-	void NetObjEnd(int LocalID);
+	void NetObjEnd();
 	void CopyWorld(CGameWorld *pFrom);
 	CEntity *FindMatch(int ObjID, int ObjType, const void *pObjData);
 	void Clear();
