@@ -4,7 +4,6 @@
 
 #include <game/generated/protocol.h>
 #include <game/mapitems.h>
-#include <game/server/teams.h>
 #include <game/server/score.h>
 #include <game/teamscore.h>
 
@@ -34,15 +33,13 @@ IGameController::IGameController(class CGameContext *pGameServer) :
 	m_SuddenDeath = 0;
 	m_RoundStartTick = Server()->Tick();
 	m_RoundCount = 0;
-	m_GameFlags = GAMEFLAG_FLAGS;
+	m_GameFlags = 0;
 	m_aMapWish[0] = 0;
 
 	m_UnbalancedTick = -1;
 	m_ForceBalanced = false;
 
 	m_CurrentRecord = 0;
-	m_CurrentRecordHolder[0] = 0;
-	m_pRecordFlagChar = NULL;
 
 	InitTeleporter();
 }
@@ -201,11 +198,11 @@ bool IGameController::OnEntity(int Index, int x, int y, int Layer, int Flags, bo
 			if(aSides[i] >= ENTITY_LASER_SHORT && aSides[i] <= ENTITY_LASER_LONG)
 			{
 				new CDoor(
-					&GameServer()->m_World, // GameWorld
-					Pos, // Pos
-					pi / 4 * i, // Rotation
-					32 * 3 + 32 * (aSides[i] - ENTITY_LASER_SHORT) * 3, // Length
-					Number // Number
+					&GameServer()->m_World, //GameWorld
+					Pos, //Pos
+					pi / 4 * i, //Rotation
+					32 * 3 + 32 * (aSides[i] - ENTITY_LASER_SHORT) * 3, //Length
+					Number //Number
 				);
 			}
 		}
@@ -656,57 +653,10 @@ void IGameController::Snap(int SnappingClient)
 		pRaceData->m_RaceFlags = protocol7::RACEFLAG_HIDE_KILLMSG | protocol7::RACEFLAG_KEEP_WANTED_WEAPON;
 	}
 
+	GameServer()->SnapSwitchers(SnappingClient);
+
 	// OpenGores
 	SnapFlags(SnappingClient);
-	// Finish OpenGores
-
-	if(!GameServer()->Switchers().empty())
-	{
-		int Team = pPlayer && pPlayer->GetCharacter() ? pPlayer->GetCharacter()->Team() : 0;
-
-		if(pPlayer && (pPlayer->GetTeam() == TEAM_SPECTATORS || pPlayer->IsPaused()) && pPlayer->m_SpectatorID != SPEC_FREEVIEW && GameServer()->m_apPlayers[pPlayer->m_SpectatorID] && GameServer()->m_apPlayers[pPlayer->m_SpectatorID]->GetCharacter())
-			Team = GameServer()->m_apPlayers[pPlayer->m_SpectatorID]->GetCharacter()->Team();
-
-		if(Team == TEAM_SUPER)
-			return;
-
-		CNetObj_SwitchState *pSwitchState = static_cast<CNetObj_SwitchState *>(Server()->SnapNewItem(NETOBJTYPE_SWITCHSTATE, Team, sizeof(CNetObj_SwitchState)));
-		if(!pSwitchState)
-			return;
-
-		pSwitchState->m_HighestSwitchNumber = clamp((int)GameServer()->Switchers().size() - 1, 0, 255);
-		mem_zero(pSwitchState->m_aStatus, sizeof(pSwitchState->m_aStatus));
-
-		std::vector<std::pair<int, int>> vEndTicks; // <EndTick, SwitchNumber>
-
-		for(int i = 0; i <= pSwitchState->m_HighestSwitchNumber; i++)
-		{
-			int Status = (int)GameServer()->Switchers()[i].m_aStatus[Team];
-			pSwitchState->m_aStatus[i / 32] |= (Status << (i % 32));
-
-			int EndTick = GameServer()->Switchers()[i].m_aEndTick[Team];
-			if(EndTick > 0 && EndTick < Server()->Tick() + 3 * Server()->TickSpeed() && GameServer()->Switchers()[i].m_aLastUpdateTick[Team] < Server()->Tick())
-			{
-				// only keep track of EndTicks that have less than three second left and are not currently being updated by a player being present on a switch tile, to limit how often these are sent
-				vEndTicks.emplace_back(std::pair<int, int>(GameServer()->Switchers()[i].m_aEndTick[Team], i));
-			}
-		}
-
-		// send the endtick of switchers that are about to toggle back (up to four, prioritizing those with the earliest endticks)
-		mem_zero(pSwitchState->m_aSwitchNumbers, sizeof(pSwitchState->m_aSwitchNumbers));
-		mem_zero(pSwitchState->m_aEndTicks, sizeof(pSwitchState->m_aEndTicks));
-
-		std::sort(vEndTicks.begin(), vEndTicks.end());
-		const int NumTimedSwitchers = minimum((int)vEndTicks.size(), (int)std::size(pSwitchState->m_aEndTicks));
-
-		for(int i = 0; i < NumTimedSwitchers; i++)
-		{
-			pSwitchState->m_aSwitchNumbers[i] = vEndTicks[i].second;
-			pSwitchState->m_aEndTicks[i] = vEndTicks[i].first;
-		}
-	}
-
-	GameServer()->SnapSwitchers(SnappingClient);
 }
 
 int IGameController::GetAutoTeam(int NotThisID)
